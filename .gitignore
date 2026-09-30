@@ -18,6 +18,10 @@ dist/
 
 # Agentes de terceiros (instalados, nao versionados - 107 ficheiros)
 /.opencode/agents/
+/.opencode/AGENTS.local.md
+
+# Temporarios de execucao
+/.tmp/
 
 # Scratch de execucao de planos (ledger, briefs, pacotes de review)
 .superpowers/

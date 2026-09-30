@@ -7,6 +7,12 @@
   #
   # Publicar a partir de `dist` em vez da raiz é a decisão que garante
   # que nada interno se escape. `tools/publicar.py` monta o `dist`.
+  #
+  # `command` é obrigatório: sem ele, um deploy ligado ao Git não
+  # executa o `publicar.py`, o `dist/` nunca é criado (está no
+  # .gitignore, não há ficheiros versionados lá dentro) e o site
+  # publica-se vazio.
+  command = "python tools/publicar.py"
   publish = "dist"
   functions = "functions"
 

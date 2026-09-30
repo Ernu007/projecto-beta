@@ -129,7 +129,8 @@ move para `assets/img/galeria/`. Não comitear ficheiros gigantes.
 - Telefone: **+258 84 793 5035** — ÚNICO número válido, confirmado pelo cliente.
   Todos os outros números que aparecem no material antigo (Airwaybill, poster,
   secções anteriores deste briefing) estão errados e foram removidos.
-- Email: jvicargaeservicos@gmail.com
+- Email: **jvicargaeservicos@gmail.com** — confirmado pelo cliente, fica assim (sem
+  o "s" que falta em "servicos"). Não corrigir.
 - Morada: **Av. 19 de Outubro, Terminal de Cargas Nº 113** — ÚNICA morada
   válida, confirmada pelo cliente.
 - NUT: 400501424

@@ -454,9 +454,15 @@ document.addEventListener('keydown', (e) => {
    ========================================================= */
 import { calcularPreco } from './precos.js';
 import { iniciarGaleria } from './galeria.js';
+/* `planoEnvio` estava em falta nesta lista e era usado no `enviarPedido`:
+   um ReferenceError no clique em "Confirmar e enviar", depois de o
+   resumo ja ter fechado — o pedido desaparecia sem mensagem nenhuma.
+   Os cinco nomes que estavam aqui (`msgEmpresa`, `msgCliente`,
+   `linkWa`, `normalizarTelefone`, `JVI_WHATSAPP`) nunca foram usados
+   neste ficheiro: saem com a correccao. Quem manda no texto do
+   WhatsApp e' o `planoEnvio`, dentro de `orcamento.js`. */
 import {
-  iniciarOrcamento, msgEmpresa, msgCliente, linkWa, linhasResumo,
-  normalizarTelefone, JVI_WHATSAPP,
+  iniciarOrcamento, linhasResumo, planoEnvio,
 } from './orcamento.js';
 
 /* O formulário vive só no modal — o briefing pede pop-up, e uma
@@ -489,6 +495,20 @@ document.querySelectorAll('[data-abrir-orc]').forEach((btn) => {
    explícito no ecrã de sucesso. A tentativa automática só existe se a
    primeira janela abriu.
    ========================================================= */
+
+/* A raiz do orcamento. `raizOrc` e' lido duas vezes aqui em baixo e
+   uma vez no fim do ficheiro, e tinha deixado de estar DECLARADO: o
+   `?.` protege contra valor null, nao contra um binding inexistente,
+   por isso a linha 500 era um ReferenceError e a 579 (topo do modulo)
+   rebentava o `main.js` inteiro assim que a pagina abria. Morriam o
+   envio do orcamento, o mapa e a galeria.
+
+   E o aviso do paragrafo seguinte nao apanha este caso: um comentario
+   defensivo no MEIO do modulo nao consegue defender o modulo. O que
+   apanha e' tests/identificadores.test.js, que varre o ficheiro todo
+   e falha se um identificador for usado sem ser declarado nem
+   importado. */
+const raizOrc = document.getElementById('orcRaiz');
 
 /* Um no que nao exista no HTML nao pode derrubar o modulo inteiro.
    Isto aconteceu: o ecra de sucesso ficou irmao de #orcRaiz em vez de
