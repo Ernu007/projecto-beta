@@ -64,6 +64,13 @@
 </head>
 <body>
 
+<!-- Skip link (WCAG 2.4.1 Bypass Blocks, Nível A). Antes do conteúdo
+     principal há 9 elementos focáveis: a marca, 7 links de navegação e o
+     botão de orçamento. Sem isto, quem navega só com teclado tem de
+     carregar Tab nove vezes em cada visita para chegar ao conteúdo.
+     Fica escondido até receber o foco — `.pular` em styles.css. -->
+<a class="pular" href="#topo">Saltar para o conteúdo</a>
+
 <div class="barra-topo" id="barraTopo"></div>
 
 <!-- ===================== HEADER ===================== -->
@@ -115,7 +122,16 @@
   <button class="btn btn--primario btn--bloco" data-abrir-orc>Pedir orçamento</button>
 </nav>
 
-<main id="topo">
+<!-- `tabindex="-1"` nos alvos da navegação interna: pela especificação
+     HTML, um link de fragmento só move o FOCO se o destino for focável.
+     Sem isto, `#servicos`, `#galeria`, `#contactos` e os restantes
+     limitavam-se a mover a posição de partida da navegação sequencial —
+     o scroll mudava e o foco ficava no link. Com teclado, o utilizador
+     clicava "Contactos", a página saltava, e o foco continuava no menu:
+     tudo o que viesse a seguir era lido a partir do sítio errado.
+
+     O `#topo` é o `main` e é também o destino do skip link e da marca. -->
+<main id="topo" tabindex="-1">
 
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="hero">
@@ -227,7 +243,7 @@
 </section>
 
 <!-- ===================== SERVIÇOS ===================== -->
-<section class="seccao" id="servicos">
+<section class="seccao" id="servicos" tabindex="-1">
   <div class="container">
     <span class="etiqueta">O que fazemos</span>
     <h2 class="titulo-seccao">Soluções integradas <span class="verde">aéreas e rodoviárias</span>.</h2>
@@ -292,7 +308,7 @@
 </section>
 
 <!-- ===================== FLUXO ===================== -->
-<section class="seccao seccao--alt" id="fluxo">
+<section class="seccao seccao--alt" id="fluxo" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Fluxo operacional</span>
     <h2 class="titulo-seccao titulo-seccao--centro">Da recolha à entrega, <span class="verde">cinco etapas</span> controladas.</h2>
@@ -337,7 +353,7 @@
 </section>
 
 <!-- ===================== COBERTURA ===================== -->
-<section class="seccao" id="cobertura">
+<section class="seccao" id="cobertura" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Cobertura &amp; capacidade</span>
     <h2 class="titulo-seccao">Infraestrutura estratégica <span class="verde">em Moçambique</span>.</h2>
@@ -372,7 +388,7 @@
 </section>
 
 <!-- ===================== CREDENCIAIS ===================== -->
-<section class="seccao seccao--alt" id="credenciais">
+<section class="seccao seccao--alt" id="credenciais" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Credenciais</span>
     <h2 class="titulo-seccao">Uma empresa <span class="verde">formalmente constituída</span> e licenciada.</h2>
@@ -409,7 +425,7 @@
 </section>
 
 <!-- ===================== GALERIA ===================== -->
-<section class="seccao" id="galeria">
+<section class="seccao" id="galeria" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Os nossos trabalhos</span>
     <h2 class="titulo-seccao">Carga entregue, <span class="verde">em todo o país</span>.</h2>
@@ -536,7 +552,7 @@
 </div>
 
 <!-- ===================== APRESENTAÇÃO / VISÃO MISSÃO OBJ ===================== -->
-<section class="seccao" id="jvi">
+<section class="seccao" id="jvi" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Apresentar a JVI</span>
     <h2 class="titulo-seccao">Uma estrutura sólida, uma <span class="verde">equipa qualificada</span>.</h2>
@@ -576,7 +592,7 @@
 </section>
 
 <!-- ===================== FAQ ===================== -->
-<section class="seccao seccao--alt" id="faq">
+<section class="seccao seccao--alt" id="faq" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Perguntas frequentes</span>
     <h2 class="titulo-seccao">Dúvidas que <span class="verde">nos fazem mais</span>.</h2>
@@ -612,7 +628,7 @@
 </section>
 
 <!-- ===================== CONTACTOS ===================== -->
-<section class="seccao" id="contactos">
+<section class="seccao" id="contactos" tabindex="-1">
   <div class="container">
     <span class="etiqueta">Parcerias &amp; contactos</span>
     <h2 class="titulo-seccao">Vamos conectar <span class="verde">o seu negócio?</span></h2>

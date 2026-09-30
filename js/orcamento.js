@@ -308,6 +308,16 @@ export function iniciarOrcamento(form) {
   function validoDoCampo(inp) {
     const mau = campoMau(inp);
     const campo = inp.closest('.campo');
+    /* O texto de erro entra no `aria-describedby` (o que se lia, e a
+       parte bem feita), mas o ESTADO inválido nunca era exposto: em
+       modo de formulário do NVDA e do JAWS, o campo aparecia como
+       válido com uma descrição de erro — exactamente o inverso do que
+       a pessoa precisa de ouvir. `aria-invalid` é o que faz o leitor
+       dizer "inválido" e oferece a entrada para a correcção no ponto.
+
+       Nunca estava em lado nenhum do HTML: zero ocorrências. */
+    if (mau) inp.setAttribute('aria-invalid', 'true');
+    else inp.removeAttribute('aria-invalid');
     if (campo) {
       campo.dataset.erro = String(mau);
       const ajuda = campo.querySelector('.campo__ajuda');

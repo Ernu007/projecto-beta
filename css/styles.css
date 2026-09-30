@@ -190,6 +190,27 @@ ul { list-style: none; }
 }
 .header__int { display: flex; align-items: center; gap: 20px; }
 
+/* Skip link. Escondido fora do foco, e aparece no primeiro Tab —
+   WCAG 2.4.1. Fica acima de tudo e é o único elemento que o
+   `outline: 2px solid var(--verde)` global não substitui. */
+.pular {
+  position: absolute; z-index: 200;
+  top: 8px; left: 8px;
+  padding: 12px 18px;
+  border-radius: var(--raio-sm);
+  background: var(--verde); color: var(--base);
+  font-size: 15px; font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform 0.15s ease;
+}
+.pular:focus { transform: translateY(0); }
+
+/* O `main` tem `tabindex="-1"` para receber o foco do skip link e dos
+   links de navegação interna. Sem isto não se vê um anel de foco à volta
+   de todo o conteúdo: o foco entra no `main` e não fica nenhum sinal de
+   onde se está. */
+main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
+
 .brand { display: flex; align-items: center; gap: 12px; flex: none; }
 .brand__logo { height: 46px; width: auto; transition: height var(--transicao); }
 .header--preso .brand__logo { height: 38px; }
