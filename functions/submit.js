@@ -430,6 +430,17 @@ export default async (req) => {
     return resp(req, 400, { erro: 'JSON inválido' });
   }
 
+  /* `JSON.parse` aceita qualquer valor JSON, e só um é objeto. Um corpo
+     `null` — que é JSON válido — dá `bruto === null`, e o `bruto.website`
+     a seguir rebentava com um TypeError, que o runtime da Netlify
+     transforma num 500. Verificado: com `null` rebenta, e com `true`,
+     `123`, `"texto"`, `[]`, `{}` e `{"nome":null}` o handler responde 400
+     como deve ser. Este era o único sítio do ficheiro que não era
+     defensivo — o resto usa `String(v ?? '')` sem excepção. */
+  if (bruto === null || typeof bruto !== 'object' || Array.isArray(bruto)) {
+    return resp(req, 400, { erro: 'Dados inválidos' });
+  }
+
   /* Honeypot preenchido = bot. Respondemos 200 para não o ajudar a calibrar. */
   if (bruto.website) return resp(req, 200, { ok: true, email: false, sheet: false, spam: true });
 
