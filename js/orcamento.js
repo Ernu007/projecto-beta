@@ -20,7 +20,12 @@ export const PROVINCIAS = [
 
 export const PAGAMENTOS = ['e-Mola', 'Cartão de crédito', 'Numerário'];
 
-/** Número da empresa — ÚNICO e confirmado pelo cliente. Não é editável na UI. */
+/* ---------- Telefone da empresa ----------
+   FONTE ÚNICA do número. É o ÚNICO número válido: o cliente confirmou
+   +258 84 793 5035 e mandou remover todos os outros que circulavam no
+   material antigo. Quando vier outro, muda-se AQUI e em mais lado nenhum —
+   é para não ter de caçar o número pelas cópias soltas no `index.html`, no
+   JSON-LD e na carta. Formato `wa.me`: só dígitos, sem `+`. */
 export const JVI_WHATSAPP = '258847935035';
 
 /* ---------- Peso: aceita vírgula ou ponto ----------

@@ -15,13 +15,13 @@ que a aplicou.
 | D5 | `functions/submit.js` mantém-se e continua a ser chamado | O briefing manda manter. Um pedido nunca deve depender só de um `wa.me` que o cliente pode fechar sem ler. |
 | D6 | Sem expansão para 6-8 páginas | O briefing dizia "considera". O funil é WhatsApp: um sender converte melhor do que seis. Páginas magras de SEO prejudicam o posicionamento em vez de o melhorar. Acrescentou-se em vez disso uma secção de FAQ na página única. |
 | D7 | As 11 fotografias indicadas no briefing | Foram identificadas uma a uma pelo cliente. Mas o texto do briefing estava errado em três delas — ver a tabela abaixo. As legendas foram escritas depois de ver as fotos. |
-| D8 | Nenhum telefone foi apagado; o novo é que ficou como WhatsApp principal | O briefing avisa que há divergências. Apagar um número que pode estar a funcionar destrói contacto existente. Ver a tabela de divergências abaixo. |
+| D8 | Só o telefone confirmado: +258 84 793 5035, em todo o site | Decisão do cliente. Tinha-se mantido a lista toda por precaução; o cliente confirmou que os outros números estavam errados, e um número errado publicado é pior do que nenhum número publicado. Ver "Números de telefone: um só" abaixo. |
 | D9 | O formulário vive só no modal | O briefing pede pop-up. Uma segunda instância na secção obrigaria a prefixar todos os `id`, e o `alt` do conteúdo de venda sobrevive sem JavaScript na secção. |
 | D10 | O tempo anti-spam conta desde a abertura do formulário | A função serverless descarta pedidos enviados em menos de 3 s. Medido no `submit`, o valor seria ~0 e **todos** os pedidos seriam descartados. |
 | D11 | O botão do último passo diz "Enviar" em vez de aparecer um botão novo | Num pop-up de 3 passos, dois botões de acção primária no mesmo ecrã duplicam a acção principal — o que a Fase 6 proíbe. |
 | D12 | O peso é `type="text"`, não `type="number"` | Um `input type="number"` **engole a vírgula decimal**: escrever `11,7` produz `value === ""`, e o D3 fica sem efeito nenhum. Com `inputmode="decimal"` o teclado numérico no telemóvel mantém-se e a validação do intervalo passa a ser feita por JS, como já era. |
 | D13 | O ecrã de sucesso tem **os dois** links, e nunca se afirma se a abertura automática funcionou | `window.open(url, '_blank', 'noopener')` devolve **sempre `null`** (MDN), logo não dá para saber se o separador abriu. E o browser só abre em resposta directa a um gesto — um `fetch` de 1–3 s consome a activação transitória. Portanto: os links são a entrega garantida, a abertura automática é um bónus sobre o qual não se fala. Sem o link para a JVI, um pedido bloqueado desaparecia por trás de um ecrã verde. |
-| D14 | O site publica-se a partir de `dist/`, não da raiz | `docs/decisoes.md` regista quais telefones não estão confirmados e a divergência do IVA. Com `publish = "."` isso ficava descarregável. `tools/publicar.py` monta o `dist` com lista explícita. |
+| D14 | O site publica-se a partir de `dist/`, não da raiz | A raiz tem notas internas que não são para o público (`docs/decisoes.md`, briefings, scripts). Com `publish = "."` isso ficava descarregável. `tools/publicar.py` monta o `dist` com lista explícita. |
 | D15 | O `esc()` do servidor corre uma vez, em `campoLimpo` | `esc` não é idempotente. Aplicado duas vezes, um cliente chamado "A & B" chegava à JVI como "A &amp;amp; B", e o `text:` e o `html:` do mesmo e-mail discordavam entre si. Para a folha de cálculo o escape é desnecessário — a `celula()` trata as fórmulas. |
 
 ## Tabela de preços
@@ -61,36 +61,29 @@ plataforma numa rua molhada; não é confirmável que seja Maputo) e de
 `img_06fa9ae40417` (embalagens de tinta PLASCON alinhadas no chão, não bidões
 numa oficina).
 
-> **A confirmar com o cliente:** o Airwaybill impresso da JVI diz **IVA 17%**,
-> enquanto o site e este documento usam **16%**, por instrução do briefing. A
-> tabela de preços, o resumo e a mensagem de WhatsApp usam 16%. Se o impresso
-> estiver certo, é a tabela que está errada.
+> **IVA: 16%, fechado.** O cliente confirmou que o valor certo é **16%** e que o
+> Airwaybill impresso, que diz 17%, está errado. A correcção é interna da JVI: o
+> site, a tabela de preços, o resumo e a mensagem de WhatsApp ficam nos 16%, e não
+> se mexem mais nisto. Foi uma questão em aberto; já não é.
 
-## Números de telefone: divergências
+## Números de telefone: um só
 
-O briefing já avisava: *"VERIFICAR, há divergências nas fotos"*. Ao ver as
-fotografias, há mais divergências do que o briefing registava.
+O briefing avisava: *"VERIFICAR, há divergências nas fotos"*. O cliente
+respondeu. O número válido é **+258 84 793 5035**, e é o único: os números que
+constavam do Airwaybill, do poster do terminal e das secções antigas do briefing
+estavam errados e foram removidos de todo o site — contactos, `contactPoint` do
+JSON-LD, botão fixo "Ligar", carta de apresentação e o PDF descarregável. Não há
+"Escritórios" nem "Alternativo": um número, em todo o lado.
 
-| Fonte | Números |
-|---|---|
-| Briefing, Fase 4 (único confirmado) | **+258 84 793 5035** |
-| Briefing, secção "Dados de contacto" | +258 84 554 6151 · +258 82 555 8005 |
-| Airwaybill 003871 (fotografia) | +258 87 555 8005 · +258 84 470 0012 |
-| Poster do terminal (fotografia) | 8454 61151 · 82 555 8005 |
+A fonte única do número é a constante `JVI_WHATSAPP` em `js/orcamento.js`. O
+`index.html` repete-o em três sítios que não passam por JS (secção Contactos,
+botão fixo e JSON-LD); se vier outro número, mudam-se os quatro juntos.
 
-O que o site faz agora:
+`functions/submit.js` envia para um só destinatário (`DESTINO`), por isso não
+havia nada a reduzir aí.
 
-- **WhatsApp — Operações:** +258 84 793 5035, o único confirmado. É o número
-  para onde vão as duas mensagens do formulário, e o link do WhatsApp flutuante.
-- **Escritórios:** +258 87 555 8005 · +258 84 470 0012 — os do Airwaybill.
-- **Alternativo:** +258 84 554 6151 · +258 82 555 8005 — os do briefing.
-
-Nenhum foi apagado. Os três aparecem no JSON-LD como `contactPoint` separados.
-
-> **A confirmar com o cliente:** qual é o número certo, se 84 470 0012 ainda
-> existe, e qual é a morada correcta — o poster diz "Terminal de Carga, Porta 27,
-> Av. 04 de Outubro" e o Airwaybill diz "Av. 19 de Outubro, Terminal de Cargas
-> Nº 113". O site usa a segunda.
+O mesmo se aplica à morada: **Av. 19 de Outubro, Terminal de Cargas Nº 113**,
+confirmada, e a variante do poster removida do briefing para não ser reutilizada.
 
 ## Testes
 

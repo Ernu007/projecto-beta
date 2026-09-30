@@ -145,9 +145,9 @@ WebP. Apague depois os `.jpg` originais.
 
 **Não publicar a raiz.** O `netlify.toml` serve `dist/`, e `tools/publicar.py`
 monta-o com uma lista explícita do que vai para o site. A razão está na secção
-10: a raiz tem `docs/decisoes.md`, que regista quais telefones **não** estão
-confirmados, a divergência do IVA e a divergência de moradas. Com
-`publish = "."` isso ficava descarregável em `/docs/decisoes.md`.
+10: a raiz tem notas internas que não são para o público — o histórico do que o
+cliente confirmou e o que estava errado. Com `publish = "."` isso ficava
+descarregável.
 
 ```powershell
 python tools/publicar.py                  # monta dist/ e verifica o que ficou lá dentro
@@ -201,21 +201,21 @@ descarregado pela página é o PDF, não o HTML.
 | NUIT | 400501424 |
 | Licença | 8732/11/04/PS/2014 |
 | **WhatsApp — Operações** | **+258 84 793 5035** |
-| Escritórios | +258 87 555 8005 · +258 84 470 0012 |
-| Alternativo | +258 84 554 6151 · +258 82 555 8005 |
-| Fixo | 21 089 459 |
 | Email | jvicargaservicos@gmail.com |
 | Sede | Av. 19 de Outubro, Terminal de Cargas Nº 113, Aeroporto de Maputo |
 
-⚠️ **Os telefones ainda não estão confirmados.** O briefing já avisava que havia
-divergências; ao ver as fotografias, há mais do que o briefing registava. A
-tabela completa da divergência está em
-[`docs/decisoes.md`](docs/decisoes.md#números-de-telefone-divergências).
-Nenhum número foi apagado do site — acrescentar um nunca custa, tirar um pode.
+✅ **O telefone está confirmado.** O cliente respondeu às três questões em aberto
+e confirmou **um único número**, o `+258 84 793 5035`. Os números que circulavam
+no material antigo (Airwaybill, poster, briefing) estavam errados e foram
+removidos do site inteiro — contactos, JSON-LD, botões fixos, carta e PDF. A nota
+fica em [`docs/decisoes.md`](docs/decisoes.md).
 
-**Para alterar contactos:** `index.html` (secção Contactos, botões fixos, JSON-LD)
-e `js/orcamento.js` (constante `JVI_WHATSAPP`, o número para onde vão as
-mensagens do formulário — tem teste próprio).
+**Para alterar contactos:** a fonte única do número é a constante `JVI_WHATSAPP`
+em `js/orcamento.js` (é para onde vão as mensagens do formulário — tem teste
+próprio). O `index.html` repete-o em três sítios que não são JS: a secção
+Contactos, o botão fixo "Ligar" e o `contactPoint` do JSON-LD. Actualizar os
+quatro juntos, senão o site passa a anunciar números diferentes conforme onde se
+clica.
 
 ---
 

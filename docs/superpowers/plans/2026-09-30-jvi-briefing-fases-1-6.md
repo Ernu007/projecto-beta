@@ -56,7 +56,7 @@ Os cinco inputs que o briefing não menciona mas que alguém vai usar na produç
 | D5 | `functions/submit.js` | Continua a ser chamado em `fire-and-forget` no confirmar, com o payload novo | O briefing manda manter. Deixar de enviar é a decisão que nunca se deve tomar sem o cliente dizer. |
 | D6 | Fase 6, "expandir para 6-8 páginas" | **Não** expandido. Uma página só, reforçada com FAQ e galeria | O funil é WhatsApp: um sender único converte melhor do que seis. Páginas magras de SEO são actively prejudicial. O cliente escreveu "considera", não "faz". |
 | D7 | Fotos da galeria | As 11 do subconjunto sugerido pelo briefing, em WebP, com `alt` descritivo e sem legenda inventada | O briefing identificou-as uma a uma. Não se inventam descrições de conteúdo que não se viu. |
-| D8 | Contactos com divergência (`87 555 8005` no site vs `84 793 5035` no briefing) | Mantém-se o número antigo em "Escritórios" e adiciona-se o novo como **WhatsApp — Operações**, que é o que abre as mensagens | O briefing diz que há divergências e manda verificar. Apagar um número que pode estar a funcionar destrói contacto existente. |
+| D8 | Contactos com divergência (`87 555 8005` no site vs `84 793 5035` no briefing) | **SUBSTITUÍDO — não aplicar.** O cliente respondeu depois e confirmou `+258 84 793 5035` como o **único** número; os restantes estavam errados e foram removidos. Ver D8 em `docs/decisoes.md` | ~~Mantém-se o número antigo em "Escritórios"~~ — a cautela era correcta na altura, mas o cliente desmentiu os números antigos. Reverter o que este plano fez. |
 
 ---
 

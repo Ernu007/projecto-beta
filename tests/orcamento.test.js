@@ -47,7 +47,9 @@ test('normalizarTelefone reduz qualquer escrita a 258847935035', () => {
 
 /* O teste anterior usava seis escritas do MESMO número. Um
    `return '258847935035'` fixo passava-o inteiro, sem exercitar a
-   lógica. Estes usam outros números, incluindo os que a JVI tem. */
+   lógica. Estes usam outros números — o que entra aqui é o telefone
+   que o CLIENTE preenche no formulário, que pode ser qualquer um, e
+   não o número da JVI (esse é a constante `JVI_WHATSAPP`, e é único). */
 test('normalizarTelefone funciona com outros numeros, nao so com um', () => {
   assert.equal(normalizarTelefone('82 555 8005'), '258825558005');
   assert.equal(normalizarTelefone('+258 84 470 0012'), '258844700012');
