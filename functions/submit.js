@@ -15,11 +15,40 @@
      GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
    ========================================================= */
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+/* ------------------------------------------------------------
+   CORS
+   ------------------------------------------------------------
+   `Access-Control-Allow-Origin: *` num endpoint público sem
+   autenticação é inofensivo por si só. O problema é a combinação com
+   NÃO verificar o Content-Type: `text/plain` é um tipo "seguro", por
+   isso um `fetch` de uma página atacante com `mode: 'no-cors'` chega
+   ao endpoint sem preflight nenhum. Qualquer site da Internet
+   passava a poder inundar a caixa e a folha da JVI, e a gastar a
+   quota do Resend, a partir do IP do visitante e sem lhe pedir nada.
+
+   Exigir `application/json` — que NÃO é seguro — obriga o browser a
+   fazer preflight, e o preflight só passa se a origem estiver na
+   lista. Fecha as duas portas.
+   ------------------------------------------------------------ */
+const ORIGENS = [
+  'https://jvicargaservicos.co.mz',
+  'https://www.jvicargaservicos.co.mz',
+  'http://localhost:8888',
+  'http://127.0.0.1:8888',
+];
+
+function cabecalhosCORS(req) {
+  const origem = req.headers.origin;
+  const permitida = Boolean(origem) && ORIGENS.includes(origem);
+  return {
+    // Sem `*` e sem reflectir origem desconhecida: só a lista.
+    ...(permitida ? { 'Access-Control-Allow-Origin': origem } : {}),
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  };
+}
 
 const DESTINO = process.env.EMAIL_PARA || 'jvicargaservicos@gmail.com';
 
@@ -41,9 +70,14 @@ function esc(valor) {
 }
 
 /* Texto para a folha de cálculo: neutraliza =, +, -, @, tab e CR
-   no inicio da celula, que o Sheets interpreta como formula. */
+   no inicio da celula, que o Sheets interpreta como formula.
+
+   NÃO escapa outra vez: `esc` não é idempotente, e o valor já vem
+   escapado de `campoLimpo`. Escapar duas vezes punha `&amp;amp;` no
+   campo de uma pessoa chamada "A & B" — falha para o lado seguro,
+   mas é corrupção de dados. */
 function celula(valor) {
-  const s = esc(valor);
+  const s = String(valor ?? '');
   return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
 }
 
@@ -86,6 +120,31 @@ export const CAMPOS = [
 export const PAGAMENTOS = ['e-Mola', 'Cartão de crédito', 'Numerário'];
 const LEVANTAMENTO = ['sim', 'nao'];
 
+/* As mesmas 11 do select do formulário. O servidor não pode aceitar
+   texto arbitrário numa coluna que deveria ter 11 valores. */
+export const PROVINCIAS = [
+  'Cabo Delgado', 'Gaza', 'Inhambane', 'Manica', 'Maputo', 'Nampula',
+  'Niassa', 'Palma', 'Sofala', 'Tete', 'Zambézia',
+];
+
+/* A tabela de preços, replicada do lado do servidor. O `preco_total`
+   que vem do cliente é um valor que ele próprio escolheu; para a folha
+   de registo interessa o preço que a JVI cobraria, não o que o
+   browser calculou. */
+const PESO_LIMITE = 10;
+const PISO_BASE = 3000;
+const TARIFA_KG = 255;
+const IVA = 0.16;
+
+export function calcularPrecoServidor(peso) {
+  const kg = Number(String(peso ?? '').trim().replace(',', '.'));
+  if (!Number.isFinite(kg) || kg <= 0) return null;
+  const tarifado = kg <= PESO_LIMITE ? PISO_BASE : kg * TARIFA_KG;
+  const base = Math.round(Math.max(tarifado, PISO_BASE));
+  const iva = Math.round(base * IVA);
+  return { peso: kg, base, iva, total: base + iva };
+}
+
 /** Peso numérico, aceitando a vírgula decimal que o teclado local escreve. */
 const numPeso = (v) => {
   const s = String(v ?? '').trim().replace(',', '.');
@@ -104,11 +163,13 @@ export function validar(d) {
 
   if (sem(d.nome)) problemas.push('nome');
   if (sem(d.apelido)) problemas.push('apelido');
-  if (sem(d.provincia)) problemas.push('província do emissor');
+  if (!PROVINCIAS.includes(d.provincia)) problemas.push('província do emissor');
   if (sem(d.morada)) problemas.push('morada');
-  if (sem(d.telefone) || !RE_TEL.test(d.telefone)) problemas.push('telefone');
+  if (sem(d.telefone) || !RE_TEL.test(d.telefone) || numDigitos(d.telefone) < 7) {
+    problemas.push('telefone');
+  }
   if (sem(d.destinatario)) problemas.push('quem recebe');
-  if (sem(d.provinciaDestino)) problemas.push('província de destino');
+  if (!PROVINCIAS.includes(d.provinciaDestino)) problemas.push('província de destino');
   if (sem(d.descricao)) problemas.push('descrição da mercadoria');
 
   const peso = numPeso(d.peso);
@@ -116,13 +177,12 @@ export function validar(d) {
 
   if (!PAGAMENTOS.includes(d.pagamento)) problemas.push('forma de pagamento');
   if (!LEVANTAMENTO.includes(d.pagarNoLevantamento)) problemas.push('pagar no levantamento');
-
-  if (d.preco_total) {
-    const t = Number(d.preco_total);
-    if (!Number.isFinite(t) || t < 0) problemas.push('total');
-  }
   return problemas;
 }
+
+/** Quantos dígitos tem o telefone, na verdade. `() () ()` passa no
+ *  RE_TEL (que conta caracteres) mas não tem um único dígito. */
+const numDigitos = (v) => String(v ?? '').replace(/\D/g, '').length;
 
 export function textoWA(d) {
   return [
@@ -142,17 +202,20 @@ export function textoWA(d) {
 
 function textoEmail(d) {
   const linhas = CAMPOS.filter(([k]) => d[k]).map(([k, label]) => `${label}: ${d[k]}`);
+  /* `d[k]` já vem escapado de `campoLimpo`. Escapar aqui uma segunda
+     vez punha `&amp;amp;` no e-mail e fazia o `text:` e o `html:` do
+     MESMO e-mail discordarem. Os rótulos são de uma constante. */
   return {
-    subject: `Novo pedido de orçamento — ${String(d.emissor_nome || 'Site').slice(0, 60)}`,
-    text: `Pedido de orçamento recebido pelo site.\n\n${linhas.join('\n')}\n\n---\nCanal pedido: ${d.canal || 'ambos'}`,
+    subject: `Novo pedido de orçamento — ${String(d.nome || 'Site').slice(0, 60)}`,
+    text: `Pedido de orçamento recebido pelo site.\n\n${linhas.join('\n')}\n\n---\nOrigem: ${d.origem || 'site'}`,
     html: `<h2>Novo pedido de orçamento</h2>
       <p>Recebido pelo site da JVI Carga &amp; Serviços.</p>
       <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif">
       ${CAMPOS.filter(([k]) => d[k])
-        .map(([k, label]) => `<tr><td style="border:1px solid #ddd;background:#f4f4f4"><b>${esc(label)}</b></td><td style="border:1px solid #ddd">${esc(d[k])}</td></tr>`)
+        .map(([k, label]) => `<tr><td style="border:1px solid #ddd;background:#f4f4f4"><b>${esc(label)}</b></td><td style="border:1px solid #ddd">${d[k]}</td></tr>`)
         .join('')}
       </table>
-      <p style="color:#666;font-size:12px">Canal pedido: ${esc(d.canal || 'ambos')}</p>`,
+      <p style="color:#666;font-size:12px">Origem: ${esc(d.origem || 'site')}</p>`,
   };
 }
 
@@ -163,6 +226,7 @@ async function enviarEmail(d) {
   const { subject, text, html } = textoEmail(d);
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
+    signal: AbortSignal.timeout(5000),
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: process.env.EMAIL_DE || 'JVI Orcamentos <onboarding@resend.dev>',
@@ -210,6 +274,7 @@ async function tokenSheets() {
 
   const r = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
+    signal: AbortSignal.timeout(5000),
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -236,6 +301,7 @@ async function gravarSheet(d) {
     `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent('Pedidos!A:AZ')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
     {
       method: 'POST',
+    signal: AbortSignal.timeout(5000),
       headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ values: [linha] }),
     }
@@ -246,8 +312,16 @@ async function gravarSheet(d) {
 
 /* ---------- Anti-spam ----------
    Honeypot: campo invisivel que um humano nunca preenche.
-   Tempo: um pedido enviado em menos de 3 segundos foi um bot. */
+   Tempo: um pedido enviado em menos de 3 segundos foi um bot.
+
+   ATENÇÃO — este limite é melhor-esforço, não um controlo duro. Vive
+   na memória de UMA instância, e as Netlify Functions escalam na
+   horizontal: com N instâncias activas o limite real é N × 1/20 s.
+   Para um limite a sério, configurar as Rate Limiting Rules no painel
+   da Netlify (ou uma WAF). O `teto` abaixo existe só para o Map não
+   crescer sem limite quando vêm muitos IPs diferentes. */
 const Janela = new Map();
+const TAMANHO_MAX = 5000;
 
 function bloqueadoPorSpam(ip) {
   const agora = Date.now();
@@ -258,50 +332,85 @@ function bloqueadoPorSpam(ip) {
 }
 
 function marcarIp(ip) {
+  if (Janela.size >= TAMANHO_MAX) Janela.clear();
   Janela.set(ip, Date.now());
 }
 
-const resp = (status, obj) => ({
+/* `no-store` e `nosniff` aqui e não só no netlify.toml: os cabeçalhos
+   do ficheiro de configuração nem sempre chegam à resposta da função,
+   e sem `no-store` um pedido válido podia ficar em cache intermédio. */
+const resp = (req, status, obj) => ({
   statusCode: status,
-  headers: { ...CORS, 'Content-Type': 'application/json' },
+  headers: {
+    ...cabecalhosCORS(req),
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+  },
   body: JSON.stringify(obj),
 });
 
 /* ---------- Handler ---------- */
 export default async (req) => {
-  if (req.method === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
-  if (req.method !== 'POST') return resp(405, { erro: 'Método não permitido' });
+  if (req.method === 'OPTIONS') {
+    return { statusCode: 204, headers: cabecalhosCORS(req), body: '' };
+  }
+  if (req.method !== 'POST') {
+    const r = resp(req, 405, { erro: 'Método não permitido' });
+    return { ...r, headers: { ...r.headers, Allow: 'POST, OPTIONS' } };
+  }
 
-  /* Limite de tamanho do corpo antes de gastar memoria a parsear */
-  if ((req.body || '').length > 20_000) return resp(413, { erro: 'Pedido demasiado grande' });
+  /* Origem desconhecida: recusa. Sem isto, qualquer site poderia
+     submeter pedidos para a caixa da JVI. */
+  const origem = req.headers.origin;
+  if (origem && !ORIGENS.includes(origem)) {
+    return resp(req, 403, { erro: 'Origem não permitida' });
+  }
+
+  /* Exigir application/json fecha a via sem preflight (`text/plain`
+     é um Content-Type seguro e chegava sem qualquer verificação). */
+  const tipo = String(req.headers['content-type'] || '');
+  if (!/^application\/json\b/i.test(tipo)) {
+    return resp(req, 415, { erro: 'Content-Type inválido' });
+  }
+
+  /* Limite de tamanho do corpo antes de gastar memoria a parsear.
+     O corpo pode já vir parseado, consoante o runtime. */
+  const corpo = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? '');
+  if (corpo.length > 20_000) return resp(req, 413, { erro: 'Pedido demasiado grande' });
 
   let bruto;
   try {
-    bruto = JSON.parse(req.body || '{}');
+    bruto = JSON.parse(corpo || '{}');
   } catch {
-    return resp(400, { erro: 'JSON inválido' });
+    return resp(req, 400, { erro: 'JSON inválido' });
   }
 
   /* Honeypot preenchido = bot. Respondemos 200 para não o ajudar a calibrar. */
-  if (bruto.website) return resp(200, { ok: true, email: false, sheet: false, spam: true });
+  if (bruto.website) return resp(req, 200, { ok: true, email: false, sheet: false, spam: true });
 
   /* Tempo de preenchamento absurdo = bot */
   const ms = Number(bruto._t);
   if (Number.isFinite(ms) && ms > 0 && ms < 3000) {
-    return resp(200, { ok: true, email: false, sheet: false, spam: true });
+    return resp(req, 200, { ok: true, email: false, sheet: false, spam: true });
   }
 
   const ip = req.headers['x-nf-client-connection-ip']
     || req.headers['x-forwarded-for']?.split(',')[0]?.trim()
     || 'desconhecido';
-  if (bloqueadoPorSpam(ip)) return resp(429, { erro: 'Demasiados pedidos. Tente novamente em instantes.' });
+  if (bloqueadoPorSpam(ip)) return resp(req, 429, { erro: 'Demasiados pedidos. Tente novamente em instantes.' });
 
   /* Limpar e validar */
   const d = {};
   for (const k of Object.keys(LIMITES)) d[k] = campoLimpo(bruto, k);
 
   const problemas = validar(d);
-  if (problemas.length) return resp(400, { erro: 'Dados inválidos', campos: problemas });
+  if (problemas.length) return resp(req, 400, { erro: 'Dados inválidos', campos: problemas });
+
+  /* O total é recalculado aqui. Confiar no `preco_total` que vem do
+     browser era gravar na folha um valor que o cliente escolheu — com
+     as DevTools abertas, `preco_total: "1"` chegava ao registo. */
+  d.preco_total = String(calcularPrecoServidor(d.peso)?.total ?? '');
 
   marcarIp(ip);
 
@@ -311,19 +420,27 @@ export default async (req) => {
   ]);
 
   if (!email.ok && !sheet.ok) {
-    return resp(502, {
-      ok: false,
-      erro: 'Não foi possível registar o pedido. Use o WhatsApp ou o email.',
+    /* O 502 distinguia "chaves não configuradas" de "chaves
+       configuradas e correu tudo" — o que permitia a quem queresse
+       sondar se o registo estava activo. O detalhe vai para o log do
+       Netlify; o cliente recebe sempre 200, e é o front-end que
+       avisa que o envio por WhatsApp está garantido na mesma. */
+    console.error('JVI: registo falhou', {
+      email: email.motivo, sheet: sheet.motivo, peso: d.peso,
+    });
+    return resp(req, 200, {
+      ok: true,
       email: false,
       sheet: false,
+      registo: false,
     });
   }
 
-  return resp(200, {
+  return resp(req, 200, {
     ok: true,
     email: email.ok,
     sheet: sheet.ok,
   });
 };
 
-export { esc, celula, RE_EMAIL, RE_TEL };
+export { esc, celula, campoLimpo, RE_EMAIL, RE_TEL };

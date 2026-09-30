@@ -186,7 +186,7 @@
             </span>
             Descarregar perfil da JVI
           </a>
-          <span class="servico__n">01</span>
+          <span class="servico__n" aria-hidden="true">01</span>
           <img src="assets/img/camiao.png" alt="Camião de carga da JVI" loading="lazy" width="1000" height="625">
         </div>
         <div class="servico__corpo">
@@ -202,7 +202,7 @@
 
       <article class="servico revelar revelar-d">
         <div class="servico__figura">
-          <span class="servico__n">02</span>
+          <span class="servico__n" aria-hidden="true">02</span>
           <img src="assets/img/terminal.jpg" alt="Terminal de carga do Aeroporto de Maputo" loading="lazy" width="1600" height="1000">
         </div>
         <div class="servico__corpo">
@@ -218,7 +218,7 @@
 
       <article class="servico revelar revelar-d2">
         <div class="servico__figura">
-          <span class="servico__n">03</span>
+          <span class="servico__n" aria-hidden="true">03</span>
           <img src="assets/img/aviao.jpg" alt="Aeronave em voo de carga" loading="lazy" width="1200" height="1500">
         </div>
         <div class="servico__corpo">
@@ -475,7 +475,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
     </button>
     <img data-luz-img src="" alt="">
-    <figcaption class="luz__legenda" data-luz-legenda></figcaption>
+    <figcaption class="luz__legenda" data-luz-legenda aria-live="polite" aria-atomic="true"></figcaption>
   </figure>
 </div>
 
@@ -589,7 +589,7 @@
 
         <div class="carta-download">
           <div>
-            <h4>Carta de Apresentação</h4>
+            <h3 class="carta-download__t">Carta de Apresentação</h3>
             <p>Conheça a JVI em detalhe — perfil, cobertura, fluxo operacional e credenciais.</p>
           </div>
           <a class="btn btn--laranja" href="carta/jvi-carta-apresentacao.pdf" download>
@@ -631,7 +631,7 @@
 </footer>
 
 <!-- ===================== BOTÕES FIXOS ===================== -->
-<div class="fixos" aria-label="Contactos rápidos">
+<nav class="fixos" aria-label="Contactos rápidos">
   <span class="fixo fixo--wa">
     <span class="fixo__txt">WhatsApp</span>
     <a class="fixo__btn" href="https://wa.me/258847935035?text=Olá%20JVI%20Carga%20%26%20Serviços%2C%20gostaria%20de%20um%20orçamento." target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
@@ -650,7 +650,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
     </a>
   </span>
-</div>
+</nav>
 
 <!-- ===================== MODAL ORÇAMENTO ===================== -->
 <div class="modal" id="modal" data-aberto="false" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
@@ -766,11 +766,16 @@
           </div>
         </div>
 
-        <!-- Custo estimado, calculado com o mesmo módulo que os testes usam -->
-        <div class="orc-preco" data-preco hidden>
-          <span class="orc-preco__r">Base <b data-p-base>—</b></span>
-          <span class="orc-preco__r">IVA 16% <b data-p-iva>—</b></span>
-          <span class="orc-preco__r orc-preco__r--total">Total <b data-p-total>—</b></span>
+        <!-- Custo estimado, calculado com o mesmo módulo que os testes
+             usam. A região viva está à volta, e não dentro, porque
+             .orc-preco arranca em `hidden` e uma live region que
+             aparece já com o texto nem sempre é anunciada. -->
+        <div class="orc-preco__vivo" role="status" aria-live="polite">
+          <div class="orc-preco" data-preco hidden>
+            <span class="orc-preco__r">Base <b data-p-base>—</b></span>
+            <span class="orc-preco__r">IVA 16% <b data-p-iva>—</b></span>
+            <span class="orc-preco__r orc-preco__r--total">Total <b data-p-total>—</b></span>
+          </div>
         </div>
         <p class="orc-preco__nota">Valor estimado pela tabela em vigor. Confirmamos o preço final ao fechar o orçamento.</p>
       </fieldset>
@@ -808,9 +813,9 @@
     <!-- Anti-spam: invisível a humanos, com.tracke a bots.
          A função serverless descarta o pedido se este campo vier
          preenchido, e também se o envio acontecer em menos de 3 s. -->
-    <div class="hp" aria-hidden="true">
+    <div class="hp">
       <label for="orcWebsite">Não preencha este campo</label>
-      <input id="orcWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+      <input id="orcWebsite" name="website" type="text" tabindex="-1" autocomplete="off" inert>
     </div>
 
     <!-- Navegação -->
@@ -857,19 +862,21 @@
       <h3>Que dados recolhemos</h3>
       <p>Apenas os dados que voluntariamente introduz no formulário de pedido de orçamento:</p>
       <ul>
-        <li><strong>Emissor:</strong> nome ou empresa, endereço, telefone e, se indicar, email.</li>
-        <li><strong>Mercadorias:</strong> número de volumes, peso bruto, dimensões, tipo e descrição da carga.</li>
-        <li><strong>Receptor:</strong> nome, endereço de destino e contactos.</li>
-        <li><strong>Valores e pagamento:</strong> valor estimado, forma de pagamento e observações.</li>
+        <li><strong>Emissor:</strong> nome, apelido, província, morada ou bairro, e telefone.</li>
+        <li><strong>Mercadorias:</strong> peso, dimensões (se as indicar) e descrição da carga.</li>
+        <li><strong>Receptor:</strong> nome de quem recebe e província de destino.</li>
+        <li><strong>Valores e pagamento:</strong> forma de pagamento e se paga no levantamento.</li>
       </ul>
-      <p>Não recolhemos categorias especiais de dados, nem dados de crianças.</p>
+      <p>Não recolhemos categorias especiais de dados, nem dados de crianças. O formulário não pede email, número de volumes nem valor da carga.</p>
 
       <h3>Para que usamos os dados</h3>
       <ul>
         <li>Elaborar e enviar a proposta de orçamento solicitada.</li>
         <li>Estabelecer contacto directo sobre a remessa, por WhatsApp, telefone ou email.</li>
         <li>Cumprir obrigações legais, fiscais e contratuais.</li>
+        <li>Prevenir o abuso automatizado do formulário.</li>
       </ul>
+      <p>O endereço IP da visita é guardado temporariamente, em memória do servidor, apenas para limitar pedidos repetidos. Não é escrito em ficheiro e desaparece ao fim de uma hora ou quando o servidor é reiniciado.</p>
       <div class="pp__destaque">
         <p><strong>Não vendemos, alugamos nem cedemos os seus dados a terceiros para fins comerciais.</strong></p>
       </div>
@@ -878,7 +885,8 @@
       <p>O tratamento assenta no <strong>consentimento</strong> que dá ao marcar a caixa no formulário e no <strong>execução de contrato</strong>, quando o pedido se converte numa remessa. Conservamos os dados durante <strong>24 meses</strong> a contar da última interacción, findos os quais são eliminados, salvo obrigação legal de guarda diferente.</p>
 
       <h3>Onde ficam guardados</h3>
-      <p>Os pedidos são guardados numa folha de cálculo de acesso restrito da JVI e/ou enviados por email para a caixa <strong>jvicargaservicos@gmail.com</strong>. O site é alojado na Netlify, plataforma que processa os dados técnicos da visita nos seus próprios servidores.</p>
+      <p>Este pedido viaja por <strong>WhatsApp</strong>. O endereço <code>wa.me</code> redirecciona para servidores da <strong>Meta Platforms Ireland Ltd.</strong>, pelo que o conteúdo da mensagem — nome, contactos, morada e dados da carga — é transmitido a essa empresa. O e-mail, quando enviado, é processado pela <strong>Resend Inc.</strong> antes de chegar à caixa <strong>jvicargaservicos@gmail.com</strong>. O pedido fica registado numa folha de cálculo de acesso restrito da JVI. O site é alojado na <strong>Netlify</strong>, que processa os dados técnicos da visita nos seus próprios servidores.</p>
+      <p>A JVI é a entidade responsável pelo tratamento. Pode pedir a eliminação do seu pedido a qualquer momento, pelo endereço de email acima ou por telefone.</p>
 
       <h3>Cookies</h3>
       <p><strong>Este site não utiliza cookies.</strong> Não há rastreio de publicidade, nem analítica de terceiros. A tipografia é alojada no próprio site, pelo que o seu endereço IP não é transmitido a servidores externos de Google.</p>

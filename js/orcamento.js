@@ -204,7 +204,10 @@ export function iniciarOrcamento(form) {
   const consentCaixa = form.querySelector('input[name="consentimento"]');
   const precoCaixa = form.querySelector('[data-preco]');
 
-  /* Preço estimado ao vivo, com o mesmo módulo que os testes usam. */
+  /* Preço estimado ao vivo, com o mesmo módulo que os testes usam.
+     Vai com atraso de propósito: a região é uma live region, e sem
+     atraso o leitor de ecrã anunciaria cada tecla por separado em vez
+     de uma frase. 250 ms é o bastante para agrupar uma palavra. */
   function pintarPreco() {
     const p = calcularPreco(normalizarPeso(form.elements.peso.value));
     if (!p) { precoCaixa.hidden = true; return; }
@@ -213,16 +216,31 @@ export function iniciarOrcamento(form) {
     precoCaixa.querySelector('[data-p-iva]').textContent = formatarMT(p.iva);
     precoCaixa.querySelector('[data-p-total]').textContent = formatarMT(p.total);
   }
-  form.elements.peso.addEventListener('input', pintarPreco);
+  let temporizadorPreco = null;
+  form.elements.peso.addEventListener('input', () => {
+    clearTimeout(temporizadorPreco);
+    temporizadorPreco = setTimeout(pintarPreco, 250);
+  });
 
   /* Erro de cada campo ligado ao campo por aria-describedby, para o
-     leitor de ecrã anunciar a falha quando o campo recebe o foco. */
+     leitor de ecrã anunciar a falha quando o campo recebe o foco.
+     O texto de ajuda (".campo__ajuda") também tem de entrar na lista:
+     escrevê-lo por cima apagava a ajuda de dois campos. */
   form.querySelectorAll('.campo[data-campo]').forEach((campo) => {
     const msg = campo.querySelector('.campo__erro');
     const inp = campo.querySelector('input, select, textarea');
-    if (!msg || !inp) return;
-    if (!msg.id) msg.id = `${inp.id}-erro`;
-    inp.setAttribute('aria-describedby', msg.id);
+    if (!inp) return;
+    const descritos = [];
+    const ajuda = campo.querySelector('.campo__ajuda');
+    if (ajuda) {
+      if (!ajuda.id) ajuda.id = `${inp.id}-ajuda`;
+      descritos.push(ajuda.id);
+    }
+    if (msg) {
+      if (!msg.id) msg.id = `${inp.id}-erro`;
+      descritos.push(msg.id);
+    }
+    if (descritos.length) inp.setAttribute('aria-describedby', descritos.join(' '));
   });
 
   /* Um campo por vez, para o ecrã não ficar coberto de vermelhos. */

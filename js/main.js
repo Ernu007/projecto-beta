@@ -14,14 +14,23 @@ const menuFundo = document.getElementById('menuFundo');
 const barraTopo = document.getElementById('barraTopo');
 
 let timerMenu = null;
+let focoMenu = null;
+
 function alternarMenu(abrir) {
   clearTimeout(timerMenu);
   menuFundo.dataset.visivel = String(abrir);
   menuBtn.setAttribute('aria-expanded', String(abrir));
+  /* O nome do botão tem de mudar com o estado: senão um leitor de
+     ecrã anuncia "Abrir menu" com o menu já aberto. */
+  menuBtn.setAttribute('aria-label', abrir ? 'Fechar menu' : 'Abrir menu');
   if (abrir) {
     delete menu.dataset.estado;
     menu.dataset.aberto = 'true';
     document.body.style.overflow = 'hidden';
+    /* O foco entra no painel e fica lá: o fundo fixo bloqueia o rato,
+       mas sem isto o Tab caminhava para a página que está por trás. */
+    focoMenu = document.activeElement;
+    setTimeout(() => menu.querySelector('a, button')?.focus(), 60);
   } else {
     // deixa a animacao de saida correr antes de tirar do layout
     if (menu.dataset.aberto === 'true') {
@@ -32,6 +41,10 @@ function alternarMenu(abrir) {
       }, 320);
     }
     document.body.style.overflow = '';
+    if (document.body.contains(document.activeElement)
+      && !menu.contains(document.activeElement)) {
+      (focoMenu === menuBtn ? menuBtn : menuBtn).focus();
+    }
   }
 }
 menuBtn.addEventListener('click', () => alternarMenu(menu.dataset.aberto !== 'true'));
@@ -374,6 +387,20 @@ function fecharModal() {
 }
 modal.querySelectorAll('[data-fechar]').forEach((el) => el.addEventListener('click', fecharModal));
 document.addEventListener('keydown', (e) => {
+  /* O menu móvel também fecha com Escape e prende o foco: é um
+     painel sobre o conteúdo, mesmo sem aria-modal. */
+  if (menu.dataset.aberto === 'true') {
+    if (e.key === 'Escape') { alternarMenu(false); return; }
+    if (e.key === 'Tab') {
+      const itens = [...menu.querySelectorAll(FOCAVEIS)].filter((el) => el.offsetParent !== null);
+      if (itens.length) {
+        const primeiro = itens[0];
+        const ultimo = itens[itens.length - 1];
+        if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+        else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+      }
+    }
+  }
   if (modal.dataset.aberto !== 'true') return;
   if (e.key === 'Escape') { fecharModal(); return; }
   /* Focus trap: o Tab nao pode sair do dialogo enquanto estiver aberto */
@@ -577,12 +604,17 @@ function abrirConfirmacao(d, aoConfirmar) {
     return [dt, dd];
   }));
   confirm.dataset.aberto = 'true';
+  /* Dois aria-modal="true" empilhados confundem o leitor de ecrã: o
+     #modal continua na árvore de acessibilidade por baixo de #confirm.
+     `inert` tira-o de lá e impede a'interacção por trás. */
+  modal.inert = true;
   document.body.classList.add('modal-aberto');
   confirm.querySelector('[data-confirmar]').focus();
 }
 
 function fecharConfirmacao() {
   confirm.dataset.aberto = 'false';
+  modal.inert = false;
   document.body.classList.remove('modal-aberto');
   focoConfirm?.focus();
 }

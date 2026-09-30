@@ -5,11 +5,12 @@
 [build.environment]
   NODE_VERSION = "20"
 
-# Rewrite: SPA fallback (permite links internos sem .html)
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# NÃO há rewrite de SPA. Este site não tem rotas de client-side: todos
+# os links internos apontam para ficheiros. O rewrite `/* -> index.html`
+# não servia para nada e fazia qualquer caminho inexistente devolver 200
+# com a home — `/.env`, `/js/typo.js` — o que quebra a monitorização e
+# transforma 404 em soft-404. As functions são resolvidas ANTES dos
+# redirects, por isso nada dependia disto.
 
 [[headers]]
   for = "/*"
@@ -17,9 +18,26 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=(), interest-cohort=()"
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    # interest-cohort (FLoC) foi retirado dos browsers; trocar por
+    # funcionalidades que o site realmente não usa.
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+# A carta tem 30 atributos style= inline (ajustes de @page em mm), por
+# isso precisa de 'unsafe-inline' em style-src. A raiz não tem nenhum
+# atributo style=, nenhum handler on*= e nenhum bloco <style> — e o
+# CSSOM (el.style.width) não é restringido por CSP — por isso fica sem.
+# Também caiu o `blob:` de img-src: não há createObjectURL em lado nenhum.
+#
+# A ordem dos blocos importa: os mais específicos aplicam-se depois.
+# Confirmar no site publicado:
+#   curl -I https://<site>/           # NÃO deve ter unsafe-inline
+#   curl -I https://<site>/carta/     # deve ter
+[[headers]]
+  for = "/carta/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
 
 [[headers]]
   for = "/assets/fonts/*"

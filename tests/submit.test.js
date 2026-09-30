@@ -4,7 +4,8 @@
    das mensagens, que é onde vivem os buracos, são. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validar, textoWA, esc, celula, RE_EMAIL, RE_TEL, LIMITES } from '../functions/submit.js';
+import { validar, textoWA, esc, celula, campoLimpo, RE_EMAIL, RE_TEL,
+  LIMITES, calcularPrecoServidor, PROVINCIAS } from '../functions/submit.js';
 
 const BOM = {
   nome: 'João Pedro',
@@ -66,6 +67,66 @@ test('pagarNoLevantamento so aceita sim ou nao', () => {
 test('campos a mais sao descartados', () => {
   const p = validar({ ...BOM, paypal: 'x', _t: 9999, canal: 'email' });
   assert.deepEqual(p, []);
+});
+
+/* O servidor nao pode aceitar texto arbitrario numa coluna que deveria
+   ter 11 valores. `pagamento` ja era allowlisted; `provincia` nao. */
+test('a provincia tem de ser uma das 11 do formulario', () => {
+  for (const p of ['Maputo', 'Cabo Delgado', 'Zambézia', 'Palma', 'Niassa']) {
+    assert.deepEqual(validar({ ...BOM, provincia: p }), [], p);
+  }
+  for (const p of ['Atlantis', 'Maputo<script>', 'maputo', '', 'M ASSETE']) {
+    assert.ok(validar({ ...BOM, provincia: p }).length > 0,
+      `provincia "${p}" devia falhar`);
+  }
+});
+
+test('a provincia de destino tambem e allowlisted', () => {
+  assert.deepEqual(validar({ ...BOM, provinciaDestino: 'Tete' }), []);
+  assert.ok(validar({ ...BOM, provinciaDestino: 'Narnia' }).length > 0);
+});
+
+/* O preco que o browser envia e um valor que o proprio cliente escolheu.
+   O servidor recalcula a partir do peso. */
+test('calcularPrecoServidor reproduz a tabela do cliente', () => {
+  assert.equal(calcularPrecoServidor(9).total, 3480);
+  assert.equal(calcularPrecoServidor(11).total, 3480);
+  assert.equal(calcularPrecoServidor(11.7).total, 3480);
+  assert.equal(calcularPrecoServidor(15).total, 4437);
+  assert.equal(calcularPrecoServidor('15').total, 4437);
+  assert.equal(calcularPrecoServidor('11,7').total, 3480);
+  assert.equal(calcularPrecoServidor(0), null);
+  assert.equal(calcularPrecoServidor('doze'), null);
+});
+
+test('o preco do servidor tambem e monotonico', () => {
+  let anterior = 0;
+  for (let i = 1; i <= 2000; i += 1) {
+    const { total } = calcularPrecoServidor(i * 0.01);
+    assert.ok(total >= anterior, `${i * 0.01} kg: ${total} < ${anterior}`);
+    anterior = total;
+  }
+});
+
+/* RE_TEL conta caracteres, nao digitos: `() () ()` passava. */
+test('um telefone sem um unico digito e rejeitado', () => {
+  for (const t of ['() () ()', '........', '- - - - -', '  ']) {
+    assert.ok(validar({ ...BOM, telefone: t }).length > 0,
+      `"${t}" devia falhar`);
+  }
+});
+
+/* esc nao e idempotente, e esc() era aplicado duas vezes a todos os
+   campos: uma pessoa chamada "A & B" chegava a JVI como "A &amp; B". */
+test('os dados nao sao escapados duas vezes', () => {
+  const uma = campoLimpo({ ...BOM, descricao: 'Tintas A & B <Lda>' }, 'descricao');
+  assert.equal(uma, 'Tintas A &amp; B &lt;Lda&gt;');
+  assert.ok(!uma.includes('&amp;amp;'), 'esc foi aplicado duas vezes');
+  assert.equal(celula(uma), uma, 'celula nao pode escapar outra vez');
+});
+
+test('celula continua a neutralizar formulas depois de um esc', () => {
+  assert.ok(celula(esc('=1+1')).startsWith("'"));
 });
 
 test('valores sao cortados ao limite do campo', () => {
