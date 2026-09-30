@@ -406,8 +406,10 @@ document.addEventListener('keydown', (e) => {
 /* =========================================================
    FORMULÁRIO DE ORÇAMENTO — 3 passos, dentro do pop-up
    ========================================================= */
+import { calcularPreco } from './precos.js';
 import {
-  iniciarOrcamento, msgEmpresa, msgCliente, linkWa, linhasResumo, JVI_WHATSAPP,
+  iniciarOrcamento, msgEmpresa, msgCliente, linkWa, linhasResumo,
+  normalizarTelefone, JVI_WHATSAPP,
 } from './orcamento.js';
 
 /* O formulário vive só no modal — o briefing pede pop-up, e uma
@@ -420,8 +422,100 @@ iniciarOrcamento(document.querySelector('#orcRaiz [data-orc]'));
 
 /* Todos os "Pedir orçamento" abrem o pop-up, sem excepções por
    largura de ecrã. */
+const formOrc = document.querySelector('#orcRaiz [data-orc]');
 document.querySelectorAll('[data-abrir-orc]').forEach((btn) => {
-  btn.addEventListener('click', abrirModal);
+  btn.addEventListener('click', () => {
+    /* A função serverless descarta pedidos com menos de 3 s de
+       preenchimento como bots. A contagem tem de começar quando o
+       formulário é aberto, não quando se carrega em enviar. */
+    if (!formOrc.dataset.abertoEm) formOrc.dataset.abertoEm = String(Date.now());
+    abrirModal();
+  });
+});
+
+/* =========================================================
+   ENVIO: REGISTO (PLANO B) + DUAS MENSAGENS DE WHATSAPP
+   ------------------------------------------------------------
+   Decisão D4: o browser bloqueia a segunda `window.open` em
+   sequência. Por isso a mensagem para a JVI abre-se sozinha, dentro
+   do gesto do utilizador, e a mensagem para o cliente fica num botão
+   explícito no ecrã de sucesso. A tentativa automática só existe se a
+   primeira janela abriu.
+   ========================================================= */
+const raizOrc = document.getElementById('orcRaiz');
+const okCaixa = raizOrc.querySelector('[data-ok]');
+const okNota = raizOrc.querySelector('[data-ok-nota]');
+const okCliente = raizOrc.querySelector('[data-ok-cliente]');
+
+/* Lê um campo do formulário, ou string vazia se não existir. */
+const g = (form, nome) => (form.elements[nome]?.value ?? '').toString().trim();
+
+async function enviarPedido(d) {
+  const clienteTel = normalizarTelefone(d.telefone);
+  const paraEmpresa = linkWa(JVI_WHATSAPP, msgEmpresa(d));
+  const paraCliente = clienteTel ? linkWa(clienteTel, msgCliente(d)) : null;
+
+  /* 1. Registo no Netlify — plano B. Não pode travar o envio. */
+  let registado = false;
+  const ms = Date.now() - Number(formOrc.dataset.abertoEm || Date.now() - 5000);
+  try {
+    const r = await fetch('/.netlify/functions/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origem: 'site',
+        ...d,
+        preco_total: calcularPreco(d.peso)?.total ?? '',
+        website: g(formOrc, 'website'), // honeypot: um humano nunca preenche isto
+        _t: ms,
+      }),
+    });
+    registado = r.ok;
+  } catch {
+    registado = false;
+  }
+
+  /* 2. Mensagem para a JVI, dentro do gesto do utilizador. */
+  const janela = window.open(paraEmpresa, '_blank', 'noopener');
+
+  /* 3. Mensagem para o cliente. */
+  const avisos = [];
+  if (paraCliente) {
+    okCliente.href = paraCliente;
+    okCliente.hidden = false;
+    okCliente.querySelector('span').textContent = 'Receber a confirmação no meu WhatsApp';
+    if (janela && !janela.closed) {
+      setTimeout(() => {
+        if (!window.open(paraCliente, '_blank', 'noopener')) {
+          avisos.push('O browser bloqueou a abertura automática. Use o botão acima.');
+        }
+      }, 800);
+    } else {
+      avisos.push('O browser bloqueou a abertura automática. Use o botão acima.');
+    }
+  } else {
+    okCliente.hidden = true;
+    avisos.push('Não conseguimos montar a ligação para o seu número. A JVI entra em contacto pela linha directa.');
+  }
+  if (!registado) {
+    avisos.push('O registo automático está indisponível — o envio por WhatsApp está garantido.');
+  }
+
+  formOrc.hidden = true;
+  okCaixa.hidden = false;
+  okNota.textContent = avisos.join(' ');
+  okCaixa.querySelector('h3').focus();
+}
+
+/* Fechar rearma o formulário para o próximo pedido, sem recarregar. */
+raizOrc.querySelector('[data-ok-fechar]').addEventListener('click', () => {
+  okCaixa.hidden = true;
+  okNota.textContent = '';
+  formOrc.reset();
+  formOrc.hidden = false;
+  formOrc.dispatchEvent(new Event('rearmar'));
+  formOrc.dataset.abertoEm = String(Date.now());
+  fecharModal();
 });
 
 /* =========================================================
@@ -434,9 +528,6 @@ const confirm = document.getElementById('confirm');
 let dadosPedido = null;
 let focoConfirm = null;
 let confirmarHandler = null;
-
-/* A implementação real chega na Fase 4; até lá, confirmar não faz nada. */
-let enviarPedido = () => {};
 
 function abrirConfirmacao(d, aoConfirmar) {
   dadosPedido = d;

@@ -48,13 +48,11 @@ function celula(valor) {
 }
 
 /* Limites por campo: evita payloads gigantes e dados sem sentido. */
-const LIMITES = {
-  emissor_nome: 120, emissor_endereco: 200, emissor_contacto: 40,
-  emissor_email: 160, volumes: 8, peso: 14, dimensao_cx: 10, dimensao_cy: 10,
-  dimensao_cz: 10, tipo_carga: 80, descricao: 1200, receptor_nome: 120,
-  receptor_endereco: 200, receptor_contacto: 40, receptor_telefone: 40,
-  valor_cobrar: 16, iva: 16, valor_extenso: 160, pagamento: 40,
-  cheque_num: 40, banco: 120, observacoes: 1200, canal: 20,
+export const LIMITES = {
+  nome: 80, apelido: 80, provincia: 40, morada: 200, telefone: 40,
+  destinatario: 120, provinciaDestino: 40, peso: 14, dimensao: 60,
+  descricao: 1200, pagamento: 40, pagarNoLevantamento: 6, preco_total: 16,
+  origem: 20, website: 200,
 };
 
 /* Conjuntos de caracteres em vez de "qualquer coisa menos o sinal": assim um
@@ -68,42 +66,77 @@ function campoLimpo(d, chave) {
   return esc(v).trim().slice(0, LIMITES[chave] ?? 200);
 }
 
-const CAMPOS = [
-  ['emissor_nome', 'Emissor'],
-  ['emissor_endereco', 'Endereço do emissor'],
-  ['emissor_contacto', 'Contactos do emissor'],
-  ['emissor_email', 'Email do emissor'],
-  ['volumes', 'N.º de volumes'],
-  ['peso', 'Peso bruto (kg)'],
-  ['dimensao_cx', 'Comprimento (cm)'],
-  ['dimensao_cy', 'Largura (cm)'],
-  ['dimensao_cz', 'Altura (cm)'],
-  ['tipo_carga', 'Tipo de carga'],
-  ['descricao', 'Descrição das mercadorias'],
-  ['receptor_nome', 'Receptor'],
-  ['receptor_endereco', 'Endereço de destino'],
-  ['receptor_contacto', 'Contactos do receptor'],
-  ['receptor_telefone', 'Telefone do destinatário'],
-  ['valor_cobrar', 'Valor a cobrar (MZN)'],
-  ['iva', 'IVA 16% (MZN)'],
-  ['valor_extenso', 'Valor por extenso'],
+/* Uma linha por campo, para a folha de cálculo ter cabeçalho. */
+export const CAMPOS = [
+  ['nome', 'Nome (primeiro)'],
+  ['apelido', 'Apelido'],
+  ['provincia', 'Província do emissor'],
+  ['morada', 'Morada / bairro'],
+  ['telefone', 'Telefone (WhatsApp)'],
+  ['destinatario', 'Quem recebe'],
+  ['provinciaDestino', 'Província de destino'],
+  ['peso', 'Peso (kg)'],
+  ['dimensao', 'Dimensões (cm)'],
+  ['descricao', 'Descrição da mercadoria'],
   ['pagamento', 'Forma de pagamento'],
-  ['cheque_num', 'N.º do cheque'],
-  ['banco', 'Banco'],
-  ['observacoes', 'Observações'],
+  ['pagarNoLevantamento', 'Paga no levantamento'],
+  ['preco_total', 'Total calculado (MZN)'],
 ];
 
-function textoWA(d) {
+export const PAGAMENTOS = ['e-Mola', 'Cartão de crédito', 'Numerário'];
+const LEVANTAMENTO = ['sim', 'nao'];
+
+/** Peso numérico, aceitando a vírgula decimal que o teclado local escreve. */
+const numPeso = (v) => {
+  const s = String(v ?? '').trim().replace(',', '.');
+  if (s === '') return NaN;
+  return Number(s);
+};
+
+/**
+ * Valida o payload já limpo. Devolve a lista de problemas (vazia = válido).
+ * @param {Record<string,string>} d
+ * @returns {string[]}
+ */
+export function validar(d) {
+  const problemas = [];
+  const sem = (v) => !String(v ?? '').trim();
+
+  if (sem(d.nome)) problemas.push('nome');
+  if (sem(d.apelido)) problemas.push('apelido');
+  if (sem(d.provincia)) problemas.push('província do emissor');
+  if (sem(d.morada)) problemas.push('morada');
+  if (sem(d.telefone) || !RE_TEL.test(d.telefone)) problemas.push('telefone');
+  if (sem(d.destinatario)) problemas.push('quem recebe');
+  if (sem(d.provinciaDestino)) problemas.push('província de destino');
+  if (sem(d.descricao)) problemas.push('descrição da mercadoria');
+
+  const peso = numPeso(d.peso);
+  if (!Number.isFinite(peso) || peso <= 0 || peso > 100000) problemas.push('peso');
+
+  if (!PAGAMENTOS.includes(d.pagamento)) problemas.push('forma de pagamento');
+  if (!LEVANTAMENTO.includes(d.pagarNoLevantamento)) problemas.push('pagar no levantamento');
+
+  if (d.preco_total) {
+    const t = Number(d.preco_total);
+    if (!Number.isFinite(t) || t < 0) problemas.push('total');
+  }
+  return problemas;
+}
+
+export function textoWA(d) {
   return [
-    '*Pedido de orçamento — JVI Carga & Serviços*',
+    '*NOVO PEDIDO DE ORÇAMENTO — JVI Carga & Serviços*',
     '',
-    `*Emissor:* ${d.emissor_nome || '—'}`,
-    `*Contacto:* ${d.emissor_contacto || '—'}`,
-    `*Carga:* ${d.volumes || '—'} vol · ${d.peso || '—'} kg`,
-    `*Descrição:* ${d.descricao || '—'}`,
-    `*Destino:* ${d.receptor_nome || '—'}`,
-    `*Morada:* ${d.receptor_endereco || '—'}`,
-    d.valor_cobrar ? `*Valor estimado:* ${d.valor_cobrar} MZN` : '',
+    `• Emissor: ${d.nome || '—'} ${d.apelido || ''}`.trim(),
+    `• Província: ${d.provincia || '—'}`,
+    `• Morada: ${d.morada || '—'}`,
+    `• WhatsApp: ${d.telefone || '—'}`,
+    `• Carga: ${d.peso || '—'} kg · ${d.descricao || '—'}`,
+    d.dimensao ? `• Dimensões: ${d.dimensao}` : '',
+    `• Recebe: ${d.destinatario || '—'} (${d.provinciaDestino || '—'})`,
+    `• Pagamento: ${d.pagamento || '—'} · no levantamento: ${d.pagarNoLevantamento === 'sim' ? 'sim' : 'não'}`,
+    d.preco_total ? `• Total: ${d.preco_total} MT` : '',
   ].filter(Boolean).join('\n');
 }
 
@@ -267,17 +300,7 @@ export default async (req) => {
   const d = {};
   for (const k of Object.keys(LIMITES)) d[k] = campoLimpo(bruto, k);
 
-  const problemas = [];
-  if (!d.emissor_nome) problemas.push('nome do emissor');
-  if (!d.emissor_endereco) problemas.push('endereço do emissor');
-  if (d.emissor_contacto && !RE_TEL.test(d.emissor_contacto)) problemas.push('contacto do emissor');
-  if (d.emissor_email && !RE_EMAIL.test(d.emissor_email)) problemas.push('email do emissor');
-  if (!d.receptor_nome) problemas.push('nome do receptor');
-  if (!d.receptor_endereco) problemas.push('endereço de destino');
-  if (!d.peso || Number.isNaN(Number(d.peso)) || Number(d.peso) <= 0) problemas.push('peso');
-  if (d.volumes && (Number.isNaN(Number(d.volumes)) || Number(d.volumes) <= 0)) problemas.push('número de volumes');
-  if (d.valor_cobrar && (Number.isNaN(Number(d.valor_cobrar)) || Number(d.valor_cobrar) < 0)) problemas.push('valor a cobrar');
-
+  const problemas = validar(d);
   if (problemas.length) return resp(400, { erro: 'Dados inválidos', campos: problemas });
 
   marcarIp(ip);
@@ -303,4 +326,4 @@ export default async (req) => {
   });
 };
 
-export { textoWA, esc, celula, RE_EMAIL, RE_TEL };
+export { esc, celula, RE_EMAIL, RE_TEL };
