@@ -19,6 +19,10 @@ que a aplicou.
 | D9 | O formulário vive só no modal | O briefing pede pop-up. Uma segunda instância na secção obrigaria a prefixar todos os `id`, e o `alt` do conteúdo de venda sobrevive sem JavaScript na secção. |
 | D10 | O tempo anti-spam conta desde a abertura do formulário | A função serverless descarta pedidos enviados em menos de 3 s. Medido no `submit`, o valor seria ~0 e **todos** os pedidos seriam descartados. |
 | D11 | O botão do último passo diz "Enviar" em vez de aparecer um botão novo | Num pop-up de 3 passos, dois botões de acção primária no mesmo ecrã duplicam a acção principal — o que a Fase 6 proíbe. |
+| D12 | O peso é `type="text"`, não `type="number"` | Um `input type="number"` **engole a vírgula decimal**: escrever `11,7` produz `value === ""`, e o D3 fica sem efeito nenhum. Com `inputmode="decimal"` o teclado numérico no telemóvel mantém-se e a validação do intervalo passa a ser feita por JS, como já era. |
+| D13 | O ecrã de sucesso tem **os dois** links, e nunca se afirma se a abertura automática funcionou | `window.open(url, '_blank', 'noopener')` devolve **sempre `null`** (MDN), logo não dá para saber se o separador abriu. E o browser só abre em resposta directa a um gesto — um `fetch` de 1–3 s consome a activação transitória. Portanto: os links são a entrega garantida, a abertura automática é um bónus sobre o qual não se fala. Sem o link para a JVI, um pedido bloqueado desaparecia por trás de um ecrã verde. |
+| D14 | O site publica-se a partir de `dist/`, não da raiz | `docs/decisoes.md` regista quais telefones não estão confirmados e a divergência do IVA. Com `publish = "."` isso ficava descarregável. `tools/publicar.py` monta o `dist` com lista explícita. |
+| D15 | O `esc()` do servidor corre uma vez, em `campoLimpo` | `esc` não é idempotente. Aplicado duas vezes, um cliente chamado "A & B" chegava à JVI como "A &amp;amp; B", e o `text:` e o `html:` do mesmo e-mail discordavam entre si. Para a folha de cálculo o escape é desnecessário — a `celula()` trata as fórmulas. |
 
 ## Tabela de preços
 
@@ -90,15 +94,22 @@ Nenhum foi apagado. Os três aparecem no JSON-LD como `contactPoint` separados.
 
 ## Testes
 
-`npm test` corre 41 testes com o runner nativo do Node, sem dependências.
+`npm test` corre **71 testes** com o runner nativo do Node, sem dependências.
 
 | Ficheiro | Cobre |
 |---|---|
 | `tests/precos.test.js` | A fórmula, os pontos de fronteira, a monotonicidade de 0,02 a 50,01 kg, pesos inválidos, peso gigante, formatação |
-| `tests/orcamento.test.js` | Províncias, peso com vírgula, telefone em seis escritas diferentes, as duas mensagens de WhatsApp |
+| `tests/orcamento.test.js` | Províncias, peso com vírgula, telefone em várias escritas e com vários números, as duas mensagens de WhatsApp |
 | `tests/confirmacao.test.js` | As linhas do resumo de confirmação, o destaque do TOTAL, casos sem peso e sem dimensões |
 | `tests/envio.test.js` | `linkWa` (número, codificação), `dados` (leitura do formulário, valores por omissão) |
+| `tests/envio-camada.test.js` | O plano de envio (os dois links, sempre) e que o peso **não** é `type="number"` |
+| `tests/dom.test.js` | **Âmbito**: cada nó que o JS procura está dentro do sítio certo — apanha o bug que matou o site |
+| `tests/css.test.js` | Tokens definidos e usados, ausência de tokens auto-referenciais, contraste medido a partir do `:root` |
 | `tests/submit.test.js` | Validação do servidor campo a campo, escape de HTML, injecção de fórmulas na folha de cálculo, formato da mensagem |
+
+O `tests/envio-camada.test.js` existe por causa de dois bugs que a suite
+anterior não apanhou: o `window.open` com `noopener`, que devolve sempre `null`,
+e o `type="number"`, que engolia a vírgula decimal.
 
 `python tools/verificar-html.py` confirma, sem browser, que todos os `id`, todos
 os `data-attribute` e todos os ficheiros que o JS procura existem no HTML, e que

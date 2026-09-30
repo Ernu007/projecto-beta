@@ -12,7 +12,6 @@ Thumbs.db
 dist/
 .netlify/
 .cache/
-
 # Ficheiros temporarios de auditoria
 *.valida.txt
 *.log

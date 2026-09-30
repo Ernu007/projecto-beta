@@ -29,6 +29,10 @@ RAIZ = Path(__file__).resolve().parent.parent
 ACTIVO = RAIZ / "assets"
 
 # (entrada, saida, altura maxima, qualidade)
+# As entradas só existem enquanto os PNG originais estiverem lá. Depois
+# de convertidos e apagados, este script passa a servir para o próximo
+# ficheiro que se junte a esta lista — e ainda assim avisa, e aponta
+# duplicados, que é a parte que continua a ser útil.
 TRABALHOS = [
     (ACTIVO / "logo.png", ACTIVO / "logo.webp", 184, 90),
     (ACTIVO / "img" / "camiao.png", ACTIVO / "img" / "camiao.webp", 800, 82),

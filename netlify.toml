@@ -1,5 +1,13 @@
 [build]
-  publish = "."
+  # `docs/` NÃO faz parte do que se publica: contém notas internas
+  # (quais telefones não estão confirmados, a divergência do IVA, a
+  # divergência de moradas). Com `publish = "."` tudo isso ficava
+  # descarregável em /docs/decisoes.md, e o BRIEFING-JVI.md e o
+  # package.json também iam para a raiz pública.
+  #
+  # Publicar a partir de `dist` em vez da raiz é a decisão que garante
+  # que nada interno se escape. `tools/publicar.py` monta o `dist`.
+  publish = "dist"
   functions = "functions"
 
 [build.environment]

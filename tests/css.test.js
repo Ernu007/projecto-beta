@@ -48,25 +48,67 @@ test('as tres cores de marca so aparecem como token, nunca literais', () => {
   }
 });
 
+/* Lê as cores do `:root` em vez de as escrever à mão. A versão
+   anterior testava hexadecimais literais, pelo que mudar `--laranja` ou
+   `--texto-fraco` mantinha o teste verde a medir uma cor que já não
+   existe. */
+function token(nome) {
+  const m = new RegExp(
+    `^\\s*${nome}\\s*:\\s*(#[0-9A-Fa-f]{3,8}|rgba?\\([^;]*?\\)|rgb\\(.*?\\)|[\\d\\s]+)\\s*;`,
+    'm',
+  ).exec(bloco);
+  if (!m) throw new Error(`token ${nome} não encontrado no :root`);
+  return m[1];
+}
+
+const lin = (c) => {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+const ratio = (a, b) => {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
+const hex = (h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16));
+const rgba = (v) => {
+  const m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)/.exec(v);
+  return [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : +m[4]];
+};
+
+/** Resolve um valor de cor do `:root` para [frente, alfa], seja
+ *  #hex, rgba(...), rgb(var(--canal-rgb) / alfa) ou um canal `R G B`. */
+function resolver(valor) {
+  if (valor.startsWith('#')) return [hex(valor), 1];
+  if (valor.startsWith('rgb(var(')) {
+    const canal = /var\((--[a-z-]+)\)/.exec(valor)[1];
+    const alfa = Number(/\/\s*([\d.]+)\s*\)/.exec(valor)[1]);
+    return [resolver(token(canal))[0], alfa];
+  }
+  if (valor.startsWith('rgb(')) return [[255, 255, 255], 1];
+  // canal "R G B" (--verde-rgb: 169 207 68)
+  const canais = valor.trim().split(/\s+/).map(Number);
+  if (canais.length >= 3 && canais.every(Number.isFinite)) return [canais.slice(0, 3), 1];
+  const [r, g, b, a] = rgba(valor);
+  return [[r, g, b], a];
+}
+
+/** Compõe uma cor com alfa sobre um fundo opaco, como o browser faz. */
+const sobre = (frente, alpha, fundo) =>
+  frente.map((c, i) => Math.round(alpha * c + (1 - alpha) * fundo[i]));
+
 test('o contraste do texto principal continua a passar AA', () => {
-  // Reproduz o cálculo de tools/contraste.py para os dois piores pares.
-  const lin = (c) => {
-    c /= 255;
-    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  };
-  const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  const ratio = (a, b) => {
-    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
-    return (x + 0.05) / (y + 0.05);
-  };
-  const hex = (h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16));
+  const fundos = { '--base': hex(token('--base')), '--base-2': hex(token('--base-2')),
+    '--base-3': hex(token('--base-3')), '--rodape': hex(token('--rodape')) };
 
-  // --texto-fraco (claro a 0.66) sobre --base-3: o pior par do site.
-  const composto = [203, 213, 225].map((c, i) => Math.round(0.66 * c + 0.34 * hex('#1B2740')[i]));
-  assert.ok(ratio(composto, hex('#1B2740')) >= 4.5);
-
-  // --laranja sobre --base-3, o pior par da cor de marca.
-  assert.ok(ratio(hex('#EA8240'), hex('#1B2740')) >= 4.5);
+  for (const nome of ['--texto', '--texto-suave', '--texto-fraco', '--claro',
+    '--verde', '--verde-escuro', '--laranja']) {
+    const [frente, alpha] = resolver(token(nome));
+    for (const [fnome, fundo] of Object.entries(fundos)) {
+      const r = ratio(sobre(frente, alpha, fundo), fundo);
+      assert.ok(r >= 4.5, `${nome} sobre ${fnome} dá ${r.toFixed(2)}:1`);
+    }
+  }
 });
 
 /* O titulo do hero comeca apagado e acende com a animacao do voo. Com
@@ -80,18 +122,18 @@ test('o titulo do hero mantem-se legivel mesmo no pior estado', () => {
   assert.ok(piso >= 0.6,
     `o piso do titulo desceu para ${piso} — o h1 fica ilegivel no pior estado`);
 
-  const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
-  const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  const hex = (h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16));
-
   // pior caso: cada cor do degradê do título, composta sobre o fundo do
-  // hero com a opacidade no piso
-  const fundo = hex('#0F172A');
-  for (const cor of ['#A9CF44', '#82C91E', '#EA8240']) {
-    const frente = hex(cor);
+  // hero com a opacidade no piso. As cores vêm do gradiente no CSS.
+  const fundo = hex(token('--base'));
+  const gradiente = /\.pal\s*\{[\s\S]*?linear-gradient\([^;]*?([\s\S]*?)\);/.exec(bloco)?.[1] ?? '';
+  const cores = [...gradiente.matchAll(/var\((--[a-z-]+)\)/g)]
+    .map((x) => x[1])
+    .map((nome) => hex(token(nome)));
+  assert.ok(cores.length >= 3, 'não encontrei as cores do degradê do título');
+
+  for (const frente of cores) {
     const composta = frente.map((c, i) => Math.round(piso * c + (1 - piso) * fundo[i]));
     const r = ratio(composta, fundo);
-    assert.ok(r >= 3, `${cor} a opacidade ${piso} dá ${r.toFixed(2)}:1, abaixo de 3:1`);
+    assert.ok(r >= 3, `cor do degradê a opacidade ${piso} dá ${r.toFixed(2)}:1, abaixo de 3:1`);
   }
 });

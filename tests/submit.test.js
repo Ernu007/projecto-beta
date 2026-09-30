@@ -131,8 +131,13 @@ test('celula continua a neutralizar formulas depois de um esc', () => {
 
 test('valores sao cortados ao limite do campo', () => {
   const longo = 'A'.repeat(LIMITES.descricao + 500);
-  /* validar() nao devolve o objecto limpo, mas nao deve rebentar */
-  assert.doesNotThrow(() => validar({ ...BOM, descricao: longo }));
+  /* O teste anterior era `doesNotThrow(() => validar(...))`, e `validar`
+     nunca usa LIMITES: passava mesmo sem truncagem nenhuma. Aqui
+     mede-se o comprimento real do valor limpo. */
+  const limpo = campoLimpo({ descricao: longo }, 'descricao');
+  assert.equal(limpo.length, LIMITES.descricao);
+  assert.equal(campoLimpo({ nome: 'A'.repeat(500) }, 'nome').length, LIMITES.nome);
+  assert.equal(campoLimpo({ peso: '9'.repeat(50) }, 'peso').length, LIMITES.peso);
 });
 
 test('esc neutraliza marcacao', () => {

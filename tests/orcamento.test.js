@@ -45,6 +45,31 @@ test('normalizarTelefone reduz qualquer escrita a 258847935035', () => {
   }
 });
 
+/* O teste anterior usava seis escritas do MESMO número. Um
+   `return '258847935035'` fixo passava-o inteiro, sem exercitar a
+   lógica. Estes usam outros números, incluindo os que a JVI tem. */
+test('normalizarTelefone funciona com outros numeros, nao so com um', () => {
+  assert.equal(normalizarTelefone('82 555 8005'), '258825558005');
+  assert.equal(normalizarTelefone('+258 84 470 0012'), '258844700012');
+  assert.equal(normalizarTelefone('84 554 6151'), '258845546151');
+  assert.equal(normalizarTelefone('00258825558005'), '258825558005');
+  assert.equal(normalizarTelefone('258825558005'), '258825558005');
+});
+
+test('normalizarTelefone rejeita o "0" de tronco seguido do indicativo', () => {
+  /* "0 258 825 555 8005" não é uma marcação de ninguém: o 0 é prefixo
+     de tronco nacional, não o +258. Devolve null em vez de adivinhar
+     qual dos dois tirar. */
+  assert.equal(normalizarTelefone('02558825558005'), null);
+});
+
+test('normalizarTelefone nao confunde um prefixo que NAO e 258', () => {
+  /* 351 (Portugal) tem 9 dígitos; se o código fosse cortado às cegas,
+     o resto passaria a ser um número moçambicano válido. */
+  assert.equal(normalizarTelefone('351912345678'), null);
+  assert.equal(normalizarTelefone('258847935035999'), null, 'tem dígitos a mais');
+});
+
 test('normalizarTelefone rejeita o que nao e telefone moçambicano', () => {
   for (const t of ['', 'abc', '123', null, undefined, '2588479350']) {
     assert.equal(normalizarTelefone(t), null, `entrada: ${String(t)}`);

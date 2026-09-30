@@ -41,15 +41,23 @@ Trabalho Jvi/
 │   ├── galeria.js          Luzbox acessível
 │   ├── hero-voo.js         Voo da carga no hero
 │   └── mapa-dados.js       Fronteiras de Moçambique (geoBoundaries ADM1)
-├── tests/                  41 testes com o runner nativo do Node
+├── tests/                  71 testes com o runner nativo do Node
 │   ├── precos.test.js
 │   ├── orcamento.test.js
 │   ├── confirmacao.test.js
 │   ├── envio.test.js
+│   ├── envio-camada.test.js
+│   ├── dom.test.js           Âmbito dos nós no HTML
+│   ├── css.test.js           Tokens, auto-referência, contraste
 │   └── submit.test.js
 ├── tools/
-│   ├── otimizar-galeria.py    Converte as fotos da galeria para WebP
-│   └── verificar-html.py      Confere ids, data-attrs, ficheiros e âncoras
+│   ├── publicar.py           Monta dist/ — o que a Netlify serve
+│   ├── otimizar-galeria.py   Converte as fotos da galeria para WebP
+│   ├── otimizar-marca.py     Logo e camião -> WebP; aponta duplicados
+│   ├── verificar-html.py     Confere ids, data-attrs, ficheiros e âncoras
+│   ├── verificar-css.py      Confere tokens e apanha cores literais
+│   ├── tokenizar-cores.py    rgba() -> rgb(var(--token-rgb) / alfa)
+│   └── contraste.py          Mede o contraste real da paleta (WCAG AA)
 ├── assets/
 │   ├── logo.webp            Logo JVI (verde/laranja), 46 px de altura — header e rodapé
 │   ├── logo-branco.png     Versão branca (fundos escuros)
@@ -104,7 +112,7 @@ Sem dependências: usa o runner nativo do Node (18 ou superior).
 npm test
 ```
 
-São 41 testes. Os que mais importam são os de `tests/precos.test.js`, que
+São 71 testes. Os que mais importam são os de `tests/precos.test.js`, que
 verificam a tabela de preços e provam que **o preço nunca desce quando o peso
 sobe** (monotonicidade testada de 0,02 a 50,01 kg, em passos de 10 g).
 
@@ -135,12 +143,30 @@ WebP. Apague depois os `.jpg` originais.
 
 ## 4. Publicar na Netlify
 
+**Não publicar a raiz.** O `netlify.toml` serve `dist/`, e `tools/publicar.py`
+monta-o com uma lista explícita do que vai para o site. A razão está na secção
+10: a raiz tem `docs/decisoes.md`, que regista quais telefones **não** estão
+confirmados, a divergência do IVA e a divergência de moradas. Com
+`publish = "."` isso ficava descarregável em `/docs/decisoes.md`.
+
 ```powershell
+python tools/publicar.py                  # monta dist/ e verifica o que ficou lá dentro
 npx netlify-cli deploy --dir . --functions functions --prod
 ```
 
 Ou pelo painel: **Add new site → Deploy manually**, com a pasta `Trabalho Jvi`
-e a directoria de funções `functions`.
+e a directoria de funções `functions`. O `publish = "dist"` do `netlify.toml`
+faz a Netlify servir a subdirectoria.
+
+Depois de publicar, confirmar:
+
+```powershell
+curl -I https://<site>/                            # CSP sem unsafe-inline
+curl -I https://<site>/carta/                      # CSP com unsafe-inline
+curl -I https://<site>/.netlify/functions/submit   # sem 405, sem 404
+curl -I https://<site>/docs/decisoes.md            # tem de dar 404
+curl -s https://<site>/index.html | Select-String "wa.me/258847935035"  # o número certo
+```
 
 O `netlify.toml` já define o publish, as funções, o cache dos assets e os
 headers de segurança.
@@ -190,9 +216,6 @@ Nenhum número foi apagado do site — acrescentar um nunca custa, tirar um pode
 **Para alterar contactos:** `index.html` (secção Contactos, botões fixos, JSON-LD)
 e `js/orcamento.js` (constante `JVI_WHATSAPP`, o número para onde vão as
 mensagens do formulário — tem teste próprio).
-
-Para alterar contactos: `js/main.js` (constante `JVI`, usada pelo formulário)
-e `index.html` (secção Contactos, botões fixos e rodapé).
 
 ---
 
@@ -294,17 +317,34 @@ uns aos outros. Já apanhou um: `logo-cor.png` era cópia exacta de `logo.png`,
 
 | Medida | Onde |
 |---|---|
-| Escape de HTML em todo o input | `functions/submit.js` → `esc()` |
+| Escape de HTML uma única vez, em `campoLimpo` | `functions/submit.js` → `esc()` |
 | Protecção contra CSV/formula injection na Sheet | `functions/submit.js` → `celula()` |
-| Limite de tamanho por campo (8–1200 chars) | `functions/submit.js` → `LIMITES` |
-| Validação estrita de email e telefone | `functions/submit.js` → `RE_EMAIL`, `RE_TEL` |
+| Limite de tamanho por campo (6–1200 chars) | `functions/submit.js` → `LIMITES` |
+| `maxlength` nos campos do formulário | `index.html` |
+| Validação estrita do telefone, com contagem de dígitos | `functions/submit.js` → `RE_TEL` |
+| Província e forma de pagamento em allowlist | `functions/submit.js` → `PROVINCIAS`, `PAGAMENTOS` |
+| Preço recalculado no servidor, nunca vindo do browser | `functions/submit.js` → `calcularPrecoServidor()` |
+| CORS: só origens da lista, e `Content-Type` obrigatório | `functions/submit.js` → `cabecalhosCORS()` |
 | Honeypot + descarte de formulários < 3 s | campo `website` e `_t` |
-| Rate limit: 1 pedido / 20 s por IP | `functions/submit.js` → `Janela` |
+| Rate limit: 1 pedido / 20 s por IP (melhor-esforço) | `functions/submit.js` → `Janela` |
+| Timeout de 5 s nas chamadas de saída | `functions/submit.js` |
 | Limite de corpo do pedido (20 KB) | `functions/submit.js` |
-| Métodos não-POST recusados (405) | `functions/submit.js` |
-| CSP, HSTS, `X-Frame-Options`, `nosniff`, `Permissions-Policy` | `netlify.toml` |
-| Consentimento obrigatório antes de enviar | `index.html` + `js/main.js` |
-| Política de privacidade publicada | diálogo acessível no rodapé |
+| Métodos não-POST recusados (405, com `Allow`) | `functions/submit.js` |
+| CSP sem `unsafe-inline` na raiz; com ele só em `/carta/*` | `netlify.toml` |
+| HSTS com `includeSubDomains; preload` | `netlify.toml` |
+| Nada de código-fonte nem notas internas publicado | `tools/publicar.py` → `dist/` |
+| Consentimento obrigatório antes de enviar | `index.html` + `js/orcamento.js` |
+| Política de privacidade a nomear Meta, Resend e Netlify | diálogo acessível no rodapé |
+
+> **O rate limit é melhor-esforço, não um controlo duro.** Vive na memória de
+> uma instância, e as Netlify Functions escalam na horizontal: com N instâncias
+> activas o limite real é N × 1/20 s. O honeypot e o descarte de `_t < 3 s` são
+> sinais de cliente, não controlo — um bot que não os envie passa. Para um
+> limite a sério, configurar as **Rate Limiting Rules** no painel da Netlify.
+
+> `RE_EMAIL` continua exportado e testado, mas **não é aplicado**: o
+> formulário não tem campo de email, desde a revisão do formulário. Se um dia
+> o tiver, `RE_EMAIL` e o `reply_to` do Resend estão prontos.
 
 **Zero cookies.** A tipografia é auto-hospedada em `assets/fonts/`, portanto
 não há pedidos ao Google Fonts e o IP do visitante não sai do site.

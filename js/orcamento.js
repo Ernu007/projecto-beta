@@ -162,6 +162,41 @@ export function linkWa(numero, texto) {
   return `https://wa.me/${n}?text=${encodeURIComponent(texto)}`;
 }
 
+/**
+ * Decide o que o ecrã de sucesso mostra depois de confirmar.
+ *
+ * Porquê uma função em vez de lógica no clique: o `window.open` com
+ * `noopener` devolve SEMPRE `null` (MDN), portanto não dá para saber se
+ * a abertura automática funcionou. A decisão passou a ser "mostra os
+ * dois links, sempre", e a abertura automática é um bónus de que não se
+ * fala. O link para a JVI é o pedido — sem ele, um pedido bloqueado
+ * desaparecia por trás de um ecrã verde de sucesso.
+ *
+ * @param {object} d - o mesmo objecto que `dados(form)` devolve
+ * @returns {{empresa:{url:string,rotulo:string},
+ *            cliente:{url:string,rotulo:string}|null,
+ *            avisoAbertura:null, avisos:string[]}}
+ */
+export function planoEnvio(d) {
+  const clienteTel = normalizarTelefone(d.telefone);
+  const avisos = [];
+  if (!clienteTel) {
+    avisos.push('Não conseguimos montar a ligação para o seu número. A JVI entra em contacto pela linha directa.');
+  }
+  return {
+    empresa: {
+      url: linkWa(JVI_WHATSAPP, msgEmpresa(d)),
+      rotulo: 'Enviar o pedido à JVI',
+    },
+    cliente: clienteTel
+      ? { url: linkWa(clienteTel, msgCliente(d)), rotulo: 'Receber a confirmação no meu WhatsApp' }
+      : null,
+    // Sempre null: o valor de retorno do window.open não diz nada.
+    avisoAbertura: null,
+    avisos,
+  };
+}
+
 function refInterno() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
@@ -177,6 +212,19 @@ function encherProvincias(select) {
   if (!select) return;
   select.replaceChildren(new Option('Seleccione…', ''));
   for (const p of PROVINCIAS) select.append(new Option(p, p));
+}
+
+/**
+ * Monta o `aria-describedby` de um campo: sempre a ajuda, e o erro
+ * apenas quando o campo está em erro. Devolve a lista, para os testes.
+ */
+function describedPor(campo, inp, ajuda, msg) {
+  const descritos = [];
+  if (ajuda?.id) descritos.push(ajuda.id);
+  if (msg?.id && campo.dataset.erro === 'true') descritos.push(msg.id);
+  if (descritos.length) inp.setAttribute('aria-describedby', descritos.join(' '));
+  else inp.removeAttribute('aria-describedby');
+  return descritos;
 }
 
 /**
@@ -224,23 +272,17 @@ export function iniciarOrcamento(form) {
 
   /* Erro de cada campo ligado ao campo por aria-describedby, para o
      leitor de ecrã anunciar a falha quando o campo recebe o foco.
-     O texto de ajuda (".campo__ajuda") também tem de entrar na lista:
-     escrevê-lo por cima apagava a ajuda de dois campos. */
+     O texto de ajuda (".campo__ajuda") entra sempre na lista; o texto
+     de erro SÓ quando existe — senão quem usa leitor de ecrã ouvia
+     "Indique o apelido." ao focar um campo perfeitamente válido. */
   form.querySelectorAll('.campo[data-campo]').forEach((campo) => {
-    const msg = campo.querySelector('.campo__erro');
     const inp = campo.querySelector('input, select, textarea');
-    if (!inp) return;
-    const descritos = [];
     const ajuda = campo.querySelector('.campo__ajuda');
-    if (ajuda) {
-      if (!ajuda.id) ajuda.id = `${inp.id}-ajuda`;
-      descritos.push(ajuda.id);
-    }
-    if (msg) {
-      if (!msg.id) msg.id = `${inp.id}-erro`;
-      descritos.push(msg.id);
-    }
-    if (descritos.length) inp.setAttribute('aria-describedby', descritos.join(' '));
+    const msg = campo.querySelector('.campo__erro');
+    if (!inp) return;
+    if (ajuda && !ajuda.id) ajuda.id = `${inp.id}-ajuda`;
+    if (msg && !msg.id) msg.id = `${inp.id}-erro`;
+    describedPor(campo, inp, ajuda, msg);
   });
 
   /* Um campo por vez, para o ecrã não ficar coberto de vermelhos. */
@@ -252,7 +294,12 @@ export function iniciarOrcamento(form) {
   function validoDoCampo(inp) {
     const mau = campoMau(inp);
     const campo = inp.closest('.campo');
-    if (campo) campo.dataset.erro = String(mau);
+    if (campo) {
+      campo.dataset.erro = String(mau);
+      const ajuda = campo.querySelector('.campo__ajuda');
+      const msg = campo.querySelector('.campo__erro');
+      describedPor(campo, inp, ajuda, msg);
+    }
     return !mau;
   }
 
@@ -315,8 +362,23 @@ export function iniciarOrcamento(form) {
     form.dispatchEvent(new CustomEvent('orc:pronto', { bubbles: true, detail: dados(form) }));
   });
 
-  /* Rearmar para o próximo pedido, sem recarregar a página. */
-  form.addEventListener('rearmar', () => { mostrar(0); pintarPreco(); });
+  /* Rearmar para o próximo pedido, sem recarregar a página. `reset()`
+     repõe valores, não atributos: sem isto, os `data-erro="true"` da
+     tentativa anterior ficavam acesos por baixo de campos vazios, e o
+     banner de erro continuaria a ser anunciado em voz alta. */
+  form.addEventListener('rearmar', () => {
+    form.querySelectorAll('.campo').forEach((c) => { delete c.dataset.erro; });
+    const consent = form.querySelector('[data-consent]');
+    if (consent) delete consent.dataset.erro;
+    const estado = form.querySelector('[data-estado]');
+    if (estado) {
+      delete estado.dataset.mostrar;
+      estado.textContent = '';
+      estado.className = 'estado-envio';
+    }
+    mostrar(0);
+    pintarPreco();
+  });
 
   mostrar(0);
   pintarPreco();

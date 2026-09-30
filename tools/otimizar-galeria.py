@@ -5,8 +5,13 @@ Uso:  python tools/otimizar-galeria.py
 Entrada: assets/img/galeria/img_*.jpg
 Saída:   assets/img/galeria/<mesmo-nome>.webp   (lado longo <= 1600 px, q=80)
 
-Os JPEG originais são removidos no fim: 1,5 MB de JPEG de telefone
-não vai para o repositório.
+NÃO apaga os `.jpg`. Os originais são do cliente e esta pasta pode ser a
+única cópia permanente (a de onde vieram é uma cache temporária), por
+isso a remoção é uma decisão separada e explícita:
+
+    Remove-Item assets/img/galeria/img_*.jpg
+
+Se correr este script depois dessa remoção, não há o que converter.
 """
 import sys
 from pathlib import Path

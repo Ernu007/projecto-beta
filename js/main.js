@@ -402,6 +402,10 @@ document.addEventListener('keydown', (e) => {
     }
   }
   if (modal.dataset.aberto !== 'true') return;
+  /* Com a confirmação aberta por cima, o Escape é dela. Sem esta guarda,
+     o handler do modal corria primeiro e fechava os dois: a pessoa
+     perdia o resumo por confirmar sem aviso. */
+  if (confirm?.dataset.aberto === 'true') return;
   if (e.key === 'Escape') { fecharModal(); return; }
   /* Focus trap: o Tab nao pode sair do dialogo enquanto estiver aberto */
   if (e.key !== 'Tab') return;
@@ -485,38 +489,64 @@ document.querySelectorAll('[data-abrir-orc]').forEach((btn) => {
    explícito no ecrã de sucesso. A tentativa automática só existe se a
    primeira janela abriu.
    ========================================================= */
-const raizOrc = document.getElementById('orcRaiz');
-const okCaixa = raizOrc.querySelector('[data-ok]');
-const okNota = raizOrc.querySelector('[data-ok-nota]');
-const okCliente = raizOrc.querySelector('[data-ok-cliente]');
 
-/* Lê um campo do formulário, ou string vazia se não existir. */
-const g = (form, nome) => (form.elements[nome]?.value ?? '').toString().trim();
-
-/* Um nó que não exista no HTML não pode derrubar o módulo inteiro.
-   Isto aconteceu: o ecrã de sucesso ficou irmão de #orcRaiz em vez de
+/* Um no que nao exista no HTML nao pode derrubar o modulo inteiro.
+   Isto aconteceu: o ecra de sucesso ficou irmao de #orcRaiz em vez de
    descendente, o querySelector devolveu null, e o TypeError matou o
-   envio do orçamento, o mapa e a galeria — tudo o que viesse depois
-   da linha no topo do módulo. O teste em tests/dom.test.js apanha a
-   versão do HTML; isto apanha a próxima. */
-function noRaiz(seletores) {
-  for (const sel of seletores) {
-    const el = raizOrc.querySelector(sel);
-    if (!el) {
-      console.warn(`JVI: ${sel} não existe dentro de #orcRaiz — funcionalidade afectada.`);
-      continue;
-    }
-    return el;
-  }
-  return null;
-}
+   envio do orcamento, o mapa e a galeria -- tudo o que viesse depois
+   da linha no topo do modulo. tests/dom.test.js apanha a versao do
+   HTML; isto apanha a proxima, e so avisa em vez de rebentar. */
+const noRaiz = (sel) => {
+  const el = raizOrc?.querySelector(sel) ?? null;
+  if (!el) console.warn(`JVI: ${sel} nao existe dentro de #orcRaiz.`);
+  return el;
+};
 
+const okCaixa = noRaiz('[data-ok]');
+const okNota = noRaiz('[data-ok-nota]');
+const okEmpresa = noRaiz('[data-ok-empresa]');
+const okCliente = noRaiz('[data-ok-cliente]');
+
+/* Le um campo do formulario, ou string vazia se nao existir. */
+const g = (form, nome) => (form.elements[nome]?.value ?? '').toString().trim();
 async function enviarPedido(d) {
-  const clienteTel = normalizarTelefone(d.telefone);
-  const paraEmpresa = linkWa(JVI_WHATSAPP, msgEmpresa(d));
-  const paraCliente = clienteTel ? linkWa(clienteTel, msgCliente(d)) : null;
+  const plano = planoEnvio(d);
 
-  /* 1. Registo no Netlify — plano B. Não pode travar o envio. */
+  /* 1. A abertura automática acontece ANTES de qualquer `await`.
+     O browser só permite abrir um separador novo em resposta directa a
+     um gesto do utilizador; um `fetch` de 1 a 3 segundos (que é o
+     tempo normal em Moçambique) consome a activação transitória e o
+     `window.open` é bloqueado. Além disso, com `noopener` o valor de
+     retorno é SEMPRE null, por isso não dá para saber se abriu — e é
+     por isso que os dois links do ecrã de sucesso são sempre a entrega
+     garantida, e a abertura automática é apenas um bónus sobre o qual
+     não se diz nada ao utilizador. */
+  window.open(plano.empresa.url, '_blank', 'noopener');
+  if (plano.cliente) {
+    setTimeout(() => window.open(plano.cliente.url, '_blank', 'noopener'), 800);
+  }
+
+  /* 2. Ecrã de sucesso, montado antes do registo: se a rede falhar,
+     o utilizador tem de ver os links na mesma. */
+  okEmpresa.href = plano.empresa.url;
+  okEmpresa.hidden = false;
+  okEmpresa.querySelector('span').textContent = plano.empresa.rotulo;
+  if (plano.cliente) {
+    okCliente.href = plano.cliente.url;
+    okCliente.hidden = false;
+    okCliente.querySelector('span').textContent = plano.cliente.rotulo;
+  } else {
+    okCliente.hidden = true;
+  }
+  const avisos = [...plano.avisos];
+
+  formOrc.hidden = true;
+  okCaixa.hidden = false;
+  okNota.textContent = avisos.join(' ');
+  okCaixa.querySelector('h3').focus();
+
+  /* 3. Registo no Netlify — plano B, por último, para não atrasar
+     nada do que o utilizador tem de ver. */
   let registado = false;
   const ms = Date.now() - Number(formOrc.dataset.abertoEm || Date.now() - 5000);
   try {
@@ -535,43 +565,22 @@ async function enviarPedido(d) {
   } catch {
     registado = false;
   }
-
-  /* 2. Mensagem para a JVI, dentro do gesto do utilizador. */
-  const janela = window.open(paraEmpresa, '_blank', 'noopener');
-
-  /* 3. Mensagem para o cliente. */
-  const avisos = [];
-  if (paraCliente) {
-    okCliente.href = paraCliente;
-    okCliente.hidden = false;
-    okCliente.querySelector('span').textContent = 'Receber a confirmação no meu WhatsApp';
-    if (janela && !janela.closed) {
-      setTimeout(() => {
-        if (!window.open(paraCliente, '_blank', 'noopener')) {
-          avisos.push('O browser bloqueou a abertura automática. Use o botão acima.');
-        }
-      }, 800);
-    } else {
-      avisos.push('O browser bloqueou a abertura automática. Use o botão acima.');
-    }
-  } else {
-    okCliente.hidden = true;
-    avisos.push('Não conseguimos montar a ligação para o seu número. A JVI entra em contacto pela linha directa.');
+  if (registado) {
+    okNota.textContent = avisos.concat(
+      'Pedido também registado no sistema da JVI.').join(' ');
   }
-  if (!registado) {
-    avisos.push('O registo automático está indisponível — o envio por WhatsApp está garantido.');
-  }
-
-  formOrc.hidden = true;
-  okCaixa.hidden = false;
-  okNota.textContent = avisos.join(' ');
-  okCaixa.querySelector('h3').focus();
 }
 
-/* Fechar rearma o formulário para o próximo pedido, sem recarregar. */
+/* Fechar rearma o formulário para o próximo pedido, sem recarregar.
+   `form.reset()` repõe VALORES, não atributos: os `data-erro="true"` da
+   tentativa anterior ficavam acesos, e quem mandasse dois pedidos na
+   mesma sessão abria o segundo formulário já vermelho e com um banner a
+   dizer "precisa de aceitar a Política de Privacidade". */
 raizOrc.querySelector('[data-ok-fechar]')?.addEventListener('click', () => {
   okCaixa.hidden = true;
   okNota.textContent = '';
+  okEmpresa.hidden = true;
+  okCliente.hidden = true;
   formOrc.reset();
   formOrc.hidden = false;
   formOrc.dispatchEvent(new Event('rearmar'));
@@ -615,7 +624,8 @@ function abrirConfirmacao(d, aoConfirmar) {
 function fecharConfirmacao() {
   confirm.dataset.aberto = 'false';
   modal.inert = false;
-  document.body.classList.remove('modal-aberto');
+  /* O #modal continua aberto: só o `fecharModal` tira a classe, senão o
+     scroll do fundo ficava desbloqueado com a máscara por cima. */
   focoConfirm?.focus();
 }
 
