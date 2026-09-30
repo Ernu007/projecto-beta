@@ -373,16 +373,36 @@ let focoAnterior = null;
 
 const FOCAVEIS = 'a[href], button:not([disabled]), input:not([disabled]):not([tabindex="-1"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/* `modal-aberto` trava o scroll do fundo (`overflow: hidden` em
+   styles.css). Quem decidia se a classe estava ou não era cada
+   abrir/fechar, a fazer `add` e `remove` por sua conta — e o diálogo
+   legal é aberto DE CIMA do modal, a partir da caixa de consentimento
+   que está lá dentro.
+
+   O `fecharLegal` tirava a classe sem reparar que o modal continuava
+   aberto: fechar a Política de Privacidade destravava o scroll com o
+   pop-up do orçamento ainda no ecrã, e a página passava a rolar por trás
+   da máscara. Com os dois abertos há ainda dois `aria-modal="true"`
+   empilhados sem `inert`, e o leitor de ecrã tem de adivinhar qual é o
+   diálogo activo.
+
+   Em vez de alternar, deriva-se do estado: qualquer sobreposição aberta
+   mantém a classe, e só quando nenhuma está é que ela sai. */
+function sincronizarBody() {
+  const algumAberto = [modal, legal, confirm].some((el) => el?.dataset.aberto === 'true');
+  document.body.classList.toggle('modal-aberto', algumAberto);
+}
+
 function abrirModal() {
   focoAnterior = document.activeElement;
   modal.dataset.aberto = 'true';
-  document.body.classList.add('modal-aberto');
+  sincronizarBody();
   const primeiro = modal.querySelector('.modal__fechar');
   setTimeout(() => primeiro?.focus(), 60);
 }
 function fecharModal() {
   modal.dataset.aberto = 'false';
-  document.body.classList.remove('modal-aberto');
+  sincronizarBody();
   focoAnterior?.focus();
 }
 modal.querySelectorAll('[data-fechar]').forEach((el) => el.addEventListener('click', fecharModal));
@@ -406,6 +426,11 @@ document.addEventListener('keydown', (e) => {
      o handler do modal corria primeiro e fechava os dois: a pessoa
      perdia o resumo por confirmar sem aviso. */
   if (confirm?.dataset.aberto === 'true') return;
+  /* A mesma precedência para a Política de Privacidade, que também
+     abre por cima do modal. Sem esta guarda, um Escape fechava os dois:
+     a pessoa lia os termos, carregava Escape para os fechar, e perdia
+     o formulário do orçamento que tinha-filled por baixo. */
+  if (legal?.dataset.aberto === 'true') return;
   if (e.key === 'Escape') { fecharModal(); return; }
   /* Focus trap: o Tab nao pode sair do dialogo enquanto estiver aberto */
   if (e.key !== 'Tab') return;
@@ -425,13 +450,28 @@ let focoLegal = null;
 
 function abrirLegal() {
   focoLegal = document.activeElement;
+  /* A Política de Privacidade abre-se de dentro do modal do orçamento
+     (é a caixa de consentimento que a chama). Com os dois abertos, o
+     modal de baixo tem de ficar `inert`: senão o teclado e o leitor de
+     ecrã continuam a passear pelo formulário que está por baixo do
+     diálogo que se está a ler, e há dois `aria-modal="true"` sem forma
+     de saber qual manda. É o mesmo cuidado que `abrirConfirmacao` já
+     toma, com o mesmo comentário de porquê. */
+  const sobreModal = modal.dataset.aberto === 'true';
+  if (sobreModal) modal.inert = true;
+  legal.dataset.sobreModal = sobreModal ? 'true' : 'false';
   legal.dataset.aberto = 'true';
-  document.body.classList.add('modal-aberto');
+  sincronizarBody();
   setTimeout(() => legal.querySelector('.legal__fechar')?.focus(), 60);
 }
 function fecharLegal() {
   legal.dataset.aberto = 'false';
-  document.body.classList.remove('modal-aberto');
+  /* Só se desarma o `inert` se foi este diálogo que o pôs. E a classe do
+     body sai por `sincronizarBody`, que sabe que o modal continua
+     aberto — antes era um `remove` incondicional que destravava o
+     scroll com o orçamento ainda no ecrã. */
+  if (legal.dataset.sobreModal === 'true') modal.inert = false;
+  sincronizarBody();
   focoLegal?.focus();
 }
 document.querySelectorAll('[data-legal="privacidade"]').forEach((el) => {
@@ -660,15 +700,18 @@ function abrirConfirmacao(d, aoConfirmar) {
      #modal continua na árvore de acessibilidade por baixo de #confirm.
      `inert` tira-o de lá e impede a'interacção por trás. */
   modal.inert = true;
-  document.body.classList.add('modal-aberto');
+  sincronizarBody();
   confirm.querySelector('[data-confirmar]').focus();
 }
 
 function fecharConfirmacao() {
   confirm.dataset.aberto = 'false';
   modal.inert = false;
-  /* O #modal continua aberto: só o `fecharModal` tira a classe, senão o
-     scroll do fundo ficava desbloqueado com a máscara por cima. */
+  /* O #modal continua aberto, por isso `sincronizarBody` mantém a classe
+     — que é o que se quer. Chamá-lo na mesma é que torna o código
+     independente da ordem: se um dia o modal não estiver aberto, a
+     classe sai em vez de ficar presa. */
+  sincronizarBody();
   focoConfirm?.focus();
 }
 
