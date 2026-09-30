@@ -620,7 +620,12 @@ body.modal-aberto { overflow: hidden; }
   border: 1px solid var(--linha);
   display: flex; flex-wrap: wrap; align-items: center; gap: 18px; justify-content: space-between;
 }
-.carta-download h4 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+/* Selector de CLASSE, e nao `.carta-download h4`: o titulo do cartao e'
+   um `<h3 class="carta-download__t">` (index.html), e nao existe nenhum
+   `<h4>` la dentro. A regra antiga nao casava com nada, e o titulo ficava
+   com o tamanho e as margens por omissao do browser — 1.17em bold em vez
+   dos 18px/800 que se pretendia. */
+.carta-download__t { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
 .carta-download p { font-size: 15px; color: var(--texto-suave); }
 
 /* A figura do camião nos contactos. Estava com o estilo todo em
