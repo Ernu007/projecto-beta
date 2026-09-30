@@ -1,0 +1,10 @@
+{
+  "name": "jvi-carga-servicos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Landing page da JVI Carga & Serviços, Lda.",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\""
+  }
+}

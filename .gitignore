@@ -16,3 +16,9 @@ dist/
 # Ficheiros temporarios de auditoria
 *.valida.txt
 *.log
+
+# Agentes de terceiros (instalados, nao versionados - 107 ficheiros)
+/.opencode/agents/
+
+# Scratch de execucao de planos (ledger, briefs, pacotes de review)
+.superpowers/
