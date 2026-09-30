@@ -407,6 +407,7 @@ document.addEventListener('keydown', (e) => {
    FORMULÁRIO DE ORÇAMENTO — 3 passos, dentro do pop-up
    ========================================================= */
 import { calcularPreco } from './precos.js';
+import { iniciarGaleria } from './galeria.js';
 import {
   iniciarOrcamento, msgEmpresa, msgCliente, linkWa, linhasResumo,
   normalizarTelefone, JVI_WHATSAPP,
@@ -584,3 +585,4 @@ document.addEventListener('orc:pronto', (e) => {
 document.getElementById('ano').textContent = new Date().getFullYear();
 iniciarHero();
 iniciarMapa();
+iniciarGaleria(document.querySelector('[data-gal]'), document.getElementById('luz'));

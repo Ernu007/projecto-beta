@@ -18,10 +18,15 @@ SELECTORES = {
         "modal", "orcRaiz", "tplOrc", "confirm", "ano", "menu", "menuBtn",
         "menuFundo", "header", "barraTopo", "canvasHero", "canvasMapa",
         "fluxoLinha", "heroRota", "heroRotaTxt", "legalPrivacidade",
+        "luz",
     ],
     "js/orcamento.js": [
         # dentro do <template> ou do modal
         "tplOrc", "orcRaiz",
+    ],
+    "js/galeria.js": [
+        # dentro da secção da galeria ou da luzbox
+        "luz",
     ],
 }
 
@@ -33,6 +38,9 @@ DATA_ATTRS = [
     "conta", "estado", "consent", "preco", "passos", "campo", "passo",
     "seccao", "ativa", "p-base", "p-iva", "p-total",
     "fechar-confirm", "confirmar", "resumo-confirm",
+    "gal", "gal-src", "gal-alt", "luz-img", "luz-legenda", "luz-fechar",
+    "luz-ant", "luz-prox", "luz-fundo", "ok", "ok-nota", "ok-cliente",
+    "ok-fechar",
 ]
 
 
