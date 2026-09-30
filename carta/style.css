@@ -55,14 +55,14 @@ body {
   background: radial-gradient(circle, rgba(234,130,64,0.16), transparent 68%);
   bottom: -130px; left: -130px; pointer-events: none;
 }
-grelha {
+.grelha {
   position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
   background-image:
     linear-gradient(rgba(169,207,68,0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(169,207,68,0.05) 1px, transparent 1px);
   background-size: 34px 34px;
 }
-faixa-lateral {
+.faixa-lateral {
   position: absolute; left: 0; top: 0; bottom: 0; width: 7px;
   background: linear-gradient(180deg, var(--verde), var(--laranja));
 }
