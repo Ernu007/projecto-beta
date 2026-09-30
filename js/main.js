@@ -80,7 +80,18 @@ aoDeslocar();
    ANIMAÇÕES AO SCROLL (IntersectionObserver)
    ========================================================= */
 const alvos = document.querySelectorAll('.revelar');
-if ('IntersectionObserver' in window && !REDUCIDO) {
+/* `IntersectionObserver` no topo do módulo, sem guarda, é a mesma
+   armadilha do `raizOrc`: um `new` que rebenta aqui aborta a avaliação
+   do módulo e mata tudo o que está DEBAIXO — o modal do orçamento, o
+   diálogo legal, a confirmação, o mapa e a galeria. Numa WebView
+   antiga, ou com `dom.intersectionobserver` desligado, uma referência a
+   partir do topo do módulo é um ReferenceError.
+
+   Três sítios do projecto usam o observador. Passam todos pela mesma
+   constante, para não ficar um deles de fora — que é exactamente como
+   o das etapas ficou. */
+const TEM_IO = 'IntersectionObserver' in window;
+if (TEM_IO && !REDUCIDO) {
   const obs = new IntersectionObserver(
     (entradas) => {
       entradas.forEach((e) => {
@@ -102,7 +113,7 @@ if ('IntersectionObserver' in window && !REDUCIDO) {
    ========================================================= */
 const etapas = document.querySelectorAll('.etapa');
 const fluxoLinha = document.getElementById('fluxoLinha');
-if (etapas.length) {
+if (etapas.length && TEM_IO) {
   const obsEtapas = new IntersectionObserver(
     (entradas) => {
       entradas.forEach((e) => e.target.setAttribute('aria-current', String(e.isIntersecting)));
