@@ -600,12 +600,16 @@ body.modal-aberto { overflow: hidden; }
 .carta-download p { font-size: 15px; color: var(--texto-suave); }
 
 /* A figura do camião nos contactos. Estava com o estilo todo em
-   `style=` inline, com as cores da marca escritas por extenso. */
+   `style=` inline, com as cores da marca escritas por extenso.
+   O aspect-ratio vem das dimensões reais declaradas no HTML, para a
+   caixa não saltar enquanto a imagem carrega. */
 .cont-figura { margin: 0; }
 .cont-figura img {
   border-radius: var(--raio); border: 1px solid var(--linha);
   background: linear-gradient(160deg, var(--base-3), var(--base));
   padding: 24px;
+  aspect-ratio: 800 / 527;
+  object-fit: contain;
 }
 
 .rodape { border-top: 1px solid var(--linha); padding: 40px 0 34px; background: var(--rodape); }

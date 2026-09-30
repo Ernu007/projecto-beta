@@ -360,6 +360,9 @@ export function iniciarVoo(canvas, opcoes = {}) {
 
   function frame(agora) {
     if (parar) return;
+    /* Saiu do ecrã: deixa de pedir frames. O `inicio` fica guardado, de
+       modo que voltar a entrar retoma de onde ia em vez de recomeçar. */
+    if (!visivel) return;
     const t = reduzir ? 1 : normalizar((agora - inicio) / DURACAO);
     const prog = ease(t);
 
@@ -423,18 +426,26 @@ export function iniciarVoo(canvas, opcoes = {}) {
   }
 
   if ('IntersectionObserver' in window) {
+    /* Pausa nos DOBOS sentidos: sem isto, se o utilizador descer o
+       scroll durante os 7 s do voo, o canvas continuava a pintar fora
+       do ecrã. O mapa (`iniciarMapa`, em main.js) já fazia assim.
+       `inicio` mantém-se, por isso voltar a entrar retoma o voo de
+       onde ia em vez de recomeçar. */
     new IntersectionObserver((e) => {
-      if (e[0].isIntersecting && !visivel) {
+      const dentro = e[0].isIntersecting;
+      if (dentro && !visivel && !parar) {
         visivel = true;
-        inicio = performance.now();
         requestAnimationFrame(frame);
+      } else if (!dentro) {
+        visivel = false;
       }
     }, { threshold: 0.2 }).observe(canvas);
   } else {
+    visivel = true;
     requestAnimationFrame(frame);
   }
 
-  return () => { parar = true; };
+  return () => { parar = true; visivel = false; };
 }
 
 export { ROTA, DURACAO };

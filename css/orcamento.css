@@ -123,11 +123,15 @@
   pointer-events: none;
 }
 
-/* ---------- Estado de envio ---------- */
+/* ---------- Estado de envio ----------
+   A região fica SEMPRE na árvore de acessibilidade, só escondida com
+   `visibility`. Com `display: none` a transição para visível já
+   trazia o texto dentro, e o leitor de ecrã nem sempre a anunciava. */
 .estado-envio {
-  margin-top: 16px; padding: 16px; border-radius: 12px; font-size: 14px; display: none;
+  margin-top: 16px; padding: 16px; border-radius: 12px; font-size: 14px;
+  visibility: hidden;
 }
-.estado-envio[data-mostrar="true"] { display: block; }
+.estado-envio[data-mostrar="true"] { visibility: visible; }
 .estado-envio--ok    { background: rgb(var(--verde-rgb) / .12); border: 1px solid rgb(var(--verde-rgb) / .4); color: var(--verde); }
 .estado-envio--erro  { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.4); color: var(--erro-txt); }
 .estado-envio--aviso { background: rgb(var(--laranja-rgb) / .1); border: 1px solid rgb(var(--laranja-rgb) / .4); color: var(--aviso-txt); }

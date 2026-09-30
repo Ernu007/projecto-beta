@@ -13,6 +13,21 @@
 <link rel="stylesheet" href="css/privacidade.css">
 <link rel="stylesheet" href="css/orcamento.css">
 <link rel="stylesheet" href="css/galeria.css">
+
+<!-- O texto do primeiro ecrã usa a fonte no primeiro ciclo: pré-carregar
+     o subset latino evita o salto visual do font-display: swap. Só este
+     subset — o português não precisa de cirílico nem vietnamita. -->
+<link rel="preload" href="assets/fonts/plus-jakarta-latin.woff2" as="font" type="font/woff2" crossorigin>
+
+<!-- main.js é o único script que o HTML conhece. Os módulos de que ele
+     importa só são descobertos depois de ele descarregar e ser
+     pré-parseado; com modulepreload arrancam as 5 transferências em
+     paralelo, já durante o parse do HTML. -->
+<link rel="modulepreload" href="js/hero-voo.js">
+<link rel="modulepreload" href="js/mapa-dados.js">
+<link rel="modulepreload" href="js/orcamento.js">
+<link rel="modulepreload" href="js/precos.js">
+<link rel="modulepreload" href="js/galeria.js">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_MZ">
@@ -31,7 +46,7 @@
 <header class="header" id="header">
   <div class="container header__int">
     <a href="#topo" class="brand" aria-label="JVI Carga e Serviços — início">
-      <img src="assets/logo.png" alt="JVI Carga e Serviços, Lda" class="brand__logo" width="120" height="200">
+      <img src="assets/logo.webp" alt="JVI Carga e Serviços, Lda" class="brand__logo" width="151" height="184" decoding="async">
       <span class="brand__txt">
         <b>JVI Carga &amp; Serviços</b>
         <span>Transportes e Logística</span>
@@ -187,7 +202,7 @@
             Descarregar perfil da JVI
           </a>
           <span class="servico__n" aria-hidden="true">01</span>
-          <img src="assets/img/camiao.png" alt="Camião de carga da JVI" loading="lazy" width="1000" height="625">
+          <img src="assets/img/camiao.webp" alt="Camião de carga" loading="lazy" decoding="async" width="800" height="527">
         </div>
         <div class="servico__corpo">
           <h3>Transporte de Carga</h3>
@@ -203,7 +218,7 @@
       <article class="servico revelar revelar-d">
         <div class="servico__figura">
           <span class="servico__n" aria-hidden="true">02</span>
-          <img src="assets/img/terminal.jpg" alt="Terminal de carga do Aeroporto de Maputo" loading="lazy" width="1600" height="1000">
+          <img src="assets/img/terminal.jpg" alt="Terminal de carga do Aeroporto de Maputo" loading="lazy" decoding="async" width="1120" height="1120">
         </div>
         <div class="servico__corpo">
           <h3>Correio &amp; Encomendas</h3>
@@ -219,7 +234,7 @@
       <article class="servico revelar revelar-d2">
         <div class="servico__figura">
           <span class="servico__n" aria-hidden="true">03</span>
-          <img src="assets/img/aviao.jpg" alt="Aeronave em voo de carga" loading="lazy" width="1200" height="1500">
+          <img src="assets/img/aviao.jpg" alt="Aeronave em voo de carga" loading="lazy" decoding="async" width="1116" height="1491">
         </div>
         <div class="servico__corpo">
           <h3>Soluções Empresariais</h3>
@@ -600,7 +615,7 @@
       </div>
 
       <figure class="revelar cont-figura">
-        <img src="assets/img/camiao.png" alt="Camião de carga da JVI Carga e Serviços" loading="lazy" width="1000" height="625">
+        <img src="assets/img/camiao.webp" alt="Camião de carga" loading="lazy" decoding="async" width="800" height="527">
       </figure>
     </div>
   </div>
@@ -612,7 +627,7 @@
 <footer class="rodape">
   <div class="container">
     <div class="rodape__topo">
-      <img src="assets/logo.png" alt="JVI Carga e Serviços, Lda" class="rodape__logo" width="120" height="200">
+      <img src="assets/logo.webp" alt="JVI Carga e Serviços, Lda" class="rodape__logo" width="151" height="184" loading="lazy" decoding="async">
       <div class="rodape__fiscais">
         <span>NUEL <b>100449137</b></span>
         <span>NUIT <b>400501424</b></span>

@@ -51,7 +51,7 @@ Trabalho Jvi/
 │   ├── otimizar-galeria.py    Converte as fotos da galeria para WebP
 │   └── verificar-html.py      Confere ids, data-attrs, ficheiros e âncoras
 ├── assets/
-│   ├── logo.png            Logo JVI (verde/laranja) — usado no header e rodapé
+│   ├── logo.webp            Logo JVI (verde/laranja), 46 px de altura — header e rodapé
 │   ├── logo-branco.png     Versão branca (fundos escuros)
 │   ├── logo-full.png       Logo completo com "Carga & Serviços, Lda"
 │   ├── favicon.png
@@ -232,27 +232,55 @@ cada `<button class="gal__item">` em `index.html`.
 
 ### Imagens de serviço (`assets/img/`)
 
-`camiao.png`, `terminal.jpg` e `aviao.jpg` vieram da carta de apresentação e
-são **placeholders**. Para usar as fotos reais, substituir com o **mesmo nome**:
+`camiao.webp`, `terminal.jpg` e `aviao.jpg` vieram da carta de apresentação e
+são **placeholders** — o camião é um camião de stock, não um da JVI. Para usar
+as fotos reais, substituir com o **mesmo nome**:
 
-| Ficheiro | Onde é usado | Tamanho recomendado |
-|---|---|---|
-| `camiao.png` | Serviço 01 + Contactos | 1200×750 |
-| `terminal.jpg` | Serviço 02 | 1200×750 |
-| `aviao.jpg` | Serviço 03 | 1200×750 |
+| Ficheiro | Onde é usado | Dimensões reais | Peso |
+|---|---|---|---|
+| `camiao.webp` | Serviço 01 + Contactos | 800×527 | ~37 KB |
+| `terminal.jpg` | Serviço 02 | 1120×1120 | ~152 KB |
+| `aviao.jpg` | Serviço 03 | 1116×1491 | ~89 KB |
 
-Recomendado exportar como JPEG de qualidade 80 e sem ultrapassar 200 KB cada.
+Mantenha `width`/`height` no HTML iguais às dimensões reais, senão a caixa salta
+ao carregar.
 
-O `logo.png` também pode ser substituído pelo PNG oficial com o mesmo nome
-(mantenha o rácio e a transparência).
+O `logo.webp` também pode ser substituído, **mantendo a proporção e o alfa**.
+Repare no tamanho de render: o CSS pinta-o a 46 px de altura, por isso 184 px
+chega com folga para ecrãs de densidade 2.
+
+Depois de substituir imagens, medir e converter:
+
+```powershell
+python tools/otimizar-marca.py      # logo e camião -> WebP; aponta duplicados
+python tools/otimizar-galeria.py    # fotografias da galeria -> WebP
+```
+
+O `otimizar-marca.py` imprime também quaisquer ficheiros **byte-idênticos**
+uns aos outros. Já apanhou um: `logo-cor.png` era cópia exacta de `logo.png`,
+189 KB no repositório e zero referências.
 
 ---
 
 ## 9. Detalhes técnicos
 
 - **Sem dependências**, sem passo de build. Abre directamente no browser.
-- **Peso total** ~3,1 MB (dos quais 1,7 MB é o PDF da carta e 1,28 MB são as
-  fotografias da galeria). A página em si, sem a carta, carrega ~1,3 MB.
+- **Texto** (HTML + CSS + JS) 205 KB brutos, ~52 KB comprimidos. A Netlify serve
+  Brotli por omissão, portanto no fio é ainda menos.
+- **Primeiro ecrã** ~253 KB comprimidos, dos quais **178 KB eram um único PNG de
+  logo que pintava 38×46 px**. Passou a `logo.webp`, 10,8 KB.
+- **Fotografias da galeria** 788 KB, todas com `loading="lazy"`,
+  `decoding="async"` e dimensões correctas, e nenhuma no primeiro ecrã.
+- **O PDF da carta** (1,7 MB) só descarrega quando o utilizador clica. Não há
+  `<embed>`, `<iframe>` nem `preload` a antecipar o fetch.
+- **Fontes**: 4 subsets auto-alojados, `font-display: swap` e `unicode-range` nas
+  20 regras. Só o subset **latino** é pré-carregado — o português não precisa de
+  cirílico nem vietnamita.
+- **`modulepreload`** nos 5 módulos de que `main.js` importa: as transferências
+  arrancam em paralelo durante o parse do HTML, em vez de o browser só descobrir
+  os imports depois de `main.js` chegar e ser pré-parseado.
+- **Canvas**: `dpr` limitado a 2, `prefers-reduced-motion` respeitado, e os dois
+  com `IntersectionObserver` a **pausar** quando saem do ecrã.
 - **Responsivo** de 360 px a 1920 px, testado sem overflow horizontal.
 - **`prefers-reduced-motion`** respeitado: sem rota animada nem caixas 3D.
 - **Acessibilidade**: ver a secção 12.
