@@ -27,20 +27,43 @@ A carta gera-se em `http://127.0.0.1:8765/carta/`.
 ```
 Trabalho Jvi/
 ├── index.html              Landing page completa
-├── css/styles.css          Tokens da marca + todo o estilo
-├── js/main.js              Menu, scroll, hero 3D, mapa, formulário
+├── package.json            "type": "module" + script de testes
+├── css/
+│   ├── styles.css          Tokens da marca, layout e conteúdo editorial
+│   ├── orcamento.css       Assistente de 3 passos, confirmação, ecrã de sucesso
+│   ├── galeria.css         Galeria e luzbox
+│   ├── privacidade.css     Diálogo da política de privacidade
+│   └── fontes.css          Fontes auto-alojadas
+├── js/
+│   ├── main.js             Menu, scroll, hero 3D, mapa, modal, FAQs
+│   ├── precos.js           Fórmula de preço — puro, sem DOM, tem testes
+│   ├── orcamento.js        Assistente, validação, mensagens de WhatsApp — puro + DOM
+│   ├── galeria.js          Luzbox acessível
+│   ├── hero-voo.js         Voo da carga no hero
+│   └── mapa-dados.js       Fronteiras de Moçambique (geoBoundaries ADM1)
+├── tests/                  41 testes com o runner nativo do Node
+│   ├── precos.test.js
+│   ├── orcamento.test.js
+│   ├── confirmacao.test.js
+│   ├── envio.test.js
+│   └── submit.test.js
+├── tools/
+│   ├── otimizar-galeria.py    Converte as fotos da galeria para WebP
+│   └── verificar-html.py      Confere ids, data-attrs, ficheiros e âncoras
 ├── assets/
 │   ├── logo.png            Logo JVI (verde/laranja) — usado no header e rodapé
 │   ├── logo-branco.png     Versão branca (fundos escuros)
 │   ├── logo-full.png       Logo completo com "Carga & Serviços, Lda"
 │   ├── favicon.png
-│   └── img/                Fotografias (camiao, terminal, aviao)
-├── functions/submit.js     Netlify Function: envia o pedido
+│   ├── fonts/              Plus Jakarta Sans auto-alojada
+│   └── img/galeria/        Fotografias reais da operação, em WebP
+├── functions/submit.js     Netlify Function: regista o pedido (plano B)
 ├── carta/                  Carta de apresentação (10 páginas A4)
 │   ├── index.html
 │   ├── style.css
 │   ├── mapa.js
 │   └── jvi-carta-apresentacao.pdf   (gerado)
+├── docs/decisoes.md        Registo das decisões tomadas e do que ficou por confirmar
 ├── netlify.toml
 └── .env.example            Chaves a preencher (ver abaixo)
 ```
@@ -68,8 +91,45 @@ Ou, em desenvolvimento, criar um ficheiro `.env` (já está no `.gitignore`).
 
 ### Folha "Pedidos"
 Criar a folha, renomear a aba para `Pedidos` e ter uma linha de cabeçalho
-com as 23 colunas na mesma ordem que `CAMPOS` em `functions/submit.js`.
+com as 13 colunas na mesma ordem que `CAMPOS` em `functions/submit.js`.
 Ao partilhar a folha, dar **Editor** ao e-mail da conta de serviço.
+
+---
+
+## 3b. Correr os testes
+
+Sem dependências: usa o runner nativo do Node (18 ou superior).
+
+```powershell
+npm test
+```
+
+São 41 testes. Os que mais importam são os de `tests/precos.test.js`, que
+verificam a tabela de preços e provam que **o preço nunca desce quando o peso
+sobe** (monotonicidade testada de 0,02 a 50,01 kg, em passos de 10 g).
+
+A fórmula de preço e a construção das mensagens de WhatsApp vivem em
+`js/precos.js` e `js/orcamento.js`, que são **puros** — não tocam no `document`.
+É por isso que o mesmo código que corre no browser é o que os testes verificam,
+sem uma segunda implementação para manter em sincronia.
+
+Verificação sem browser, depois de mexer no `index.html`:
+
+```powershell
+python tools/verificar-html.py
+```
+
+Confirma que todos os `id`, todos os `data-attribute` e todos os ficheiros que
+o JS procura existem, e que todas as âncoras internas têm destino.
+
+Ao trocar as fotografias da galeria:
+
+```powershell
+python tools/otimizar-galeria.py
+```
+
+Redimensiona para 1600 px de lado longo, respeita a orientação EXIF e grava
+WebP. Apague depois os `.jpg` originais.
 
 ---
 
@@ -114,11 +174,22 @@ descarregado pela página é o PDF, não o HTML.
 | NUEL | 100449137 |
 | NUIT | 400501424 |
 | Licença | 8732/11/04/PS/2014 |
-| WhatsApp / Telefone | +258 87 555 8005 |
-| Telefone | +258 84 470 0012 |
+| **WhatsApp — Operações** | **+258 84 793 5035** |
+| Escritórios | +258 87 555 8005 · +258 84 470 0012 |
+| Alternativo | +258 84 554 6151 · +258 82 555 8005 |
 | Fixo | 21 089 459 |
 | Email | jvicargaservicos@gmail.com |
 | Sede | Av. 19 de Outubro, Terminal de Cargas Nº 113, Aeroporto de Maputo |
+
+⚠️ **Os telefones ainda não estão confirmados.** O briefing já avisava que havia
+divergências; ao ver as fotografias, há mais do que o briefing registava. A
+tabela completa da divergência está em
+[`docs/decisoes.md`](docs/decisoes.md#números-de-telefone-divergências).
+Nenhum número foi apagado do site — acrescentar um nunca custa, tirar um pode.
+
+**Para alterar contactos:** `index.html` (secção Contactos, botões fixos, JSON-LD)
+e `js/orcamento.js` (constante `JVI_WHATSAPP`, o número para onde vão as
+mensagens do formulário — tem teste próprio).
 
 Para alterar contactos: `js/main.js` (constante `JVI`, usada pelo formulário)
 e `index.html` (secção Contactos, botões fixos e rodapé).
@@ -141,11 +212,28 @@ Estão em `:root`, no topo de `css/styles.css`. Mudar a marca = mudar aí.
 
 ---
 
-## 8. Substituir as imagens
+## 8. As imagens
 
-As fotografias em `assets/img/` vieram da carta de apresentação original e
-são **placeholders**. Para usar as fotos reais, basta substituir os ficheiros
-com o **mesmo nome**:
+### Galeria (`assets/img/galeria/`)
+
+São as fotografias **reais** da operação, fornecidas pelo cliente, e já
+convertidas para WebP (lado longo ≤ 1600 px, qualidade 80). A galeria usa 11
+delas; as outras 7 ficaram no repositório como reserva, e não são carregadas
+porque não estão referenciadas.
+
+Ao substituí-las: deite os `.jpg` em `assets/img/galeria/`, corra
+`python tools/otimizar-galeria.py`, apague os `.jpg`, e actualize o `alt` de
+cada `<button class="gal__item">` em `index.html`.
+
+> O `alt` de cada fotografia foi escrito **depois de ver a foto**. Três das
+> descrições do briefing não correspondiam ao que estava na imagem — a tabela
+> está em [`docs/decisoes.md`](docs/decisoes.md#fotografias-onde-o-briefing-estava-errado).
+> Se trocar as fotos, ver também as fotos antes de escrever o `alt`.
+
+### Imagens de serviço (`assets/img/`)
+
+`camiao.png`, `terminal.jpg` e `aviao.jpg` vieram da carta de apresentação e
+são **placeholders**. Para usar as fotos reais, substituir com o **mesmo nome**:
 
 | Ficheiro | Onde é usado | Tamanho recomendado |
 |---|---|---|
@@ -163,14 +251,14 @@ O `logo.png` também pode ser substituído pelo PNG oficial com o mesmo nome
 ## 9. Detalhes técnicos
 
 - **Sem dependências**, sem passo de build. Abre directamente no browser.
-- **Peso total** ~1,9 MB (dos quais 1,7 MB é o PDF da carta).
+- **Peso total** ~3,1 MB (dos quais 1,7 MB é o PDF da carta e 1,28 MB são as
+  fotografias da galeria). A página em si, sem a carta, carrega ~1,3 MB.
 - **Responsivo** de 360 px a 1920 px, testado sem overflow horizontal.
 - **`prefers-reduced-motion`** respeitado: sem rota animada nem caixas 3D.
-- **Acessibilidade**: todos os contrastes passam WCAG AA (pior caso 4,79:1),
-  foco visível, `aria-describedby` nos erros de campo, focus trap no modal,
-  `aria-live` nas mensagens de estado, 1 único `h1`.
+- **Acessibilidade**: ver a secção 12.
 - **SEO**: meta description, Open Graph, Twitter Card, `robots.txt`,
-  `sitemap.xml`, JSON-LD `Organization`, cabeçalhos `h1`–`h4` em ordem.
+  `sitemap.xml`, JSON-LD `Organization` com os três telefones, cabeçalhos
+  `h1`–`h4` em ordem.
 
 ---
 
@@ -207,3 +295,29 @@ gerar o PDF (ver secção 5). O botão de download na página e no selo
 `Descarregar perfil da JVI` apontam para o ficheiro em
 `carta/jvi-carta-apresentacao.pdf` — se o PDF não for regenerado, o
 utilizador vê a versão antiga.
+
+---
+
+## 12. Acessibilidade
+
+O que está implementado, e onde:
+
+| Medida | Onde |
+|---|---|
+| Um único `h1`; `h2`–`h4` em ordem, sem saltos | `index.html` |
+| Foco visível em tudo o que recebe foco | `:focus-visible` em `css/styles.css` |
+| Nenhum `outline: none` sem substituto visível | `css/styles.css` |
+| Erro de campo ligado por `aria-describedby` | `js/orcamento.js` → `iniciarOrcamento()` |
+| Foco no primeiro campo com erro ao bloquear um passo | `js/orcamento.js` → `valido()` |
+| Um erro por vez, não o formulário inteiro a vermelho | `js/orcamento.js` |
+| Passo e progresso anunciados | `data-conta` com `aria-live="polite"`, `aria-valuenow` na barra |
+| Modais com `role="dialog"`, `aria-modal`, foco preso, `Escape`, e foco devolvido | `js/main.js` (modal e confirmação), `js/galeria.js` (luzbox) |
+| Cada fotografia da galeria é um `<button>`, abre com Enter | `index.html`, `js/galeria.js` |
+| Navegação da luzbox com ← e → | `js/galeria.js` |
+| `prefers-reduced-motion` respeitado em todas as animações | `css/styles.css` |
+| Espaçamento e corpo de texto na escala de 4/8 px e ≥ 16 px | `css/*.css` |
+
+**Por testar à mão, ainda:** leitor de ecrã (NVDA ou VoiceOver) a percorrer o
+assistente de 3 passos, e contraste real com o filtro de daltonismo. Nenhum
+browser estava ligado quando este trabalho foi feito, por isso estas duas
+verificações ficaram por fazer.

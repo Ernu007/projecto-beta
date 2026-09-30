@@ -514,6 +514,31 @@ ul { list-style: none; }
 body.modal-aberto { overflow: hidden; }
 
 /* =========================================================
+   FAQ
+   ========================================================= */
+.faq { margin-top: 40px; display: grid; gap: 12px; max-width: 860px; }
+.faq__i {
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--raio-sm);
+  background: var(--base-2); overflow: hidden; transition: border-color var(--transicao);
+}
+.faq__i[open] { border-color: var(--linha); }
+.faq__p {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 24px; font-size: 16px; font-weight: 700; cursor: pointer; list-style: none;
+}
+.faq__p::-webkit-details-marker { display: none; }
+.faq__p::after {
+  content: "+"; flex: none; font-size: 24px; font-weight: 400; line-height: 1;
+  color: var(--verde); transition: transform var(--transicao);
+}
+.faq__i[open] .faq__p::after { transform: rotate(45deg); }
+.faq__p:hover { background: rgba(169, 207, 68, 0.05); }
+.faq__p:focus-visible { outline: 2px solid var(--verde); outline-offset: -2px; }
+.faq__r { padding: 0 24px 24px; font-size: 15px; color: var(--texto-suave); }
+.faq__r p + p { margin-top: 12px; }
+.faq__r b { color: var(--verde); }
+
+/* =========================================================
    CONTACTOS / RODAPÉ
    ========================================================= */
 .grelha-cont { display: grid; gap: 34px; margin-top: 46px; }
