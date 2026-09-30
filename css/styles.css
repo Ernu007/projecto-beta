@@ -304,6 +304,30 @@ ul { list-style: none; }
 }
 .hero__acoes { display: flex; flex-wrap: wrap; gap: 13px; margin-bottom: 44px; }
 
+/* A disposição das acções do hero é ESCrita, não deixada ao acaso.
+   Com `flex-wrap: wrap` e larguras intrínsecas, quem caía em que linha
+   dependia do comprimento do texto: medido no Chrome, os três botões
+   davam 204.50 + 221.20 + 217.88 + dois gaps de 13 = 669.58px contra
+   660px de contentor, e o "Como chegar à JVI" descia sozinho, com a
+   largura dele, encostado à esquerda por baixo do botão primário —
+   lia-se como botão órfão.
+
+   Por isso o botão das direcções é `btn--bloco`: `flex: 1 0 100%` põe
+   numa base de 100% do contentor, o que garante que ele fica na linha
+   de baixo e a ocupar a largura toda. A primeira linha leva os outros
+   dois — orçamento primário a par do WhatsApp — e cabe com folga
+   (204.50 + 13 + 221.20 = 438.70px). */
+.hero__acoes > .btn--bloco { flex: 1 0 100%; }
+
+/* Abaixo de 520px de viewport dois botões à mesma linha ficam apertados
+   (o contentor ficaria com 473px para 438.70px de botões, e a partir de
+   487px nem isso era verdade). As três acções passam a coluna de
+   botões inteiros, que é também o que se toca melhor num telemóvel. */
+@media (max-width: 520px) {
+  .hero__acoes > * { flex: 1 0 100%; }
+}
+
+
 .hero__provas { display: flex; flex-wrap: wrap; gap: 12px 34px; }
 .prova { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--texto-suave); }
 .prova svg { width: 18px; height: 18px; color: var(--verde); flex: none; }

@@ -34,7 +34,8 @@
 <meta property="og:site_name" content="JVI Carga & Serviços, Lda">
 <meta property="og:title" content="JVI Carga & Serviços — Transporte de Carga e Encomendas em Moçambique">
 <meta property="og:description" content="Transporte, tratamento e distribuição de cargas, encomendas e objectos postais em todo o Moçambique. Peça o seu orçamento.">
-<meta property="og:image" content="assets/logo-full.png">
+<meta property="og:image" content="/assets/logo-full.png">
+<meta property="og:image:absolute" content="https://jvicarga.netlify.app/assets/logo-full.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://jvicargaservicos.co.mz/">
 </head>
@@ -128,8 +129,15 @@
              em direcções para o terminal, sem API key, sem tracking e sem
              JavaScript — por isso é um <a> literal e não um botão. O
              destino tem de ser byte-a-byte igual ao que `linkDirecoes()`
-             produz em js/rota.js; é o `tests/rota.test.js` que o garante. -->
-        <a class="btn btn--vidro" href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.%2019%20de%20Outubro%2C%20Terminal%20de%20Cargas%20N%C2%BA%20113%2C%20Aeroporto%20de%20Maputo&amp;travelmode=driving" target="_blank" rel="noopener">
+             produz em js/rota.js; é o `tests/rota.test.js` que o garante.
+
+             E `btn--bloco`, que é o que o põe na linha de baixo a ocupar
+             a largura toda: sem isto, os três botões somavam 669.58px
+             (204.50 + 221.20 + 217.88 + dois gaps de 13) contra 660px de
+             contentor, e este quebrava sozinho, com a largura dele, e
+             lia-se como botão órfão. A primária e o WhatsApp ficam na
+             primeira linha. É o `tests/hero-acoes.test.js` que o garante. -->
+        <a class="btn btn--vidro btn--bloco" href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.%2019%20de%20Outubro%2C%20Terminal%20de%20Cargas%20N%C2%BA%20113%2C%20Aeroporto%20de%20Maputo&amp;travelmode=driving" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
           Como chegar à JVI
         </a>
