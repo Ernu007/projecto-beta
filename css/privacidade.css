@@ -4,8 +4,14 @@
 .pp { max-width: 78ch; }
 
 .pp__meta {
-  font-size: 13px; color: var(--texto-fraco); margin-bottom: 30px;
-  padding-bottom: 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 13px; color: var(--texto-fraco); margin-bottom: 32px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--borda);
+}
+
+/* A linha "última revisão" fica em vez de antes, não em depois. */
+.pp__meta--fim {
+  margin: 24px 0 0; padding: 16px 0 0; border-bottom: 0;
+  border-top: 1px solid var(--borda);
 }
 
 .pp h3 {
@@ -26,8 +32,8 @@
 .pp strong { color: var(--texto); font-weight: 700; }
 
 .pp__destaque {
-  padding: 18px 20px; border-radius: 12px; margin: 22px 0;
-  background: rgba(169, 207, 68, 0.07); border: 1px solid var(--linha);
+  padding: 20px; border-radius: 12px; margin: 22px 0;
+  background: rgb(var(--verde-rgb) / .07); border: 1px solid var(--linha);
   border-left: 3px solid var(--verde);
   font-size: 14.5px; color: var(--texto-suave);
 }
@@ -37,7 +43,7 @@
 .consent {
   display: flex; gap: 10px; align-items: flex-start;
   margin-top: 16px; padding: 12px 15px; border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--vidro); border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12.5px; color: var(--texto-fraco); line-height: 1.55;
 }
 .consent input { accent-color: var(--verde); width: 17px; height: 17px; flex: none; margin-top: 1px; }
@@ -63,8 +69,8 @@
 .legal__fechar {
   position: absolute; top: 16px; right: 16px;
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
-  background: rgba(255, 255, 255, 0.07); color: var(--texto-suave);
+  background: var(--vidro); color: var(--texto-suave);
   transition: all var(--transicao);
 }
-.legal__fechar:hover { background: rgba(248, 113, 113, 0.2); color: #FCA5A5; }
+.legal__fechar:hover { background: rgba(248, 113, 113, 0.2); color: var(--erro-txt); }
 .legal__fechar svg { width: 19px; height: 19px; }
