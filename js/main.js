@@ -1,16 +1,8 @@
-﻿/* =========================================================
+/* =========================================================
    JVI Carga & Serviços — Landing Page
    ========================================================= */
 
 const REDUCIDO = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* ---------- Configuração da empresa ---------- */
-const JVI = {
-  whatsapp: '258875558005',
-  telefone: '+258875558005',
-  email: 'jvicargaservicos@gmail.com',
-  endpoint: '/.netlify/functions/submit',
-};
 
 /* =========================================================
    HEADER + MENU MÓVEL + BARRA DE PROGRESSO
@@ -412,238 +404,24 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* =========================================================
-   FORMULÁRIO AIRWAYBILL
+   FORMULÁRIO DE ORÇAMENTO — 3 passos, dentro do pop-up
    ========================================================= */
-const tpl = document.getElementById('tplOrc');
+import {
+  iniciarOrcamento, msgEmpresa, msgCliente, linkWa, JVI_WHATSAPP,
+} from './orcamento.js';
 
-/* O mesmo formulário vive na secção e no modal. Como não pode haver
-   IDs duplicados, cada clone recebe um prefixo próprio e os `for` /
-   `aria-labelledby` / `aria-describedby` são reescritos em conformidade. */
-function montarFormulario(destino, prefixo) {
-  const frag = tpl.content.cloneNode(true);
-  const mapa = new Map();
-  frag.querySelectorAll('[id]').forEach((el) => mapa.set(el.id, `${prefixo}-${el.id}`));
-  frag.querySelectorAll('[id]').forEach((el) => { el.id = mapa.get(el.id); });
-  frag.querySelectorAll('label[for]').forEach((el) => {
-    if (mapa.has(el.htmlFor)) el.htmlFor = mapa.get(el.htmlFor);
-  });
-  frag.querySelectorAll('[aria-labelledby], [aria-describedby]').forEach((el) => {
-    ['aria-labelledby', 'aria-describedby'].forEach((attr) => {
-      const v = el.getAttribute(attr);
-      if (!v) return;
-      el.setAttribute(attr, v.split(/\s+/).map((t) => mapa.get(t) || t).join(' '));
-    });
-  });
-  destino.appendChild(frag);
-}
+/* O formulário vive só no modal — o briefing pede pop-up, e uma
+   segunda instância na secção obligaria a prefixar todos os IDs.
+   A secção fica com o CTA e a tabela de preços em texto. */
+document.getElementById('orcRaiz').append(
+  document.getElementById('tplOrc').content.cloneNode(true)
+);
+iniciarOrcamento(document.querySelector('#orcRaiz [data-orc]'));
 
-montarFormulario(document.getElementById('orcSecao'), 'orc-a');
-montarFormulario(document.getElementById('orcModal'), 'orc-b');
-
+/* Todos os "Pedir orçamento" abrem o pop-up, sem excepções por
+   largura de ecrã. */
 document.querySelectorAll('[data-abrir-orc]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const alvo = window.innerWidth < 1000 ? document.getElementById('orcSecao') : document.getElementById('orcModal');
-    const rect = alvo.getBoundingClientRect();
-    if (modal.dataset.aberto === 'false' && rect.top < window.innerHeight && rect.bottom > 0 && alvo.id === 'orcSecao') {
-      alvo.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      abrirModal();
-    }
-  });
-});
-
-/* Lógica do formulário, aplicada a cada instância (secção + modal) */
-document.querySelectorAll('.orc__form').forEach((form) => {
-  const raiz = form.closest('.orc');
-  const passosBtns = [...raiz.querySelectorAll('.orc-passo-btn')];
-  const seccoes = [...raiz.querySelectorAll('.form-seccao')];
-  const barra = form.querySelector('.orc__barra');
-  const barraFill = barra.querySelector('span');
-  const btnAnt = form.querySelector('[data-ant]');
-  const btnSeg = form.querySelector('[data-seg]');
-  const btnEnv = form.querySelector('[data-env]');
-  const estado = form.querySelector('[data-estado]');
-  let atual = 0;
-  function valido(sec) {
-    let ok = true;
-    seccoes[sec].querySelectorAll('[required]').forEach((inp) => {
-      const campo = inp.closest('.campo');
-      const vazio = !inp.value.trim();
-      const emailRuim = inp.type === 'email' && inp.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inp.value);
-      const mau = vazio || emailRuim;
-      if (mau) ok = false;
-      if (campo) campo.dataset.erro = String(mau);
-      if (mau && ok === false && document.activeElement !== inp) inp.focus({ preventScroll: false });
-    });
-    return ok;
-  }
-
-  function mostrar(idx) {
-    atual = Math.max(0, Math.min(seccoes.length - 1, idx));
-    seccoes.forEach((s, i) => (s.dataset.ativa = String(i === atual)));
-    passosBtns.forEach((b, i) => {
-      b.setAttribute('aria-current', String(i === atual));
-      b.dataset.feito = String(i < atual);
-    });
-    const pct = ((atual + 1) / seccoes.length) * 100;
-    barraFill.style.width = `${pct}%`;
-    barra.setAttribute('aria-valuenow', Math.round(pct));
-    btnAnt.disabled = atual === 0;
-    btnSeg.hidden = atual === seccoes.length - 1;
-    btnEnv.hidden = atual !== seccoes.length - 1;
-    actualizarResumo();
-  }
-
-  /* Cada erro fica ligado ao seu campo por aria-describedby, para o
-     leitor de ecra anunciar a falha quando o campo recebe o foco. */
-  form.querySelectorAll('.campo[data-campo]').forEach((campo) => {
-    const msg = campo.querySelector('.campo__erro');
-    const inp = campo.querySelector('input, select, textarea');
-    if (msg && inp) {
-      if (!msg.id) msg.id = `${inp.id}-erro`;
-      inp.setAttribute('aria-describedby', msg.id);
-    }
-  });
-
-  function actualizarResumo() {
-    const g = (n) => form.elements[n]?.value?.trim() || '—';
-    const nVol = g('volumes');
-    const peso = g('peso');
-    const base = parseFloat(g('valor_cobrar')) || 0;
-    const iva = Math.round(base * 0.16 * 100) / 100;
-    form.elements.iva.value = base ? iva.toFixed(2) : '';
-    const total = base + iva;
-    /* O resumo vive na coluna lateral, fora do <form>: procuramos em `raiz`. */
-    const alvo = (n) => raiz.querySelector(`[data-res="${n}"]`);
-    const res = {
-      emissor: alvo('emissor'), carga: alvo('carga'),
-      destino: alvo('destino'), valores: alvo('valores'),
-    };
-    if (res.emissor) res.emissor.textContent = `${g('emissor_nome')} — ${g('emissor_endereco')}`;
-    if (res.carga) res.carga.textContent = `${nVol} vol · ${peso} kg — ${g('descricao')}`;
-    if (res.destino) res.destino.textContent = `${g('receptor_nome')} — ${g('receptor_endereco')}`;
-    if (res.valores) res.valores.textContent = base
-      ? `${base.toFixed(2)} + IVA ${iva.toFixed(2)} = ${total.toFixed(2)} MZN (${form.querySelector('input[name="pagamento"]:checked')?.value || 'Numerário'})`
-      : 'A definir pela JVI';
-  }
-
-  form.elements.valor_cobrar?.addEventListener('input', actualizarResumo);
-  form.addEventListener('change', (e) => {
-    if (e.target.name === 'pagamento') {
-      const v = e.target.value;
-      form.querySelector('[data-campo="cheque_num"]').hidden = v !== 'Cheque';
-      form.querySelector('[data-campo="banco"]').hidden = v !== 'Cheque';
-    }
-    if (e.target.name === 'canal' || e.target.name === 'pagamento') actualizarResumo();
-  });
-
-  passosBtns.forEach((b) => b.addEventListener('click', () => {
-    const alvo = Number(b.dataset.passo);
-    if (alvo > atual && !valido(atual)) return;
-    mostrar(alvo);
-  }));
-  btnSeg.addEventListener('click', () => { if (valido(atual)) mostrar(atual + 1); });
-  btnAnt.addEventListener('click', () => mostrar(atual - 1));
-
-  const ABERTO_EM = Date.now();
-  const consent = form.querySelector('[data-consent]');
-  const consentCaixa = form.querySelector('input[name="consentimento"]');
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!seccoes.every((_, i) => valido(i))) { mostrar(seccoes.findIndex((_, i) => !valido(i))); return; }
-
-    /* Sem consentimento não enviamos nada: a caixa é obrigatória */
-    if (!consentCaixa.checked) {
-      consent.dataset.erro = 'true';
-      estado.dataset.mostrar = 'true';
-      estado.className = 'estado-envio estado-envio--erro';
-      estado.textContent = 'Para enviar o pedido, precisa de aceitar a Política de Privacidade.';
-      consentCaixa.focus();
-      return;
-    }
-    consent.dataset.erro = 'false';
-
-    const dados = Object.fromEntries(new FormData(form).entries());
-    delete dados.consentimento;
-    dados.origem = 'site';
-    dados.canal = form.querySelector('input[name="canal"]:checked')?.value || 'ambos';
-    dados.pagamento = form.querySelector('input[name="pagamento"]:checked')?.value || 'Numerário';
-    /* Tempo de preenchimento: o backend descarta pedidos < 3 s (bots) */
-    dados._t = Date.now() - ABERTO_EM;
-
-    btnEnv.disabled = true;
-    btnEnv.textContent = 'A enviar…';
-    estado.dataset.mostrar = 'true';
-    estado.className = 'estado-envio estado-envio--aviso';
-    estado.textContent = 'A enviar o seu pedido…';
-
-    const textoWA = [
-      `*Pedido de orçamento — JVI Carga & Serviços*`,
-      ``,
-      `*Emissor:* ${dados.emissor_nome} (${dados.emissor_contacto})`,
-      `*Carga:* ${dados.volumes} vol · ${dados.peso} kg`,
-      `*Descrição:* ${dados.descricao}`,
-      `*Destino:* ${dados.receptor_nome} — ${dados.receptor_endereco}`,
-      dados.valor_cobrar ? `*Valor estimado:* ${dados.valor_cobrar} MZN` : '',
-    ].filter(Boolean).join('\n');
-
-    let gravouSheet = false;
-    let enviouEmail = false;
-    let falhou = false;
-    let mensagem = '';
-
-    try {
-      const r = await fetch(JVI.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dados),
-      });
-      const resp = await r.json().catch(() => ({}));
-      gravouSheet = Boolean(resp.sheet);
-      enviouEmail = Boolean(resp.email);
-      if (r.status === 429) { falhou = true; mensagem = resp.erro || 'Demasiados pedidos seguidos. Aguarde um momento e tente de novo.'; }
-      else if (r.status === 400) { falhou = true; mensagem = resp.erro ? `Não foi possível enviar: ${resp.erro}. Verifique os dados e tente de novo.` : 'Dados inválidos.'; }
-      else if (r.status >= 500) { falhou = true; mensagem = 'O serviço de registo está temporariamente indisponível.'; }
-    } catch {
-      falhou = true;
-    }
-
-    const canal = dados.canal;
-
-    if (falhou) {
-      estado.className = 'estado-envio estado-envio--erro';
-      estado.textContent = mensagem + ' Pode enviar o pedido directamente por WhatsApp ou email — os botões ao lado.';
-      if (canal === 'ambos' || canal === 'whatsapp') {
-        window.open(`https://wa.me/${JVI.whatsapp}?text=${encodeURIComponent(textoWA)}`, '_blank', 'noopener');
-      }
-      if (canal === 'email') {
-        window.location.href = `mailto:${JVI.email}?subject=${encodeURIComponent('Pedido de orçamento de transporte')}&body=${encodeURIComponent(textoWA)}`;
-      }
-      btnEnv.disabled = false;
-      btnEnv.textContent = 'Enviar pedido';
-      return;
-    }
-
-    estado.className = 'estado-envio estado-envio--ok';
-    estado.textContent =
-      'Pedido registado. A JVI Carga & Serviços já recebeu o seu pedido de orçamento e vai entrar em contacto consigo.';
-
-    if (canal === 'ambos' || canal === 'whatsapp') {
-      window.open(`https://wa.me/${JVI.whatsapp}?text=${encodeURIComponent(textoWA)}`, '_blank', 'noopener');
-    }
-    if (canal === 'email' && !enviouEmail) {
-      window.location.href = `mailto:${JVI.email}?subject=${encodeURIComponent('Pedido de orçamento de transporte')}&body=${encodeURIComponent(textoWA)}`;
-    }
-    if (!gravouSheet && !enviouEmail) {
-      estado.className = 'estado-envio estado-envio--aviso';
-      estado.textContent += ' (Registo automático temporariamente indisponível — o contacto directo acima está garantido.)';
-    }
-
-    btnEnv.disabled = false;
-    btnEnv.textContent = 'Enviar pedido';
-  });
-  mostrar(0);
+  btn.addEventListener('click', abrirModal);
 });
 
 /* =========================================================

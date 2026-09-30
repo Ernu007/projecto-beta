@@ -1,0 +1,162 @@
+/* =========================================================
+   JVI Carga & Serviços — Assistente de orçamento (3 passos)
+   ------------------------------------------------------------
+   Espaçamento na escala de 4/8 px. Só entra aqui o que o
+   styles.css não define (o formulário antigo foi removido).
+   ========================================================= */
+
+.orc { display: grid; gap: 24px; }
+
+/* ---------- Indicador de progresso ---------- */
+.orc__cabec { display: grid; gap: 12px; }
+.orc__passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.orc-passo {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  font-size: 13px; font-weight: 700; color: var(--texto-fraco);
+}
+.orc-passo__n {
+  width: 28px; height: 28px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-size: 12.5px; font-weight: 800;
+  background: rgba(255, 255, 255, 0.07); color: var(--texto-fraco);
+  border: 1px solid transparent; transition: all var(--transicao);
+}
+.orc-passo__t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.orc-passo[data-estado="feito"] .orc-passo__n { background: var(--verde-escuro); color: var(--base); }
+.orc-passo[data-estado="feito"] { color: var(--texto-suave); }
+.orc-passo[data-estado="ativo"] .orc-passo__n { background: var(--verde); color: var(--base); }
+.orc-passo[data-estado="ativo"] { color: var(--texto); }
+
+.orc__barra { height: 4px; border-radius: 100px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.orc__barra span {
+  display: block; height: 100%; width: 33%; border-radius: 100px;
+  background: linear-gradient(90deg, var(--verde), var(--laranja));
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Passos ---------- */
+.orc-seccao { display: none; border: 0; margin: 0; padding: 0; min-width: 0; }
+.orc-seccao[data-ativa="true"] { display: grid; gap: 16px; animation: entra 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+.orc-seccao__t { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+
+/* ---------- Campos ---------- */
+.campos { display: grid; gap: 16px; }
+@media (min-width: 620px) { .campos--2 { grid-template-columns: repeat(2, 1fr); } }
+.campo { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.campo--largo { grid-column: 1 / -1; }
+.campo label, .campo__rotulo { font-size: 12.5px; font-weight: 700; color: var(--texto-suave); letter-spacing: 0.02em; }
+.campo .ob { color: var(--laranja); }
+.campo .opc {
+  margin-left: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--texto-fraco);
+}
+.campo input, .campo select, .campo textarea {
+  width: 100%; padding: 14px 16px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04); color: var(--texto);
+  border: 1px solid rgba(255, 255, 255, 0.11); font: inherit; font-size: 16px;
+  transition: border-color var(--transicao), background var(--transicao), box-shadow var(--transicao);
+}
+.campo textarea { min-height: 84px; resize: vertical; }
+.campo select {
+  appearance: none; padding-right: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A9CF44' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center; background-size: 18px;
+}
+.campo select option { background: var(--base-2); color: var(--texto); }
+.campo input::placeholder, .campo textarea::placeholder { color: rgba(203, 213, 225, 0.6); }
+.campo input:focus, .campo select:focus, .campo textarea:focus {
+  outline: none; border-color: var(--verde); background: rgba(169, 207, 68, 0.05);
+  box-shadow: 0 0 0 3px rgba(169, 207, 68, 0.14);
+}
+.campo__ajuda { font-size: 12px; color: var(--texto-fraco); }
+.campo__erro { font-size: 12px; color: #FCA5A5; display: none; }
+.campo[data-erro="true"] input, .campo[data-erro="true"] select { border-color: #F87171; }
+.campo[data-erro="true"] .campo__erro { display: block; }
+
+/* ---------- Preço estimado ---------- */
+.orc-preco {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 24px;
+  padding: 16px 20px; border-radius: 12px;
+  background: rgba(169, 207, 68, 0.08); border: 1px solid var(--linha);
+}
+.orc-preco__r { font-size: 12.5px; color: var(--texto-fraco); }
+.orc-preco__r b { display: block; margin-top: 2px; font-size: 17px; color: var(--texto); font-weight: 800; }
+.orc-preco__r--total { margin-left: auto; text-align: right; }
+.orc-preco__r--total b { color: var(--verde); font-size: 24px; letter-spacing: -0.02em; }
+.orc-preco__nota { margin-top: -8px; font-size: 11.5px; color: var(--texto-fraco); }
+
+/* ---------- Opções (radiogroup) ---------- */
+.opcoes { display: grid; gap: 8px; }
+@media (min-width: 460px) { .opcoes:not(.opcoes--simnao) { grid-template-columns: repeat(3, 1fr); } }
+.opcoes--simnao { grid-template-columns: repeat(2, 1fr); }
+.opcao {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer;
+  border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03); transition: all var(--transicao);
+}
+.opcao:hover { border-color: rgba(169, 207, 68, 0.35); }
+.opcao input { accent-color: var(--verde); width: 18px; height: 18px; flex: none; }
+.opcao span { font-size: 14.5px; font-weight: 700; }
+.opcao small { display: block; font-size: 11.5px; font-weight: 500; color: var(--texto-fraco); }
+.opcao:has(input:checked) { border-color: var(--verde); background: rgba(169, 207, 68, 0.1); }
+
+/* ---------- Navegação ---------- */
+.orc__nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.orc__conta { margin-inline: auto; font-size: 12.5px; color: var(--texto-fraco); }
+.orc__nav .btn--vidro[disabled] { opacity: 0.3; pointer-events: none; }
+
+/* ---------- Consentimento ---------- */
+.consent {
+  display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px;
+  border-radius: 12px; background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.consent input { width: 18px; height: 18px; flex: none; margin-top: 2px; accent-color: var(--verde); }
+.consent label { font-size: 13px; color: var(--texto-suave); }
+.consent a { color: var(--verde); text-decoration: underline; }
+.consent[data-erro="true"] { border-color: #F87171; }
+
+/* ---------- Estado de envio ---------- */
+.estado-envio {
+  margin-top: 16px; padding: 14px 16px; border-radius: 12px; font-size: 14px; display: none;
+}
+.estado-envio[data-mostrar="true"] { display: block; }
+.estado-envio--ok    { background: rgba(169, 207, 68, 0.12); border: 1px solid rgba(169, 207, 68, 0.4); color: var(--verde); }
+.estado-envio--erro  { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.4); color: #FCA5A5; }
+.estado-envio--aviso { background: rgba(234, 130, 64, 0.1); border: 1px solid rgba(234, 130, 64, 0.4); color: #F5B183; }
+
+/* ---------- Modal do orçamento ---------- */
+.modal__caixa--orc { width: min(640px, 100%); }
+.modal__titulo { font-size: clamp(24px, 4vw, 32px); font-weight: 800; letter-spacing: -0.025em; margin: 4px 0 8px; }
+.modal__lead { font-size: 14.5px; color: var(--texto-suave); margin-bottom: 24px; }
+
+/* ---------- CTA dentro da secção ---------- */
+.orc-cta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px;
+  margin-top: 32px; padding: 24px 28px; border-radius: var(--raio);
+  background: linear-gradient(120deg, rgba(169, 207, 68, 0.12), rgba(234, 130, 64, 0.08));
+  border: 1px solid var(--linha);
+}
+.orc-cta__txt { flex: 1 1 280px; font-size: 15px; color: var(--texto-suave); }
+.orc-cta__txt b { color: var(--verde); }
+.btn--grande { padding: 17px 34px; font-size: 16px; }
+
+/* =========================================================
+   CONFIRMAÇÃO
+   ========================================================= */
+.confirm {
+  position: fixed; inset: 0; z-index: 130; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.confirm[data-aberto="true"] { display: flex; }
+.confirm__fundo { position: absolute; inset: 0; background: rgba(5, 9, 18, 0.86); backdrop-filter: blur(8px); }
+.confirm__caixa {
+  position: relative; width: min(520px, 100%); max-height: 90svh; overflow-y: auto;
+  background: var(--base-2); border: 1px solid var(--linha); border-radius: var(--raio);
+  box-shadow: var(--sombra); padding: 32px 28px; animation: sobe 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.confirm__lista { display: grid; grid-template-columns: auto 1fr; gap: 8px 20px; margin: 24px 0 0; font-size: 14px; }
+.confirm__lista dt { color: var(--texto-fraco); font-weight: 700; font-size: 12.5px; }
+.confirm__lista dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.confirm__lista dd[data-destaque="true"] { font-size: 19px; font-weight: 800; color: var(--verde); }
+.confirm__nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.confirm__nav .btn { flex: 1 1 180px; }

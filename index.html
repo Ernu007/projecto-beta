@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/fontes.css">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/privacidade.css">
+<link rel="stylesheet" href="css/orcamento.css">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_MZ">
@@ -377,8 +378,14 @@
   <div class="container">
     <span class="etiqueta">Pedir orçamento</span>
     <h2 class="titulo-seccao">Conte-nos sobre a sua <span class="verde">carga</span>.</h2>
-    <p class="subtitulo-seccao">Preencha o Airwaybill digital — leva menos de dois minutos e respondemos com uma proposta detalhada.</p>
-    <div id="orcSecao"></div>
+    <p class="subtitulo-seccao">Leva menos de dois minutos. Escreve o peso, vê o preço, e envia — a JVI responde com uma proposta detalhada.</p>
+    <div class="orc-cta">
+      <p class="orc-cta__txt">O preço sai do seu peso: <b>3 000 MT</b> até 10 kg, <b>255 MT por kg</b> acima disso, IVA incluído. O preço nunca desce quando o peso sobe.</p>
+      <button class="btn btn--primario btn--grande" data-abrir-orc>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h3"/></svg>
+        Pedir orçamento
+      </button>
+    </div>
   </div>
 </section>
 
@@ -478,237 +485,145 @@
 <!-- ===================== MODAL ORÇAMENTO ===================== -->
 <div class="modal" id="modal" data-aberto="false" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
   <div class="modal__fundo" data-fechar></div>
-  <div class="modal__caixa">
+  <div class="modal__caixa modal__caixa--orc">
     <button class="modal__fechar" data-fechar aria-label="Fechar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
-    <h2 id="modalTitulo" class="titulo-seccao" style="font-size:clamp(24px,4vw,34px)">Peça o seu <span class="verde">orçamento</span></h2>
-    <p class="subtitulo-seccao" style="margin-bottom:26px">Preencha os dados da sua carga. Respondemos com uma proposta detalhada em menos de 24 horas úteis.</p>
-    <div id="orcModal"></div>
+    <span class="etiqueta">Orçamento</span>
+    <h2 id="modalTitulo" class="modal__titulo">Peça o seu <span class="verde">orçamento</span></h2>
+    <p class="modal__lead">Três passos rápidos. O preço aparece logo à medida que escreve o peso.</p>
+    <div id="orcRaiz"></div>
   </div>
 </div>
 
-<!-- ===================== TEMPLATE DO FORMULÁRIO ===================== -->
+<!-- ===================== TEMPLATE DO FORMULÁRIO (3 PASSOS) ===================== -->
 <template id="tplOrc">
-  <div class="orc">
-    <!-- Passos -->
-    <div class="orc__passos" role="tablist" aria-label="Etapas do orçamento">
-      <button class="orc-passo-btn" type="button" data-passo="0" role="tab" aria-current="true">
-        <span class="orc-passo-btn__n">1</span>
-        <span class="orc-passo-btn__t">Dados do Emissor<span class="orc-passo-btn__d">Quem envia</span></span>
-      </button>
-      <button class="orc-passo-btn" type="button" data-passo="1" role="tab">
-        <span class="orc-passo-btn__n">2</span>
-        <span class="orc-passo-btn__t">Mercadorias<span class="orc-passo-btn__d">O que transportamos</span></span>
-      </button>
-      <button class="orc-passo-btn" type="button" data-passo="2" role="tab">
-        <span class="orc-passo-btn__n">3</span>
-        <span class="orc-passo-btn__t">Dados do Receptor<span class="orc-passo-btn__d">Quem recebe</span></span>
-      </button>
-      <button class="orc-passo-btn" type="button" data-passo="3" role="tab">
-        <span class="orc-passo-btn__n">4</span>
-        <span class="orc-passo-btn__t">Valores e Pagamento<span class="orc-passo-btn__d">Cobrança e forma</span></span>
-      </button>
-
-      <!-- O resumo vive na coluna lateral: atualiza-se a cada passo e
-           poupa cerca de 200px de altura na coluna do formulario. -->
-      <div class="resumo" data-resumo>
-        <b>Resumo do pedido</b>
-        <dl>
-          <dt>Emissor</dt><dd data-res="emissor">—</dd>
-          <dt>Destino</dt><dd data-res="destino">—</dd>
-          <dt>Carga</dt><dd data-res="carga">—</dd>
-          <dt>Valores</dt><dd data-res="valores">—</dd>
-        </dl>
-      </div>
+  <form class="orc" novalidate data-orc>
+    <!-- Indicador de progresso -->
+    <div class="orc__cabec">
+      <ol class="orc__passos" data-passos>
+        <li class="orc-passo" data-passo="0" data-estado="ativo"><span class="orc-passo__n">1</span><span class="orc-passo__t">Emissor</span></li>
+        <li class="orc-passo" data-passo="1" data-estado="por-fazer"><span class="orc-passo__n">2</span><span class="orc-passo__t">Carga</span></li>
+        <li class="orc-passo" data-passo="2" data-estado="por-fazer"><span class="orc-passo__n">3</span><span class="orc-passo__t">Pagamento</span></li>
+      </ol>
+      <div class="orc__barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33" aria-label="Progresso do pedido"><span></span></div>
     </div>
 
-    <!-- Formulário -->
-    <form class="orc__form" novalidate>
-      <div class="orc__barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"><span></span></div>
-
-      <!-- Passo 1: Emissor -->
-      <fieldset class="form-seccao" data-seccao="0" data-ativa="true">
-        <h3>Dados do Emissor</h3>
-        <p>Quem envia a carga.</p>
+    <div class="orc__corpo">
+      <!-- ===================== PASSO 1 ===================== -->
+      <fieldset class="orc-seccao" data-seccao="0" data-ativa="true">
+        <legend class="sr-only">Passo 1 — dados do emissor</legend>
+        <h3 class="orc-seccao__t">Quem envia a carga</h3>
         <div class="campos campos--2">
-          <div class="campo campo--largo" data-campo="emissor_nome">
-            <label for="emissor_nome">Nome / Empresa <span class="ob">*</span></label>
-            <input id="emissor_nome" name="emissor_nome" type="text" placeholder="Ex.: Nometade, Lda." required autocomplete="organization">
-            <span class="campo__erro">Indique o nome do emissor.</span>
+          <div class="campo" data-campo="nome">
+            <label for="orcNome">Nome <span class="ob">*</span></label>
+            <input id="orcNome" name="nome" type="text" placeholder="Ex.: João Pedro" required autocomplete="given-name">
+            <span class="campo__erro">Indique o primeiro nome.</span>
           </div>
-          <div class="campo campo--largo" data-campo="emissor_endereco">
-            <label for="emissor_endereco">Endereço <span class="ob">*</span></label>
-            <input id="emissor_endereco" name="emissor_endereco" type="text" placeholder="Cidade, bairro, zona" required>
-            <span class="campo__erro">Indique o endereço do emissor.</span>
+          <div class="campo" data-campo="apelido">
+            <label for="orcApelido">Apelido <span class="ob">*</span></label>
+            <input id="orcApelido" name="apelido" type="text" placeholder="Ex.: Sissu" required autocomplete="family-name">
+            <span class="campo__erro">Indique o apelido.</span>
           </div>
-          <div class="campo" data-campo="emissor_contacto">
-            <label for="emissor_contacto">Contactos <span class="ob">*</span></label>
-            <input id="emissor_contacto" name="emissor_contacto" type="tel" placeholder="+258 8… … … …" required autocomplete="tel">
-            <span class="campo__erro">Indique um número de telefone.</span>
+          <div class="campo" data-campo="provincia">
+            <label for="orcProvincia">Província <span class="ob">*</span></label>
+            <select id="orcProvincia" name="provincia" required></select>
+            <span class="campo__erro">Escolha a província.</span>
           </div>
-          <div class="campo" data-campo="emissor_email">
-            <label for="emissor_email">Email</label>
-            <input id="emissor_email" name="emissor_email" type="email" placeholder="email@exemplo.com" autocomplete="email">
-            <span class="campo__erro">Email inválido.</span>
+          <div class="campo" data-campo="morada">
+            <label for="orcMorada">Morada / bairro <span class="ob">*</span></label>
+            <input id="orcMorada" name="morada" type="text" placeholder="Ex.: Sommachine, Maputo" required autocomplete="street-address">
+            <span class="campo__erro">Indique a morada ou bairro.</span>
+          </div>
+          <div class="campo campo--largo" data-campo="telefone">
+            <label for="orcTelefone">Telefone (WhatsApp) <span class="ob">*</span></label>
+            <input id="orcTelefone" name="telefone" type="tel" inputmode="tel" placeholder="84 793 5035" required autocomplete="tel">
+            <span class="campo__ajuda">É este número que recebe a confirmação. Pode escrever com ou sem o +258.</span>
+            <span class="campo__erro">Indique um número moçambicano válido: 9 dígitos, a começar por 8.</span>
           </div>
         </div>
       </fieldset>
 
-      <!-- Passo 2: Mercadorias -->
-      <fieldset class="form-seccao" data-seccao="1">
-        <h3>Descrição de Mercadorias</h3>
-        <p>Conte-nos o que transportamos.</p>
+      <!-- ===================== PASSO 2 ===================== -->
+      <fieldset class="orc-seccao" data-seccao="1">
+        <legend class="sr-only">Passo 2 — dados da carga</legend>
+        <h3 class="orc-seccao__t">O que transportamos</h3>
         <div class="campos campos--2">
-          <div class="campo" data-campo="volumes">
-            <label for="volumes">N.º de Volumes <span class="ob">*</span></label>
-            <input id="volumes" name="volumes" type="number" min="1" step="1" placeholder="1" required>
-            <span class="campo__erro">Indique quantos volumes.</span>
+          <div class="campo" data-campo="destinatario">
+            <label for="orcDestinatario">Quem recebe <span class="ob">*</span></label>
+            <input id="orcDestinatario" name="destinatario" type="text" placeholder="Nome de quem recebe" required>
+            <span class="campo__erro">Indique quem recebe a carga.</span>
+          </div>
+          <div class="campo" data-campo="provinciaDestino">
+            <label for="orcProvinciaDestino">Província de destino <span class="ob">*</span></label>
+            <select id="orcProvinciaDestino" name="provinciaDestino" required></select>
+            <span class="campo__erro">Escolha a província de destino.</span>
           </div>
           <div class="campo" data-campo="peso">
-            <label for="peso">Peso Bruto (kg) <span class="ob">*</span></label>
-            <input id="peso" name="peso" type="number" min="0.01" step="0.01" placeholder="0.00" required>
-            <span class="campo__erro">Indique o peso bruto.</span>
+            <label for="orcPeso">Peso (kg) <span class="ob">*</span></label>
+            <input id="orcPeso" name="peso" type="number" inputmode="decimal" min="0.1" max="100000" step="0.1" placeholder="Ex.: 15" required>
+            <span class="campo__erro">Indique o peso em quilogramas (mínimo 0,1).</span>
           </div>
-          <div class="campo" data-campo="dimensao_cx">
-            <label for="dimensao_cx">Dimensões — Comprimento (cm)</label>
-            <input id="dimensao_cx" name="dimensao_cx" type="number" min="0" step="0.1" placeholder="0">
-          </div>
-          <div class="campo" data-campo="dimensao_cy">
-            <label for="dimensao_cy">Largura (cm)</label>
-            <input id="dimensao_cy" name="dimensao_cy" type="number" min="0" step="0.1" placeholder="0">
-          </div>
-          <div class="campo" data-campo="dimensao_cz">
-            <label for="dimensao_cz">Altura (cm)</label>
-            <input id="dimensao_cz" name="dimensao_cz" type="number" min="0" step="0.1" placeholder="0">
-          </div>
-          <div class="campo" data-campo="tipo_carga">
-            <label for="tipo_carga">Tipo de carga</label>
-            <select id="tipo_carga" name="tipo_carga">
-              <option value="">Seleccione…</option>
-              <option>Documentos e objectos postais</option>
-              <option>Equipamento de laboratório</option>
-              <option>Material eléctrico e electrónico</option>
-              <option>Peças e acessórios</option>
-              <option>Vestuário e têxteis</option>
-              <option>Alimentos e bebidas</option>
-              <option>Construção e materiais</option>
-              <option>Outro</option>
-            </select>
+          <div class="campo" data-campo="dimensao">
+            <label for="orcDimensao">Dimensões (cm) <span class="opc">opcional</span></label>
+            <input id="orcDimensao" name="dimensao" type="text" placeholder="Ex.: 60 x 40 x 40">
+            <span class="campo__ajuda">Comprimento × largura × altura. Se não souber, deixe vazio.</span>
           </div>
           <div class="campo campo--largo" data-campo="descricao">
-            <label for="descricao">Descrição das mercadorias <span class="ob">*</span></label>
-            <textarea id="descricao" name="descricao" placeholder="Descreva o conteúdo da carga, material e fragilidade…" required></textarea>
-            <span class="campo__erro">Descreva as mercadorias.</span>
+            <label for="orcDescricao">Descrição da mercadoria <span class="ob">*</span></label>
+            <textarea id="orcDescricao" name="descricao" rows="3" placeholder="Ex.: camisetas · tintas PLASCON · material eléctrico" required></textarea>
+            <span class="campo__erro">Descreva a mercadoria.</span>
           </div>
         </div>
-      </fieldset>
 
-      <!-- Passo 3: Receptor -->
-      <fieldset class="form-seccao" data-seccao="2">
-        <h3>Dados do Receptor</h3>
-        <p>Quem recebe a carga e onde.</p>
-        <div class="campos campos--2">
-          <div class="campo campo--largo" data-campo="receptor_nome">
-            <label for="receptor_nome">Nome / Empresa <span class="ob">*</span></label>
-            <input id="receptor_nome" name="receptor_nome" type="text" placeholder="Ex.: Albito" required>
-            <span class="campo__erro">Indique o nome do receptor.</span>
-          </div>
-          <div class="campo campo--largo" data-campo="receptor_endereco">
-            <label for="receptor_endereco">Endereço de destino <span class="ob">*</span></label>
-            <input id="receptor_endereco" name="receptor_endereco" type="text" placeholder="Cidade, bairro, zona" required>
-            <span class="campo__erro">Indique o endereço de destino.</span>
-          </div>
-          <div class="campo" data-campo="receptor_contacto">
-            <label for="receptor_contacto">Contactos <span class="ob">*</span></label>
-            <input id="receptor_contacto" name="receptor_contacto" type="tel" placeholder="+258 8… … … …" required>
-            <span class="campo__erro">Indique um contacto do receptor.</span>
-          </div>
-          <div class="campo" data-campo="receptor_telefone">
-            <label for="receptor_telefone">Telefone do destinatário</label>
-            <input id="receptor_telefone" name="receptor_telefone" type="tel" placeholder="+258 8… … … …">
-          </div>
+        <!-- Custo estimado, calculado com o mesmo módulo que os testes usam -->
+        <div class="orc-preco" data-preco hidden>
+          <span class="orc-preco__r">Base <b data-p-base>—</b></span>
+          <span class="orc-preco__r">IVA 16% <b data-p-iva>—</b></span>
+          <span class="orc-preco__r orc-preco__r--total">Total <b data-p-total>—</b></span>
         </div>
+        <p class="orc-preco__nota">Valor estimado pela tabela em vigor. Confirmamos o preço final ao fechar o orçamento.</p>
       </fieldset>
 
-      <!-- Passo 4: Valores e pagamento -->
-      <fieldset class="form-seccao" data-seccao="3">
-        <h3>Valores e Forma de Pagamento</h3>
-        <p>Valores estimados e forma de liquidação preferida.</p>
-        <div class="campos campos--3">
-          <div class="campo" data-campo="valor_cobrar">
-            <label for="valor_cobrar">Valor a Cobrar (MZN)</label>
-            <input id="valor_cobrar" name="valor_cobrar" type="number" min="0" step="0.01" placeholder="0.00">
-          </div>
-          <div class="campo" data-campo="iva">
-            <label for="iva">IVA (16%)</label>
-            <input id="iva" name="iva" type="number" min="0" step="0.01" placeholder="Calculado automaticamente" readonly>
-          </div>
-          <div class="campo campo--largo" data-campo="valor_extenso">
-            <label for="valor_extenso">Valor por extenso</label>
-            <input id="valor_extenso" name="valor_extenso" type="text" placeholder="Ex.: dois mil e quinhentos meticais">
-          </div>
-          <div class="campo campo--largo">
-            <label>Forma de pagamento</label>
-            <div class="radio radio--pagamento">
-              <label><input type="radio" name="pagamento" value="Numerário" checked> Numerário</label>
-              <label><input type="radio" name="pagamento" value="Cheque"> Cheque</label>
-              <label><input type="radio" name="pagamento" value="Transferência Bancária"> Transferência Bancária</label>
-              <label><input type="radio" name="pagamento" value="M-Pesa"> M-Pesa</label>
+      <!-- ===================== PASSO 3 ===================== -->
+      <fieldset class="orc-seccao" data-seccao="2">
+        <legend class="sr-only">Passo 3 — pagamento</legend>
+        <h3 class="orc-seccao__t">Como pretende pagar</h3>
+        <div class="campos">
+          <div class="campo campo--largo" data-campo="pagamento">
+            <span class="campo__rotulo" id="rotPag">Forma de pagamento <span class="ob">*</span></span>
+            <div class="opcoes" role="radiogroup" aria-labelledby="rotPag">
+              <label class="opcao"><input type="radio" name="pagamento" value="e-Mola" checked> <span>e-Mola<small>Telemóvel</small></span></label>
+              <label class="opcao"><input type="radio" name="pagamento" value="Cartão de crédito"> <span>Cartão de crédito<small>Visa · MasterCard</small></span></label>
+              <label class="opcao"><input type="radio" name="pagamento" value="Numerário"> <span>Numerário<small>Meticais</small></span></label>
             </div>
           </div>
-          <div class="campo" data-campo="cheque_num" hidden>
-            <label for="cheque_num">N.º do cheque</label>
-            <input id="cheque_num" name="cheque_num" type="text" placeholder="N.º do cheque">
-          </div>
-          <div class="campo" data-campo="banco" hidden>
-            <label for="banco">Banco</label>
-            <input id="banco" name="banco" type="text" placeholder="Nome do banco">
-          </div>
-          <div class="campo campo--largo" data-campo="observacoes">
-            <label for="observacoes">Observações</label>
-            <textarea id="observacoes" name="observacoes" placeholder="Instruções especiais, urgência, local exacto de recolha…"></textarea>
-          </div>
-        </div>
 
-        <!-- Anti-spam: invisivel a humanos, attractivo a bots. -->
-        <div class="hp" aria-hidden="true">
-          <label for="website">Não preencha este campo</label>
-          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
-        </div>
+          <div class="campo campo--largo" data-campo="pagarNoLevantamento">
+            <span class="campo__rotulo" id="rotLev">Paga no levantamento, na província de destino?</span>
+            <div class="opcoes opcoes--simnao" role="radiogroup" aria-labelledby="rotLev">
+              <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="sim" checked> <span>Sim<small>Pago quando for buscar</small></span></label>
+              <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="nao"> <span>Não<small>Pago antes do envio</small></span></label>
+            </div>
+          </div>
 
-        <div class="canais">
-          <h4>Como quer enviar o pedido?</h4>
-          <div class="radio radio--canal">
-            <label><input type="radio" name="canal" value="ambos" checked>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-              WhatsApp + Email <span style="font-size:12px;color:var(--texto-fraco)">(recomendado)</span>
-            </label>
-            <label><input type="radio" name="canal" value="whatsapp">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.46 1.32 4.96L2 22l5.25-1.38a9.87 9.87 0 0 0 4.79 1.22h.01c5.46 0 9.9-4.45 9.91-9.91a9.85 9.85 0 0 0-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"/></svg>
-              Só WhatsApp
-            </label>
-            <label><input type="radio" name="canal" value="email">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
-              Só Email <span style="font-size:12px;color:var(--texto-fraco)">(formal, empresas)</span>
-            </label>
+          <div class="consent" data-consent>
+            <input type="checkbox" name="consentimento" value="sim" id="orcConsent">
+            <label for="orcConsent">Li e aceito a <a href="#" data-legal="privacidade">Política de Privacidade</a> e autorizo o tratamento dos meus dados para este orçamento. <span class="ob">*</span></label>
           </div>
         </div>
-
-        <div class="consent" data-consent>
-          <input type="checkbox" name="consentimento" value="sim" id="consentimento">
-          <label for="consentimento">Li e aceito a <a href="#" data-legal="privacidade">Política de Privacidade</a> da JVI Carga &amp; Serviços, e autorizo o tratamento dos dados indicados para efeitos de orçamento e contacto comercial. <span style="color:var(--laranja)">*</span></label>
-        </div>
-
-        <div class="estado-envio" data-estado role="status" aria-live="polite"></div>
       </fieldset>
-      <div class="form-nav">
-        <button class="btn btn--vidro" type="button" data-ant disabled>Anterior</button>
-        <button class="btn btn--primario" type="button" data-seg>Seguinte</button>
-        <button class="btn btn--laranja" type="submit" data-env hidden>Enviar pedido</button>
-      </div>
-    </form>
-  </div>
+    </div>
+
+    <!-- Navegação -->
+    <div class="orc__nav">
+      <button class="btn btn--vidro" type="button" data-ant disabled>Voltar</button>
+      <span class="orc__conta" data-conta aria-live="polite">Passo 1 de 3</span>
+      <button class="btn btn--primario" type="button" data-seg>Continuar</button>
+    </div>
+
+    <div class="estado-envio" data-estado role="status" aria-live="polite"></div>
+  </form>
 </template>
 
 <!-- ===================== POLÍTICA DE PRIVACIDADE ===================== -->
