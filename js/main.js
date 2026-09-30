@@ -367,10 +367,36 @@ function iniciarMapa() {
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
+  /* Quando é que o desenho acaba. Em `desenhar`, a rota de cada capital
+     tem `p = clamp((t - distancia/9) * 1.2)`, ou seja cada rota acaba de
+     desenhar em `t = distancia/9 + 0.833`. A última é a mais distante.
+     Passado isso o mapa já está no estado final.
+
+     O loop não tinha fim. `passo` só parava quando o utilizador saía da
+     secção, e o mapa redesenhava a 60 Hz durante todo o tempo que lá
+     estivesse — mesmo com as rotas Terminadas há segundos. Por frame:
+     ~1 100 `lineTo` das 10 províncias, 10 `fill()`, 34 `stroke()`, 18
+     `createRadialGradient` (9 capitais + o hub) e 10 novas passagens de
+     `ctx.font` nas etiquetas.
+
+     A única coisa que ainda mexia depois de o desenho acabar é o pulso do
+     hub, `13 + Math.sin(t * 2.2) * 4` — um ponto que respira. Não
+     justifica um repaint completo do mapa 60 vezes por segundo, e é
+     exactamente o que empurra o INP para fora da faixa "Good" numa gama
+     média. A secção fica a ser lida, com o rato em cima.
+
+     O `hero-voo.js` já faz isto: `parar = true` quando `t >= 1`. Os dois
+     canvases do site passam a ter a mesma regra. */
+  const T_FIM = Math.max(
+    ...Object.keys(CAPITAIS)
+      .filter((n) => n !== 'Maputo')
+      .map((n) => distancia(CAPITAIS[n], hub)),
+  ) / 9 + 1.2;
+
   resize();
   window.addEventListener('resize', () => { if (visivel) desenhar((performance.now() - t0) / 1000); }, { passive: true });
 
-  if ('IntersectionObserver' in window) {
+  if (TEM_IO) {
     new IntersectionObserver((e) => {
       visivel = e[0].isIntersecting;
       if (!visivel) return;
@@ -379,8 +405,10 @@ function iniciarMapa() {
       if (reduzir) { desenhar(3); return; }
       const passo = (agora) => {
         if (!visivel) return;
-        desenhar((agora - t0) / 1000);
-        requestAnimationFrame(passo);
+        const t = (agora - t0) / 1000;
+        desenhar(t);
+        /* Só continua enquanto o desenho estiver a fazer alguma coisa. */
+        if (t < T_FIM) requestAnimationFrame(passo);
       };
       requestAnimationFrame(passo);
     }, { threshold: 0.15 }).observe(canvas);
