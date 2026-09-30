@@ -153,12 +153,40 @@ descarregável.
 
 ```powershell
 python tools/publicar.py                  # monta dist/ e verifica o que ficou lá dentro
-npx netlify-cli deploy --dir . --functions functions --prod
+npx netlify-cli deploy --dir dist --functions functions --prod
 ```
 
-Ou pelo painel: **Add new site → Deploy manually**, com a pasta `Trabalho Jvi`
-e a directoria de funções `functions`. O `publish = "dist"` do `netlify.toml`
-faz a Netlify servir a subdirectoria.
+**`--dir dist`, e não `--dir .`.** A opção `--dir` diz à CLI o que publicar e
+**substitui** o `publish = "dist"` do `netlify.toml` — o ficheiro de config não
+é consultado para esse efeito neste caminho. Com `--dir .` a Netlify serve a
+raiz inteira e ficam publicamente descarregáveis, linha a linha, cada um
+destes:
+
+| URL | O que passa a estar na Internet |
+| --- | --- |
+| `/docs/decisoes.md` | que telefones não estão confirmados, a divergência do IVA, a da morada, a Fase 7B desactivada |
+| `/BRIEFING-JVI.md` | o briefing do cliente, com a lista de contactos |
+| `/DECISOES-CLIENTE.md` | NUEL, NUIT, licença da empresa |
+| `/functions/submit.js` | o código-fonte da validação: os `LIMITES`, as 11 províncias, o `RE_TEL`, o honeypot `website` e o tempo `_t` — com isto à frente, quem quiser inundar a caixa da JVI sabe exactamente o que contornar |
+| `/tools/*.py`, `/tests/*.js` | os scripts de build e a suite de testes |
+
+O `curl -I .../docs/decisoes.md` da lista abaixo é precisamente a verificação
+que apanha isto. Deve correr **antes** de cada deploy, não depois.
+
+Pelo painel (**Add new site → Deploy manually**) o caminho é diferente: o
+netlify.toml não é lido, e a pasta que se arrasta é toda publicada. Por isso,
+nesse caso, **arrasta a pasta `dist`**, e aponta a directoria de funções para
+`functions`. (Com `publish = "dist"` a Netlify serviria a subdirectoria — mas
+só num deploy ligado ao Git, onde o `command` do `[build]` monta o `dist`
+primeiro.)
+
+Antes de confirmar que o deploy correu bem, confirmar que a raiz **não** foi
+publicada. Estes dois são os que apanham o `--dir .`:
+
+```powershell
+curl -I https://<site>/docs/decisoes.md            # tem de dar 404
+curl -I https://<site>/functions/submit.js         # tem de dar 404
+```
 
 Depois de publicar, confirmar:
 
@@ -166,12 +194,11 @@ Depois de publicar, confirmar:
 curl -I https://<site>/                            # CSP sem unsafe-inline
 curl -I https://<site>/carta/                      # CSP com unsafe-inline
 curl -I https://<site>/.netlify/functions/submit   # sem 405, sem 404
-curl -I https://<site>/docs/decisoes.md            # tem de dar 404
 curl -s https://<site>/index.html | Select-String "wa.me/258847935035"  # o número certo
 ```
 
-O `netlify.toml` já define o publish, as funções, o cache dos assets e os
-headers de segurança.
+O `netlify.toml` já define o publish, o comando de build, as funções, o cache
+e os headers de segurança.
 
 ---
 
