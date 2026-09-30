@@ -15,7 +15,7 @@ HTML = RAIZ / "index.html"
 # Selectores que o JS consulta, com o ficheiro onde sao usados.
 SELECTORES = {
     "js/main.js": [
-        "modal", "orcRaiz", "tplOrc", "tplOrc", "ano", "menu", "menuBtn",
+        "modal", "orcRaiz", "tplOrc", "confirm", "ano", "menu", "menuBtn",
         "menuFundo", "header", "barraTopo", "canvasHero", "canvasMapa",
         "fluxoLinha", "heroRota", "heroRotaTxt", "legalPrivacidade",
     ],
@@ -32,6 +32,7 @@ DATA_ATTRS = [
     "abrir-orc", "fechar", "fechar-legal", "legal", "orc", "ant", "seg",
     "conta", "estado", "consent", "preco", "passos", "campo", "passo",
     "seccao", "ativa", "p-base", "p-iva", "p-total",
+    "fechar-confirm", "confirmar", "resumo-confirm",
 ]
 
 

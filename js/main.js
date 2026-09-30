@@ -407,7 +407,7 @@ document.addEventListener('keydown', (e) => {
    FORMULÁRIO DE ORÇAMENTO — 3 passos, dentro do pop-up
    ========================================================= */
 import {
-  iniciarOrcamento, msgEmpresa, msgCliente, linkWa, JVI_WHATSAPP,
+  iniciarOrcamento, msgEmpresa, msgCliente, linkWa, linhasResumo, JVI_WHATSAPP,
 } from './orcamento.js';
 
 /* O formulário vive só no modal — o briefing pede pop-up, e uma
@@ -422,6 +422,69 @@ iniciarOrcamento(document.querySelector('#orcRaiz [data-orc]'));
    largura de ecrã. */
 document.querySelectorAll('[data-abrir-orc]').forEach((btn) => {
   btn.addEventListener('click', abrirModal);
+});
+
+/* =========================================================
+   CONFIRMAÇÃO ANTES DO ENVIO
+   ------------------------------------------------------------
+   O formulário, já validado, emite `orc:pronto` com os dados.
+   Aqui desenham-se e espera-se por "Confirmar e enviar".
+   ========================================================= */
+const confirm = document.getElementById('confirm');
+let dadosPedido = null;
+let focoConfirm = null;
+let confirmarHandler = null;
+
+/* A implementação real chega na Fase 4; até lá, confirmar não faz nada. */
+let enviarPedido = () => {};
+
+function abrirConfirmacao(d, aoConfirmar) {
+  dadosPedido = d;
+  confirmarHandler = aoConfirmar;
+  focoConfirm = document.activeElement;
+  const dl = confirm.querySelector('[data-resumo-confirm]');
+  dl.replaceChildren(...linhasResumo(d).flatMap(({ rotulo, valor, destaque }) => {
+    const dt = document.createElement('dt');
+    dt.textContent = rotulo;
+    const dd = document.createElement('dd');
+    dd.textContent = valor;
+    if (destaque) dd.dataset.destaque = 'true';
+    return [dt, dd];
+  }));
+  confirm.dataset.aberto = 'true';
+  document.body.classList.add('modal-aberto');
+  confirm.querySelector('[data-confirmar]').focus();
+}
+
+function fecharConfirmacao() {
+  confirm.dataset.aberto = 'false';
+  document.body.classList.remove('modal-aberto');
+  focoConfirm?.focus();
+}
+
+confirm.querySelectorAll('[data-fechar-confirm]')
+  .forEach((el) => el.addEventListener('click', fecharConfirmacao));
+confirm.querySelector('[data-confirmar]').addEventListener('click', () => {
+  fecharConfirmacao();
+  confirmarHandler?.(dadosPedido);
+});
+
+/* O resumo só mostra um valor por campo: nunca HTML vindo do
+   utilizador, o que fecharia a porta a injecção de marcação. */
+document.addEventListener('keydown', (e) => {
+  if (confirm.dataset.aberto !== 'true') return;
+  if (e.key === 'Escape') { fecharConfirmacao(); return; }
+  if (e.key !== 'Tab') return;
+  const itens = [...confirm.querySelectorAll(FOCAVEIS)].filter((el) => el.offsetParent !== null);
+  if (!itens.length) return;
+  const primeiro = itens[0];
+  const ultimo = itens[itens.length - 1];
+  if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+  else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+});
+
+document.addEventListener('orc:pronto', (e) => {
+  abrirConfirmacao(e.detail, enviarPedido);
 });
 
 /* =========================================================

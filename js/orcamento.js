@@ -54,12 +54,6 @@ export function telefoneLegivel(movel) {
   return `+258 ${n.slice(0, 2)} ${n.slice(2, 5)} ${n.slice(5)}`;
 }
 
-/** Ligação wa.me com o número normalizado e a mensagem codificada. */
-export function linkWa(numero, texto) {
-  const n = normalizarTelefone(numero) || String(numero).replace(/\D/g, '');
-  return `https://wa.me/${n}?text=${encodeURIComponent(texto)}`;
-}
-
 const num = (v) => (v === undefined || v === null ? '' : String(v).trim()) || '—';
 
 /* ---------- Mensagem 1: para a JVI ---------- */
@@ -145,7 +139,11 @@ export function linhasResumo(d) {
 }
 
 /* ---------- Leitura do formulário ---------- */
-/** Lê o formulário para um objecto simples, sem elementos de DOM. */
+/**
+ * Lê o formulário para um objecto simples.
+ * Só precisa de `form.elements[nome]` e de `form.querySelector`, por isso
+ * também corre fora do browser — e é assim que os testes o exercitam.
+ */
 export function dados(form) {
   const g = (n) => (form.elements[n]?.value ?? '').toString().trim();
   return {
@@ -156,6 +154,12 @@ export function dados(form) {
     pagamento: form.querySelector('input[name="pagamento"]:checked')?.value || 'Numerário',
     pagarNoLevantamento: form.querySelector('input[name="pagarNoLevantamento"]:checked')?.value || 'sim',
   };
+}
+
+/** Ligação wa.me com o número normalizado e a mensagem codificada. */
+export function linkWa(numero, texto) {
+  const n = normalizarTelefone(numero) || String(numero).replace(/\D/g, '');
+  return `https://wa.me/${n}?text=${encodeURIComponent(texto)}`;
 }
 
 function refInterno() {

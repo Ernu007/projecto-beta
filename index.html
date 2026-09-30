@@ -626,6 +626,21 @@
   </form>
 </template>
 
+<!-- ===================== CONFIRMAÇÃO ANTES DO ENVIO ===================== -->
+<div class="confirm" id="confirm" data-aberto="false" role="dialog" aria-modal="true" aria-labelledby="confirmTitulo">
+  <div class="confirm__fundo" data-fechar-confirm></div>
+  <div class="confirm__caixa">
+    <span class="etiqueta">Confirmar</span>
+    <h2 id="confirmTitulo" class="modal__titulo">Confirme o seu <span class="verde">pedido</span></h2>
+    <p class="modal__lead">Leia e confirme. Depois enviamos tudo por WhatsApp — à JVI e ao seu número.</p>
+    <dl class="confirm__lista" data-resumo-confirm></dl>
+    <div class="confirm__nav">
+      <button class="btn btn--vidro" type="button" data-fechar-confirm>Voltar a editar</button>
+      <button class="btn btn--primario" type="button" data-confirmar>Confirmar e enviar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== POLÍTICA DE PRIVACIDADE ===================== -->
 <div class="legal" id="legalPrivacidade" data-aberto="false" role="dialog" aria-modal="true" aria-labelledby="ppTitulo">
   <div class="legal__fundo" data-fechar-legal></div>
