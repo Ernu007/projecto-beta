@@ -53,15 +53,64 @@
   [headers.values]
     Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
 
+# ---------------------------------------------------------------------------
+# CACHE — porquê nada disto é `immutable`
+#
+# `immutable` com `max-age=31536000` é a política CORRECTA para ficheiros
+# cujo NOME muda quando o conteúdo muda: `logo.a1b2c3d4.webp`. Aí o URL
+# é novo, logo ninguém tem a versão velha em cache, e o browser pode
+# guardá-la um ano sem nunca revalidar.
+#
+# Este projecto não tem nomes com hash. `tools/otimizar-galeria.py` faz
+# `jpg.with_suffix('.webp')` — o nome de saída é o nome do JPG que o
+# cliente enviou, e o sufixo `img_14b85241586` é um identificador do
+# envio, não um resumo do conteúdo. As fontes, o logo e o favicon têm
+# nomes fixos.
+#
+# Consequência do `immutable` como estava: o JVI manda uma fotografia
+# nova com o mesmo nome, ou alguém volta a correr o otimizador com
+# `QUALIDADE` diferente, e o URL fica igual com bytes diferentes.
+# Qualquer visitante que já tenha o ficheiro guarda-o em cache 365 dias
+# e nunca revalida — não há forma de o browser descobrir. Um logo novo,
+# uma foto nova ou uma fonte actualizada nunca chegam a quem já
+# visitou o site.
+#
+# A correcção certa a médio prazo é pôr o hash do conteúdo nos nomes e
+# voltar a `immutable`. Sem toolchain de build, o que fica é uma janela
+# de frescura curta com `stale-while-revalidate`: serve-se instantâneo
+# da cache (que é o caso comum) e revalida-se em segundo plano, com um
+# tecto de 30 dias em que uma versão antiga deixa de ser servida sem
+# ninguém perguntar.
+# ---------------------------------------------------------------------------
 [[headers]]
   for = "/assets/fonts/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
 
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+# HTML, CSS e JS não tinham Cache-Control nenhum: ficavam com o default
+# da plataforma, que revalida a cada visita. Um round-trip extra antes de
+# o browser poder começar a renderizar, num RTT de Moçambique para fora,
+# é o número mais caro do primeiro ecrã. `must-revalidate` no HTML
+# porque é o documento que aponta para o resto.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=604800"
 
 # A função de envio não pode ser cacheada
 [[headers]]
