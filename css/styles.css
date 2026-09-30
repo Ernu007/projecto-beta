@@ -689,12 +689,19 @@ body.modal-aberto { overflow: hidden; }
 /* Palavras do titulo: cada uma acende quando o aviao passa
    pela provincia correspondente. O JS escreve --p (0..1) em cada. */
 .hero h1 { display: grid; gap: 0 0.28em; }
-.h1linha { display: block; white-space: nowrap; }
+.h1linha { display: block; }
 .pal {
   display: inline-block;
-  opacity: calc(0.12 + 0.88 * var(--p, 1));
-  filter: blur(calc((1 - var(--p, 1)) * 5px));
-  transform: translateY(calc((1 - var(--p, 1)) * 0.32em));
+  /* O piso é 0.62, não 0. Com 0.12 o título principal ficava a
+     1,26:1 — quase invisível — durante os ~7 segundos que a animação
+     do voo demora, e para sempre se o canvas não arrancar. A 0.62 o
+     pior estado dá ~4,4:1, acima do 3:1 que o WCAG exige para texto
+     grande. A animação passa a ser um acender, não um desaparecer.
+     O var(--p, 1) garante que sem JS o título fica totalmente
+     visível. */
+  opacity: calc(0.62 + 0.38 * var(--p, 1));
+  filter: blur(calc((1 - var(--p, 1)) * 3px));
+  transform: translateY(calc((1 - var(--p, 1)) * 0.28em));
   transition: opacity .5s cubic-bezier(0.22, 1, 0.36, 1),
               filter .5s cubic-bezier(0.22, 1, 0.36, 1),
               transform .5s cubic-bezier(0.22, 1, 0.36, 1);

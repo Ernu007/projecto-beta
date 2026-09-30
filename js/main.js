@@ -119,27 +119,42 @@ function iniciarHero() {
   const hero = document.getElementById('hero');
   if (!canvas || !hero) return;
 
-  /* Cada palavra do titulo acende quando o aviao entra na provincia
-     correspondente. Sem o scene, o titulo fica todo visivel. */
+  /* Cada palavra do título acende quando o avião entra na província
+     correspondente. Sem o scene, o título fica todo visível. */
   const palavras = [...hero.querySelectorAll('.pal')];
   const marca = palavras.map((el) => {
     el.style.setProperty('--p', '0');
     return el;
   });
+  /* Se a animação não arrancar, o título não pode ficar apagado: o
+     piso de opacidade em CSS segura-se, mas melhor é repô-lo. */
+  const reporTitulo = () => marca.forEach((el) => el.style.setProperty('--p', '1'));
 
   requestAnimationFrame(() => {
     hero.classList.add('pronto');
-    iniciarVoo(canvas, {
-      aoProgredir(prog) {
-        palavras.forEach((el, i) => {
-          const alvo = (i + 0.35) / palavras.length;
-          const v = Math.max(0, Math.min(1, (prog - alvo) / 0.16));
-          el.style.setProperty('--p', v.toFixed(3));
-        });
-        marca.length; void NOME_PALAVRA; void ROTA;
-      },
-    });
+    try {
+      iniciarVoo(canvas, {
+        aoProgredir(prog) {
+          palavras.forEach((el, i) => {
+            const alvo = (i + 0.35) / palavras.length;
+            const v = Math.max(0, Math.min(1, (prog - alvo) / 0.16));
+            el.style.setProperty('--p', v.toFixed(3));
+          });
+          marca.length; void NOME_PALAVRA; void ROTA;
+        },
+      });
+    } catch (erro) {
+      console.warn('JVI: a animação do hero não arrancou — título reposto.', erro);
+      reporTitulo();
+    }
   });
+  /* Rede de segurança: se daqui a 9 s o título ainda estiver apagado,
+     é porque o IntersectionObserver nunca disparou. */
+  setTimeout(() => {
+    if (palavras.some((el) => Number(el.style.getPropertyValue('--p')) < 1)) {
+      reporTitulo();
+    }
+  }, 9000);
 }
 
 /* =========================================================
@@ -451,6 +466,24 @@ const okCliente = raizOrc.querySelector('[data-ok-cliente]');
 /* Lê um campo do formulário, ou string vazia se não existir. */
 const g = (form, nome) => (form.elements[nome]?.value ?? '').toString().trim();
 
+/* Um nó que não exista no HTML não pode derrubar o módulo inteiro.
+   Isto aconteceu: o ecrã de sucesso ficou irmão de #orcRaiz em vez de
+   descendente, o querySelector devolveu null, e o TypeError matou o
+   envio do orçamento, o mapa e a galeria — tudo o que viesse depois
+   da linha no topo do módulo. O teste em tests/dom.test.js apanha a
+   versão do HTML; isto apanha a próxima. */
+function noRaiz(seletores) {
+  for (const sel of seletores) {
+    const el = raizOrc.querySelector(sel);
+    if (!el) {
+      console.warn(`JVI: ${sel} não existe dentro de #orcRaiz — funcionalidade afectada.`);
+      continue;
+    }
+    return el;
+  }
+  return null;
+}
+
 async function enviarPedido(d) {
   const clienteTel = normalizarTelefone(d.telefone);
   const paraEmpresa = linkWa(JVI_WHATSAPP, msgEmpresa(d));
@@ -509,7 +542,7 @@ async function enviarPedido(d) {
 }
 
 /* Fechar rearma o formulário para o próximo pedido, sem recarregar. */
-raizOrc.querySelector('[data-ok-fechar]').addEventListener('click', () => {
+raizOrc.querySelector('[data-ok-fechar]')?.addEventListener('click', () => {
   okCaixa.hidden = true;
   okNota.textContent = '';
   formOrc.reset();
