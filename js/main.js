@@ -581,7 +581,30 @@ async function enviarPedido(d) {
         _t: ms,
       }),
     });
-    registado = r.ok;
+    /* `r.ok` só diz que a resposta foi 2xx — e o servidor responde 200
+       em três situações que não são "registado":
+
+         {ok:true, email:…, sheet:…}        — registado mesmo
+         {ok:true, spam:true}               — descartado como bot
+         {ok:true, registo:false}           — NENHUM canal funcionou
+
+       A terceira é a configuração por omissão: a função documenta que
+       nenhuma das chaves é obrigatória, e sem `RESEND_API_KEY` nem
+       `SHEET_ID` — o estado de um site novo — o servidor responde
+       200/registo:false e não escreve nada em lado nenhum. Com `r.ok`
+       a dizer `true`, o site affirmava "Pedido também registado no
+       sistema da JVI" sem que existisse registo, e a Política de
+       Privacidade promete ao cliente que o pedido fica numa folha de
+       cálculo.
+
+       O que se diz ao utilizador tem de ser o que o servidor respondeu,
+       e não o que o HTTP deixou passar.
+
+       A chave é `registo`, sem o "r" — é o que o `functions/submit.js`
+       devolve. O `tests/registo.test.js` fixa o nome dos dois lados, que
+       é a forma mais barata de isto voltar a divergir em silêncio. */
+    const j = await r.json().catch(() => ({}));
+    registado = r.ok && j.spam !== true && j.registo !== false;
   } catch {
     registado = false;
   }
