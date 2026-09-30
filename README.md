@@ -40,10 +40,12 @@ Trabalho Jvi/
 │   ├── orcamento.js        Assistente, validação, mensagens de WhatsApp — puro + DOM
 │   ├── galeria.js          Luzbox acessível
 │   ├── hero-voo.js         Voo da carga no hero
+│   ├── rota.js             Link de direcções para o terminal (Fase 7A) — puro
 │   └── mapa-dados.js       Fronteiras de Moçambique (geoBoundaries ADM1)
-├── tests/                  71 testes com o runner nativo do Node
+├── tests/                  88 testes com o runner nativo do Node
 │   ├── precos.test.js
 │   ├── orcamento.test.js
+│   ├── rota.test.js          Link de direcções, morada e política de privacidade
 │   ├── confirmacao.test.js
 │   ├── envio.test.js
 │   ├── envio-camada.test.js
@@ -112,7 +114,7 @@ Sem dependências: usa o runner nativo do Node (18 ou superior).
 npm test
 ```
 
-São 71 testes. Os que mais importam são os de `tests/precos.test.js`, que
+São 88 testes. Os que mais importam são os de `tests/precos.test.js`, que
 verificam a tabela de preços e provam que **o preço nunca desce quando o peso
 sobe** (monotonicidade testada de 0,02 a 50,01 kg, em passos de 10 g).
 
@@ -335,6 +337,9 @@ uns aos outros. Já apanhou um: `logo-cor.png` era cópia exacta de `logo.png`,
 | Nada de código-fonte nem notas internas publicado | `tools/publicar.py` → `dist/` |
 | Consentimento obrigatório antes de enviar | `index.html` + `js/orcamento.js` |
 | Política de privacidade a nomear Meta, Resend e Netlify | diálogo acessível no rodapé |
+| **Nenhum tracking de localização em lado nenhum** | não há `geolocation` nem `watchPosition` no site; a 7B está desactivada |
+| **Link de direcções sem `origin`** — a posição não sai do browser de quem clica | `js/rota.js` → `linkDirecoes()`, `tests/rota.test.js` |
+| **Telefone do cliente nomeado e normalizado nos três canais de aviso** | `functions/submit.js` → `telefoneCallback()` |
 
 > **O rate limit é melhor-esforço, não um controlo duro.** Vive na memória de
 > uma instância, e as Netlify Functions escalam na horizontal: com N instâncias

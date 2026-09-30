@@ -4,8 +4,9 @@
    das mensagens, que é onde vivem os buracos, são. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validar, textoWA, esc, celula, campoLimpo, RE_EMAIL, RE_TEL,
-  LIMITES, calcularPrecoServidor, PROVINCIAS } from '../functions/submit.js';
+import { validar, textoWA, textoEmail, esc, celula, campoLimpo, RE_EMAIL, RE_TEL,
+  LIMITES, calcularPrecoServidor, PROVINCIAS, telefoneCallback, CAMPOS }
+  from '../functions/submit.js';
 
 const BOM = {
   nome: 'João Pedro',
@@ -170,6 +171,75 @@ test('textoWA sem total nao inventa um valor', () => {
   const t = textoWA(BOM);
   assert.doesNotMatch(t, /MT/);
   assert.doesNotMatch(t, /undefined|NaN/);
+});
+
+/* ---------------------------------------------------------------------------
+   A ALTERNATIVA À FASE 7B, NO CANAL DO SERVIDOR
+
+   A 7B (a JVI saber que o cliente está a chegar, com a posição e a
+   hora) fica DESACTIVADA por falta de API key do Google. O que fica é
+   o número do cliente no aviso, para a JVI LIGAR DE VOLTA — sem
+   geolocalização, sem tracking, sem estimativas inventadas.
+
+   Este canal (WhatsApp da função, folha de cálculo e e-mail) é o
+   registo duradouro do pedido, e é por ele que a JVI vai buscar o
+   número quando o cliente não manda mensagem. Por isso o número vai
+   normalizado para `+258 …`: interessa o número para onde se telefona,
+   não a grafia com que o cliente o escreveu. Ver `docs/decisoes.md`.
+   --------------------------------------------------------------------------- */
+
+test('o aviso do servidor nomeia o numero como sendo do cliente', () => {
+  const t = textoWA({ ...BOM, preco_total: 3480 });
+  assert.match(t, /Telefone do cliente: \+258 84 793 5035/);
+  assert.doesNotMatch(t, /• WhatsApp:/,
+    'o rótulo antigo não diz de quem é o número');
+});
+
+test('telefoneCallback normaliza qualquer escrita para +258 …', () => {
+  for (const t of ['84 793 5035', '+258 84 793 5035', '258847935035',
+    '00258847935035', '258 84 793 5035', '0847935035']) {
+    assert.equal(telefoneCallback(t), '+258 84 793 5035', `escrita: ${t}`);
+  }
+  assert.equal(telefoneCallback('82 555 8005'), '+258 82 555 8005');
+});
+
+test('telefoneCallback nunca perde o numero do cliente', () => {
+  /* A normalizacao só conhece telemóveis moçambicanos. O que não
+     normaliza (uma fixa, um número escrito de outra maneira) é devolvido
+     tal e qual, NUNCA descartado: perder o contacto é pior do que o
+     guardar com a grafia que o cliente usou. */
+  for (const t of ['21 123 456', '+351 912 345 678', 'abc', '', null]) {
+    const r = telefoneCallback(t);
+    assert.equal(r, t === null || t === undefined ? '' : String(t),
+      `entrada: ${String(t)}`);
+  }
+});
+
+/* O aviso vai por três canais: a mensagem de WhatsApp que o cliente
+   manda, o e-mail e a folha de cálculo. Se o número chega num e não
+   chega no outro, a JVI liga a partir de uns e não de outros — e a
+   folha é onde o registo é consultado meses depois. */
+test('o e-mail tambem leva o numero do cliente, no formato de telefone', () => {
+  const { text, html, subject } = textoEmail({ ...BOM, preco_total: 3480 });
+  assert.match(text, /Telefone do cliente: \+258 84 793 5035/);
+  assert.match(html, /Telefone do cliente/);
+  assert.match(html, /\+258 84 793 5035/);
+  assert.doesNotMatch(text, /Telefone \(WhatsApp\)/,
+    'o rótulo antigo não diz de quem é o número');
+  assert.ok(subject.length > 0);
+});
+
+test('a folha de calculo regista o telefone do cliente, na ordem das colunas', () => {
+  /* `CAMPOS` é a lista de cabeçalhos da folha. A ordem não pode mudar —
+     a folha já existe com as colunas criadas — mas o rótulo pode, e
+     tem de dizer de quem é o número. */
+  assert.deepEqual(CAMPOS.map(([k]) => k), [
+    'nome', 'apelido', 'provincia', 'morada', 'telefone', 'destinatario',
+    'provinciaDestino', 'peso', 'dimensao', 'descricao', 'pagamento',
+    'pagarNoLevantamento', 'preco_total',
+  ]);
+  const telefone = CAMPOS.find(([k]) => k === 'telefone');
+  assert.equal(telefone[1], 'Telefone do cliente');
 });
 
 test('os padroes de email e telefone sao ancorados', () => {

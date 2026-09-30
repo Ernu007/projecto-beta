@@ -121,3 +121,39 @@ test('mensagens com campos vazios nao ficam com "—" a transbordar', () => {
   assert.match(vazio, /NOVO PEDIDO DE ORÇAMENTO/);
   assert.doesNotMatch(vazio, /undefined|NaN/);
 });
+
+/* ---------------------------------------------------------------------------
+   A ALTERNATIVA À FASE 7B, QUE NÃO PRECISA DE API KEY
+
+   A 7B (avisar a JVI quando o cliente está a chegar, com a posição e a
+   hora) fica DESACTIVADA: sem `duration_in_traffic` do Google não há
+   estimativa de tempo, e sem estimativa não há como decidir que o
+   cliente está a 5 minutos. Ver `docs/decisoes.md`.
+
+   O que fica, e é o que o cliente queria de facto — "a JVI sabe e
+   telefona" — é o número do cliente no aviso, sem nenhum browser no
+   meio: a JVI liga de volta de um telefone normal, que é um acto
+   humano. Não é geolocalização, mas é o mesmo objectivo.
+
+   O número JÁ ia no aviso. O que estes testes travam é que continue a
+   ir, e que o rótulo diga de quem é — no mesmo aviso há o número do
+   cliente e o da JVI, e "WhatsApp" a solo não desambigua.
+   --------------------------------------------------------------------------- */
+
+test('o aviso a JVI diz de quem e o numero, para ela ligar de volta', () => {
+  const t = msgEmpresa(CHEIO);
+  assert.match(t, /• Telefone do cliente: \+258 84 793 5035/);
+  assert.doesNotMatch(t, /• WhatsApp:/,
+    'o rótulo antigo não diz de quem é o número, e o aviso tem dois');
+});
+
+test('no aviso a JVI o numero de retorno e o do CLIENTE, nunca o da JVI', () => {
+  /* Se os dois números fossem para o mesmo sítio, a JVI ligava para si
+     própria. O número da JVI é a constante `JVI_WHATSAPP` e não pode
+     aparecer no corpo do aviso. */
+  const t = msgEmpresa({ ...CHEIO, telefone: '82 555 8005' });
+  assert.match(t, /• Telefone do cliente: \+258 82 555 8005/);
+  assert.doesNotMatch(t, /\+258 84 793 5035/);
+  assert.doesNotMatch(t, /258847935035/);
+});
+

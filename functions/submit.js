@@ -100,13 +100,17 @@ function campoLimpo(d, chave) {
   return esc(v).trim().slice(0, LIMITES[chave] ?? 200);
 }
 
-/* Uma linha por campo, para a folha de cálculo ter cabeçalho. */
+/* Uma linha por campo, para a folha de cálculo ter cabeçalho.
+   A ORDEM é o que a folha já tem criado — não se mexe. Os rótulos é
+   que vão para o e-mail, e é por isso que o do telefone diz de quem
+   é: no pedido há o número do cliente e o da JVI, e a JVI é quem vai
+   usar este para ligar de volta. */
 export const CAMPOS = [
   ['nome', 'Nome (primeiro)'],
   ['apelido', 'Apelido'],
   ['provincia', 'Província do emissor'],
   ['morada', 'Morada / bairro'],
-  ['telefone', 'Telefone (WhatsApp)'],
+  ['telefone', 'Telefone do cliente'],
   ['destinatario', 'Quem recebe'],
   ['provinciaDestino', 'Província de destino'],
   ['peso', 'Peso (kg)'],
@@ -184,6 +188,37 @@ export function validar(d) {
  *  RE_TEL (que conta caracteres) mas não tem um único dígito. */
 const numDigitos = (v) => String(v ?? '').replace(/\D/g, '').length;
 
+/* ------------------------------------------------------------
+   O telefone de retorno
+   ------------------------------------------------------------
+   A Fase 7B (avisar a JVI de que o cliente está a chegar, com a
+   posição e a hora) fica DESACTIVADA por falta de API key do Google.
+   A alternativa que não precisa de key é esta: o número do cliente
+   vai no aviso, e a JVI LIGA DE VOLTA. É uma chamada normal, de um
+   telefone normal, sem browser nenhum no meio.
+
+   Para isso o número tem de chegar à JVI no formato em que se marca
+   para telefonar. O `RE_TEL` aceita meia dúzia de formas de escrever
+   o mesmo número, e o cliente pode escrever qualquer uma.
+
+   Replicado de `normalizarTelefone` em `js/orcamento.js` em vez de
+   importado, pelo mesmo motivo que a tabela de preços: a Netlify
+   constrói as functions sozinhas, e o servidor tem de validar sem
+   confiar em nada que venha do browser.
+
+   O que não normaliza é devolvido tal e qual. Descartar o número por
+   a escrita não ser a esperada era perder o contacto.
+   ------------------------------------------------------------ */
+export function telefoneCallback(valor) {
+  const bruto = String(valor ?? '').trim();
+  let d = bruto.replace(/\D/g, '');
+  if (d.startsWith('00')) d = d.slice(2);
+  if (d.startsWith('258')) d = d.slice(3);
+  else if (d.startsWith('0')) d = d.slice(1);
+  if (!/^[2-9]\d{8}$/.test(d)) return bruto;
+  return `+258 ${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5)}`;
+}
+
 export function textoWA(d) {
   return [
     '*NOVO PEDIDO DE ORÇAMENTO — JVI Carga & Serviços*',
@@ -191,7 +226,7 @@ export function textoWA(d) {
     `• Emissor: ${d.nome || '—'} ${d.apelido || ''}`.trim(),
     `• Província: ${d.provincia || '—'}`,
     `• Morada: ${d.morada || '—'}`,
-    `• WhatsApp: ${d.telefone || '—'}`,
+    `• Telefone do cliente: ${telefoneCallback(d.telefone) || '—'}`,
     `• Carga: ${d.peso || '—'} kg · ${d.descricao || '—'}`,
     d.dimensao ? `• Dimensões: ${d.dimensao}` : '',
     `• Recebe: ${d.destinatario || '—'} (${d.provinciaDestino || '—'})`,
@@ -200,8 +235,17 @@ export function textoWA(d) {
   ].filter(Boolean).join('\n');
 }
 
-function textoEmail(d) {
-  const linhas = CAMPOS.filter(([k]) => d[k]).map(([k, label]) => `${label}: ${d[k]}`);
+/** O valor que vai no aviso, por campo. Só o telefone muda: em vez da
+ *  grafia do formulário, o número como se marca para telefonar. A
+ *  folha de cálculo continua com o valor cru — é o registo do que o
+ *  cliente escreveu, e o e-mail e o WhatsApp é que são lidos para
+ *  ligar. */
+const valorAviso = (k, v) => (k === 'telefone' ? telefoneCallback(v) : v);
+
+/** Exportada para os testes: o `text:` e o `html:` do MESMO e-mail
+ *  discordam quando um dos dois mente, e isso só se vê comparando. */
+export function textoEmail(d) {
+  const linhas = CAMPOS.filter(([k]) => d[k]).map(([k, label]) => `${label}: ${valorAviso(k, d[k])}`);
   /* `d[k]` já vem escapado de `campoLimpo`. Escapar aqui uma segunda
      vez punha `&amp;amp;` no e-mail e fazia o `text:` e o `html:` do
      MESMO e-mail discordarem. Os rótulos são de uma constante. */
@@ -212,7 +256,7 @@ function textoEmail(d) {
       <p>Recebido pelo site da JVI Carga &amp; Serviços.</p>
       <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif">
       ${CAMPOS.filter(([k]) => d[k])
-        .map(([k, label]) => `<tr><td style="border:1px solid #ddd;background:#f4f4f4"><b>${esc(label)}</b></td><td style="border:1px solid #ddd">${d[k]}</td></tr>`)
+        .map(([k, label]) => `<tr><td style="border:1px solid #ddd;background:#f4f4f4"><b>${esc(label)}</b></td><td style="border:1px solid #ddd">${k === 'telefone' ? esc(telefoneCallback(d[k])) : d[k]}</td></tr>`)
         .join('')}
       </table>
       <p style="color:#666;font-size:12px">Origem: ${esc(d.origem || 'site')}</p>`,

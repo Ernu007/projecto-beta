@@ -61,7 +61,16 @@ export function telefoneLegivel(movel) {
 
 const num = (v) => (v === undefined || v === null ? '' : String(v).trim()) || '—';
 
-/* ---------- Mensagem 1: para a JVI ---------- */
+/* ---------- Mensagem 1: para a JVI ----------
+   O telefone do cliente vai NOMEADO como tal, e não como "WhatsApp":
+   este aviso é lido no telefone da JVI, e a linha seguinte ao número é
+   a que a JVI usa para LIGAR DE VOLTA. O rótulo desambigua os dois
+   números do pedido — o do cliente e o da JVI, que é a constante
+   `JVI_WHATSAPP` e só aparece no endereço do link.
+
+   É a alternativa honesta à Fase 7B (avisar a JVI da aproximação do
+   cliente com a posição), que fica desactivada por falta de API key
+   do Google. Ver `docs/decisoes.md`. */
 export function msgEmpresa(d) {
   const p = calcularPreco(d.peso);
   return [
@@ -73,7 +82,7 @@ export function msgEmpresa(d) {
     `• Nome: ${num(d.nome)} ${num(d.apelido)}`.replace('— —', '').trim(),
     `• Província: ${num(d.provincia)}`,
     `• Morada: ${num(d.morada)}`,
-    `• WhatsApp: ${telefoneLegivel(d.telefone)}`,
+    `• Telefone do cliente: ${telefoneLegivel(d.telefone)}`,
     '',
     '*CARGA*',
     `• Peso: ${num(d.peso)} kg`,

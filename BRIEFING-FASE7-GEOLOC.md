@@ -21,6 +21,44 @@ sair ao estacionamento para o ir buscar.
 
 ---
 
+## Decisão do cliente: SEM API key do Google
+
+O cliente decidiu **não usar a API do Google**. Não há API key, não há billing, não há
+espera por aprovação.
+
+Isto é válido e é a decisão certa para um site deste tamanho. O que muda:
+
+- **A Fase 7B (pop-up de proximidade e aviso à JVI) fica DESACTIVADA.** Sem
+  `duration_in_traffic` não há estimativa de tempo, e sem estimativa não há como
+  decidir quando o cliente está "a 5 minutos".
+- **A Fase 7A fica activa e é entregue sem key**, usando o link de direcções do Google
+  Maps, que é gratuito e não exige conta.
+
+**Não inventes estimativas.** Se não há API, não há número de minutos. É melhor um
+botão que abre direcções verdadeiras do que um "está a 18 minutos" inventado.
+
+### Fase 7A (sem key) — o que se implementa
+
+- Botão na tela inicial: **"Como chegar à JVI"**
+- Ao clicar, abre o Google Maps em direcções para a empresa. Usa o formato oficial,
+  sem key e sem tracking:
+  `https://www.google.com/maps/dir/?api=1&destination=<url-encoded>&travelmode=driving`
+- **A JVI não sabe a posição de ninguém.** O cliente tem a morada e as direcções, e
+  chega lá por si. Ponto final.
+- O botão é secundário: a acção primária continua a ser "Pedir orçamento".
+
+Se a 7A te parece pouco, há uma alternativa honesta que **não precisa de key** e
+mantém parte da ideia original: quando o cliente preenche o formulário de orçamento, o
+aviso para a JVI no WhatsApp passa a incluir **o número de telefone do cliente**, e a
+JVI **liga para ele** — que era o que o cliente queria. Não é geolocalização, mas é o
+"a empresa sabe e telefona" sem nenhum browser no meio. O `DECISOES-CLIENTE.md` já põe
+o telefone como constante única; garante que o número do cliente vai na mensagem.
+
+Implementa **isto** como alternativa à 7B, e deixa a 7B documentada em
+`docs/decisoes.md` como "possível mais tarde, requer API key do Google".
+
+---
+
 ## LIMITAÇÕES DO BROWSER — lê isto antes de implementar
 
 Estas não sãoOpções de implementação. São imposições da plataforma. Qualquer solução
@@ -97,15 +135,33 @@ funcionalidade — é o feedback visual que evita que ele pense que nada acontec
 
 ### Geometria da empresa
 
-A morada da JVI é **uma só**, confirmada pelo cliente, e é a que o site já usa:
+**Coordenadas confirmadas pelo cliente: `-25.929668, 32.572424`**
 
-**Av. 19 de Outubro, Terminal de Cargas Nº 113**
+O terminal de cargas é a **empresa-mãe**: a JVI e os concorrentes são os "filhos" que
+operam lá dentro. Por isso a JVI partilha a morada e as coordenadas com todos os outros
+— e é isso que torna a concorrência um problema: estão todos no mesmo terminal, à vista
+de todos.
 
-Usa **uma** coordenada, a dessa morada. **Precisas de a obter**: o endereço não
-basta, a API quer lat/long. Coloca-a numa constante nomeada no topo do ficheiro, com
-um comentário a dizer que é a morada confirmada e que deve ser substituída se a JVI se
-mudar. Não inventes coordenadas — deixa o valor por preencher
-é melhor do que um valor errado em produção, que mandaria o cliente para o mato.
+Este link do cliente é a fonte:
+`https://maps.apple/p/eQqujn3zMr8DKC` (Terminal de Cargas, Maputo International Airport,
+descrito no Apple Maps como "Airport Terminal · Maputo International Airport")
+
+**Não substituas esta coordenada por outra.** Foi o cliente que confirmou. A descrição
+dizer "Aeroporto" pode sugerir que é o terminal errado — não é, é o terminal onde todos
+operam.
+
+A morada que o site mostra em texto é **Av. 19 de Outubro, Terminal de Cargas Nº 113**
+(confirmada pelo cliente). As coordenadas e a morada textual não precisam de coincidir
+ao metro: as coordenadas servem para o mapa apontar ao terminal, o endereço serve para
+a pessoa chegar à porta certa lá dentro.
+
+O **telefone** é outro assunto e não vem do link: é **+258 84 793 5035**, o único
+confirmado. O link do Maps traz um número diferente (+258 84 511 1211) que **não** é
+da JVI — não o uses em lado nenhum.
+
+Coloca as coordenadas numa constante nomeada no topo do ficheiro, com um comentário a
+explicar o que são (terminal partilhado, empresa-mãe) para ninguém as substituir por
+outra pesquisa.
 
 ### Duas fases de implementação
 
@@ -226,3 +282,35 @@ continua a funcionar. Não inventes estimativas.
 - Actualiza `.env.example` e `docs/decisoes.md`
 - Actualiza o briefing se alguma decisão mudar
 - **Reporta explicitamente:** a 7B está activa ou desactivada, e porquê
+
+---
+
+## O que foi entregue (Setembro de 2026)
+
+A **7A está ACTIVA**. A **7B está DESACTIVADA**, e a alternativa que não
+precisa de key também está activa.
+
+| | Estado | Onde |
+|---|---|---|
+| **7A** — botão "Como chegar à JVI" | **Activa** | `index.html` (hero) + `js/rota.js` |
+| **Alternativa** — a JVI liga de volta | **Activa** | `js/orcamento.js` (`msgEmpresa`) e `functions/submit.js` (`textoWA`, `textoEmail`, `CAMPOS`) |
+| **7B** — aviso de aproximação | **Desactivada** | Nada implementado. Ver `docs/decisoes.md` D16. |
+
+**Porque é que a 7B não foi feita, e não vai ser feita sem key.** O limiar que
+o cliente pediu — "2-5 minutos" — é um limiar de **tempo**, não de metros. A
+única fonte de tempo real de viagem é o `duration_in_traffic` da API Directions,
+que exige API key com billing. A geolocalização do browser só dá linha recta, e
+calibrar o raio por metro nunca coincidiria com o tempo real. Publicar um
+"está a 18 minutos" sem fonte seria inventar. Fica para mais tarde, se houver
+key — e é reactivável sem mexer no botão.
+
+**O que a alternativa entrega, e porque é o que o cliente queria.** O número
+do cliente vai no aviso à JVI nos três canais, nomeado como "Telefone do
+cliente" e normalizado para `+258 …`, e a JVI **liga**. É uma chamada normal,
+de um telefone normal, sem browser no meio. Não é geolocalização e não diz ao
+JVI que o cliente está a chegar — mas é o "a JVI sabe e telefona" que o
+cliente descreveu, e não precisa de API key nenhuma.
+
+**O que ficou por confirmar com o cliente:** a JVI sabe que pode ligar de volta
+a partir do aviso? O número é sempre o melhor para contacto directo, ou
+convém pedir um segundo número no formulário (o `planoEnvio` já suporta)?
