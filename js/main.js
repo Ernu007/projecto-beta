@@ -41,9 +41,24 @@ function alternarMenu(abrir) {
       }, 320);
     }
     document.body.style.overflow = '';
-    if (document.body.contains(document.activeElement)
-      && !menu.contains(document.activeElement)) {
-      (focoMenu === menuBtn ? menuBtn : menuBtn).focus();
+    /* Devolve o foco ao gatilho — mas SÓ quando o foco está dentro do
+       menu que está a fechar, ou já se perdeu no `<body>`.
+
+       A guarda antiga era `!menu.contains(document.activeElement)`, que
+       exclui exactamente o caso que precisa disto: fechar o menu com o
+       Escape enquanto um link dele tem o foco. Aí o `focus()` não corria,
+       e 320 ms depois o painel ia para `display:none` com o foco num nó
+       que deixava de existir — o teclado perdia a posição e a pessoa
+       recomeçava do topo do documento.
+
+       E o ternário era `(focoMenu === menuBtn ? menuBtn : menuBtn)`: os
+       dois ramos iguais, com `focoMenu` capturado na abertura e nunca
+       usado. A intenção era `focoMenu ?? menuBtn`. */
+    const dentroDoMenu = menu.contains(document.activeElement);
+    const semFoco = document.activeElement === document.body
+      || document.activeElement === null;
+    if (dentroDoMenu || semFoco) {
+      (focoMenu instanceof HTMLElement ? focoMenu : menuBtn).focus();
     }
   }
 }
