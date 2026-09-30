@@ -190,7 +190,7 @@ URL URLSearchParams Blob performance structuredClone queueMicrotask
 getComputedStyle alert confirm prompt this arguments if else for while do
 switch case default break continue try catch finally throw function class
 const let var async await yield import export from as static get set of in
-instanceof new typeof void delete return`.split(/\s+/));
+instanceof new typeof void delete return Option`.split(/\s+/));
 
 test('nenhum ficheiro em js/ chama uma funcao que nao declarou', () => {
   const problemas = [];
