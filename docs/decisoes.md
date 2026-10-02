@@ -36,6 +36,79 @@ que a aplicou.
 | D26 | As coordenadas das capitais vêm do OpenStreetMap, e o ponto tem de cair dentro da sua província | Chimoia estava a **450 km** de Manica. Ver a secção "O mapa" abaixo. |
 | D27 | Os dois canvas preenchem **todos** os anéis de cada província, e a secção de Cobertura desenha o contorno do país | Quatro províncias nunca foram preenchidas, e não havia fronteira nenhuma em volta de Moçambique. Ver a secção "O mapa" abaixo. |
 | D28 | Cada salto tem uma seta, e o avião sai da origem de cada salto | Não havia uma única seta, e a spline Catmull-Rom não passava pelas âncoras nas pontas. Ver a secção "O mapa" abaixo. |
+| D29 | O menu tem sete itens: os seis do B1 mais "Nossa empresa", entre "A JVI" e "Contactos", e o móvel é igual ao de topo | Ver "Fase 8B" abaixo. |
+| D30 | O primeiro cartão leva as duas fotografias lado a lado; os quatro cartões ficam dois a dois | Ver "Fase 8B" abaixo. |
+| D31 | A galeria é um carrossel de uma fotografia, com anterior/seguinte e pausa | Ver "Fase 8B" abaixo. |
+| D32 | O "Pedir orçamento" passa a estar visível em todos os tamanhos de ecrã, e o menu de topo só aparece a partir de 1200 px | Ver "Fase 8B" abaixo. |
+
+## Fase 8B — menu, cartões, galeria e a secção nova
+
+A especificação é `tests/interface.test.js`. Onde o briefing era ambíguo:
+
+### D29 — o menu
+O B1 lista seis itens; o B9 pede uma secção nova "Nossa empresa", que
+tem de estar no menu. Ficou entre "A JVI" e "Contactos". "Credenciais" e
+"Perguntas frequentes" saíram do menu, mas as secções continuam na
+página. **Dúvida:** "A JVI" e "Nossa empresa" falam do mesmo assunto; se
+o cliente quiser, as duas fundem-se numa só.
+
+### D30 — os cartões
+O B3 diz "Transporte de carga → Soluções integradas, e os subtítulos de
+transporte aéreo e rodoviário mantêm-se". Leitura: quatro cartões —
+**Soluções integradas**, **Transporte aéreo**, **Transporte rodoviário**
+e **Outras províncias** (B6). Os antigos "Correio & Encomendas" e
+"Soluções Empresariais" foram absorvidos no primeiro (porta-a-porta,
+planos para empresas). As palavras do B6 estavam degradadas na
+transcrição; os textos foram escritos de novo, curtos, para o intento.
+**Dúvida:** o texto exacto que o cliente queria no cartão "Outras
+províncias" — escrevi "Enviamos a partir de Maputo para as dez províncias
+do país".
+
+O B5 ("caixas no chão de um lado, encomendas para a Zambézia do outro")
+foi lido como as duas fotografias **dentro do mesmo cartão**, metade cada
+— as caixas para Nampula empilhadas na rua e a caixa do camião para a
+Zambézia. A grelha passou a duas colunas fixas (uma abaixo de 640 px).
+
+Os cartões não têm `<div>` lá dentro: o corpo do cartão é o próprio
+`<article>` e a figura é `<figure>`.
+
+O "Descarregar perfil da JVI" saiu dos cartões (B4). O download continua
+no rodapé e no cartão "Carta de Apresentação" dos Contactos, que fica
+imediatamente acima do rodapé. A secção nova **não** tem botão de
+download, para não repetir o que o cliente mandou tirar.
+
+### D31 — o carrossel
+Uma fotografia de cada vez, 520 px de largura no máximo ("cards
+pequenos"), a passar de 4,5 em 4,5 s e a voltar ao início no fim. Pára
+com o rato por cima, com o foco lá dentro, com o separador escondido e
+com o botão de pausa — conteúdo que se mexe sozinho mais de 5 s tem de
+poder ser parado (WCAG 2.2.2). Com `prefers-reduced-motion: reduce` não
+arranca. Cada fotografia continua a ser o botão que abre a luzbox.
+
+### D32 — o botão de orçamento
+O `.header` já era `position: fixed`, por isso o botão do topo já ia com
+a página — **mas só a partir de 900 px**; no telemóvel estava escondido
+dentro do menu. Passou a estar sempre visível, mais pequeno no telemóvel,
+ao lado do botão do menu. Tentou-se pôr o botão `fixed` por conta
+própria: a 1280 px ficava por cima de "Nossa empresa." e "Contactos.".
+Com sete itens o menu de topo já não cabe a 900 px, e aparece agora a
+partir de 1200 px; o nome por extenso da marca esconde-se entre 1200 e
+1440 px para lhe dar lugar.
+
+### WhatsApp e Google Maps
+Os cinco ícones do WhatsApp (hero, Contactos, botão flutuante, ecrã de
+sucesso duas vezes) e o novo do rodapé passaram a ser o mesmo desenho: o
+auscultador e o balão do logótipo oficial. O rodapé ganhou um "Falar no
+WhatsApp" e um "Como chegar à JVI" com o pin do Maps numa faixa da
+largura toda do botão; o `href` é o mesmo do hero. **Dúvida:** o
+cliente disse "ícone do Google Maps"; usou-se o pin genérico a vermelho
+do Maps (#EA4335) e não o logótipo multicolor da Google, que é marca
+registada com regras de uso próprias.
+
+### A imagem da carta
+`assets/img/carta-capa.webp` é a página 1 de
+`carta/jvi-carta-apresentacao.pdf`, rasterizada a 96 dpi (794×1123,
+~20 KB).
 
 ## Fase 8A — o mapa
 

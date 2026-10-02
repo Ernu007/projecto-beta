@@ -61,3 +61,86 @@ export function iniciarGaleria(raiz, luz) {
     else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
   });
 }
+
+/* =========================================================
+   Carrossel (Fase 8B, B7)
+   ------------------------------------------------------------
+   Uma fotografia de cada vez, a passar sozinha em ciclo contínuo:
+   o índice dá a volta no fim em vez de parar na última.
+
+   Só muda o `scrollLeft` da pista; o `scroll-snap` do CSS encaixa a
+   fotografia. Pára com o rato por cima, com o foco lá dentro, com o
+   separador escondido e com o botão de pausa (WCAG 2.2.2) — e nem
+   arranca com `prefers-reduced-motion: reduce`.
+   ========================================================= */
+const INTERVALO_MS = 4500;
+
+export function iniciarCarrossel(raiz) {
+  const pista = raiz?.querySelector('[data-gal-pista]');
+  if (!pista) return;
+  const itens = [...pista.querySelectorAll('.gal__item')];
+  if (itens.length < 2) return;
+
+  const contador = raiz.querySelector('[data-gal-contador]');
+  const pausa = raiz.querySelector('[data-gal-pausa]');
+  const movimento = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let i = 0;
+  let relogio = null;
+  let pausadoPeloUtilizador = movimento.matches;
+  let pairado = false;
+
+  function ir(k) {
+    i = (k + itens.length) % itens.length;
+    pista.scrollTo({ left: itens[i].offsetLeft, behavior: movimento.matches ? 'auto' : 'smooth' });
+    if (contador) contador.textContent = `${i + 1} / ${itens.length}`;
+  }
+
+  function parar() { clearInterval(relogio); relogio = null; }
+  function arrancar() {
+    parar();
+    if (pausadoPeloUtilizador || pairado || document.hidden || movimento.matches) return;
+    relogio = setInterval(() => ir(i + 1), INTERVALO_MS);
+  }
+
+  function marcarPausa() {
+    if (!pausa) return;
+    pausa.setAttribute('aria-pressed', String(pausadoPeloUtilizador));
+    pausa.setAttribute('aria-label', pausadoPeloUtilizador ? 'Retomar o carrossel' : 'Pausar o carrossel');
+    pausa.querySelector('[data-ico-pausa]')?.toggleAttribute('hidden', pausadoPeloUtilizador);
+    pausa.querySelector('[data-ico-play]')?.toggleAttribute('hidden', !pausadoPeloUtilizador);
+  }
+
+  raiz.querySelector('[data-gal-ant]')?.addEventListener('click', () => { ir(i - 1); arrancar(); });
+  raiz.querySelector('[data-gal-prox]')?.addEventListener('click', () => { ir(i + 1); arrancar(); });
+  pausa?.addEventListener('click', () => {
+    pausadoPeloUtilizador = !pausadoPeloUtilizador;
+    marcarPausa();
+    arrancar();
+  });
+
+  /* Quem arrasta a pista à mão muda a fotografia: o índice acompanha,
+     senão o próximo passo automático saltava para trás. */
+  let fimScroll = null;
+  pista.addEventListener('scroll', () => {
+    clearTimeout(fimScroll);
+    fimScroll = setTimeout(() => {
+      const k = Math.round(pista.scrollLeft / (pista.clientWidth || 1));
+      i = Math.min(Math.max(k, 0), itens.length - 1);
+      if (contador) contador.textContent = `${i + 1} / ${itens.length}`;
+    }, 120);
+  }, { passive: true });
+
+  pista.addEventListener('mouseenter', () => { pairado = true; parar(); });
+  pista.addEventListener('mouseleave', () => { pairado = false; arrancar(); });
+  pista.addEventListener('focusin', () => { pairado = true; parar(); });
+  pista.addEventListener('focusout', () => { pairado = false; arrancar(); });
+  document.addEventListener('visibilitychange', arrancar);
+  movimento.addEventListener?.('change', () => {
+    if (movimento.matches) pausadoPeloUtilizador = true;
+    marcarPausa();
+    arrancar();
+  });
+
+  marcarPausa();
+  arrancar();
+}

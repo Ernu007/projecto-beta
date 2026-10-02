@@ -227,7 +227,28 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
 }
 .nav a:hover { color: var(--verde); background: rgb(var(--verde-rgb) / .08); }
 
-.header__cta { display: none; }
+/* B8: o botão de orçamento fica SEMPRE à vista, em todos os
+   tamanhos de ecrã. O cliente repetiu duas vezes que é o botão que
+   converte. O `.header` já é `position: fixed`, por isso o botão vai
+   com ele; o `sticky` com `top` declarado na mesma regra é o seguro
+   para o dia em que o header deixar de ser fixo — `sticky` sem `top`
+   não prende nada.
+
+   Não passa a `fixed` por conta própria: tentou-se, e a 1280 px o
+   botão ficava por cima do último item do menu. No telemóvel encolhe
+   e fica ao lado do botão do menu. */
+.header__cta { display: block; position: sticky; top: 0; z-index: 5; margin-left: auto; }
+@media (max-width: 899px) {
+  .header__cta .btn { padding: 10px 16px; font-size: 13.5px; gap: 8px; }
+  .header__cta .btn svg { width: 16px; height: 16px; }
+}
+/* Sem o menu de topo, o botão do menu encosta-se ao de orçamento. */
+@media (max-width: 1199px) { .header__cta + .menu-btn { margin-left: 12px; } }
+@media (max-width: 380px) {
+  /* Abaixo de 380 px o texto não cabe ao lado do logótipo e do menu. */
+  .header__cta .btn { padding: 10px 12px; font-size: 12.5px; }
+  .header__cta .btn svg { display: none; }
+}
 
 /* Menu mobile */
 .menu-btn {
@@ -265,11 +286,16 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
 }
 .menu-fundo[data-visivel="true"] { opacity: 1; pointer-events: auto; }
 
-@media (min-width: 900px) {
-  .brand__txt { display: block; }
-  .nav { display: block; }
-  .header__cta { display: block; }
+/* Sete itens no menu (Fase 8B) já não cabem a 900 px ao lado do nome
+   da marca e do botão de orçamento: o menu de topo aparece a partir de
+   1200 px, e o nome por extenso só quando sobra largura para ele. */
+@media (min-width: 1200px) {
+  .nav { display: block; margin-left: auto; }
+  .nav + .header__cta { margin-left: 0; }
   .menu-btn, .menu, .menu-fundo { display: none; }
+}
+@media (min-width: 700px) and (max-width: 1199px), (min-width: 1440px) {
+  .brand__txt { display: block; }
 }
 
 /* =========================================================
@@ -395,9 +421,12 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
 /* =========================================================
    SERVIÇOS
    ========================================================= */
-.grelha-3 { display: grid; gap: 20px; margin-top: 52px; }
-@media (min-width: 800px)  { .grelha-3 { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1080px) { .grelha-3 { grid-template-columns: repeat(3, 1fr); } }
+/* B5: dois cartões lado a lado, em duas colunas fixas. Eram três
+   colunas para quatro cartões menos, e a última linha ficava com uma
+   figura sozinha — o "alternado" que o cliente viu. Abaixo de 640 px
+   passa a uma coluna: dois cartões de 160 px num telemóvel não se leem. */
+.grelha-3 { display: grid; gap: 20px; margin-top: 52px; grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 640px) { .grelha-3 { grid-template-columns: 1fr; } }
 
 .servico {
   position: relative; border-radius: var(--raio); overflow: hidden;
@@ -406,7 +435,10 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
   transition: transform var(--transicao), border-color var(--transicao);
 }
 .servico:hover { transform: translateY(-7px); border-color: rgb(var(--verde-rgb) / .3); }
-.servico__figura { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--base-2); }
+.servico__figura { position: relative; margin: 0; aspect-ratio: 16 / 10; overflow: hidden; background: var(--base-2); }
+/* B5: as caixas no chão de um lado, as encomendas para a Zambézia do
+   outro — na mesma figura, metade cada. */
+.servico__figura--par { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
 .servico__figura img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
 .servico:hover .servico__figura img { transform: scale(1.07); }
 .servico__figura::after {
@@ -420,27 +452,12 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
   background: rgb(var(--base-rgb) / .75); backdrop-filter: blur(8px);
   color: var(--verde); border: 1px solid var(--linha);
 }
-/* Selo de fiabilidade: remete para o download da carta, dá proofiness */
-.selo {
-  position: absolute; left: 16px; top: 16px; z-index: 2;
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 14px 9px 10px; border-radius: 100px;
-  background: rgba(11, 18, 32, 0.82); backdrop-filter: blur(10px);
-  border: 1px solid rgb(var(--verde-rgb) / .28);
-  font-size: 12px; font-weight: 700; color: var(--claro);
-  transition: transform var(--transicao), border-color var(--transicao), background var(--transicao);
-}
-.selo:hover { transform: translateY(-2px); border-color: var(--verde); background: rgb(var(--verde-rgb) / .12); }
-.selo__ico {
-  width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--verde); color: var(--base); flex: none;
-}
-.selo__ico svg { width: 13px; height: 13px; }
 
-@media (min-width: 700px) { .selo { left: auto; right: 16px; } }
-
-.servico__corpo { padding: 24px 26px 28px; flex: 1; display: flex; flex-direction: column; }
-.servico h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.02em; }
+/* O corpo do cartão é o próprio `<article>` (sem `<div>` à volta do
+   texto): cada filho que não é a figura leva a margem lateral. */
+.servico { padding-bottom: 28px; }
+.servico > :not(.servico__figura) { margin-inline: 26px; }
+.servico h3 { font-size: 20px; font-weight: 800; margin-top: 24px; margin-bottom: 10px; letter-spacing: -0.02em; }
 .servico p { font-size: var(--corpo); color: var(--texto-suave); margin-bottom: 16px; }
 .servico__lista { margin-top: auto; display: grid; gap: 7px; }
 .servico__lista li { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: var(--texto-fraco); }
@@ -668,9 +685,36 @@ body.modal-aberto { overflow: hidden; }
 .rodape__fiscais { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12.5px; color: var(--texto-fraco); }
 .rodape__fiscais b { color: var(--verde); font-weight: 700; }
 .rodape__base { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--borda); font-size: 12.5px; color: var(--texto-fraco); }
+/* B10: as acções do rodapé. O "Como chegar à JVI" ocupa a largura
+   toda e o pin do Google Maps também: é uma faixa de 44 px de altura com
+   o desenho ao centro, não um ícone do tamanho da letra encostado ao
+   texto. O `& svg` aninhado é o que o `tests/interface.test.js` lê; a
+   regra irmã logo abaixo cobre os browsers sem CSS aninhado. */
+.rodape__accoes { display: grid; gap: 12px; margin-bottom: 30px; }
+.btn-maps {
+  flex-direction: column; gap: 8px; width: 100%; padding-block: 14px 16px; border-radius: var(--raio);
+  & svg { display: block; width: 100%; height: 44px; color: #EA4335; }
+}
+.rodape__accoes .btn-maps svg { display: block; width: 100%; height: 44px; color: #EA4335; }
+.rodape__accoes .btn--wa { justify-self: start; }
+@media (max-width: 520px) { .rodape__accoes .btn--wa { justify-self: stretch; } }
 .rodape__links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 .rodape__links a { color: var(--texto-fraco); transition: color var(--transicao); }
 .rodape__links a:hover { color: var(--verde); }
+
+/* =========================================================
+   NOSSA EMPRESA (B9)
+   ========================================================= */
+.empresa { display: grid; gap: 40px; align-items: center; }
+@media (min-width: 860px) { .empresa { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; } }
+.empresa__carta { margin: 0; max-width: 420px; justify-self: center; }
+.empresa__carta img {
+  width: 100%; height: auto; border-radius: var(--raio-sm);
+  border: 1px solid var(--borda); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+}
+.empresa__dados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin-top: 28px; }
+.empresa__dados dt { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--texto-fraco); }
+.empresa__dados dd { margin: 4px 0 0; font-weight: 700; color: var(--verde); }
 
 /* =========================================================
    BOTÕES FIXOS (canto inferior direito)

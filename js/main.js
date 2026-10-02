@@ -623,7 +623,7 @@ document.addEventListener('keydown', (e) => {
    FORMULÁRIO DE ORÇAMENTO — 3 passos, dentro do pop-up
    ========================================================= */
 import { calcularPreco } from './precos.js';
-import { iniciarGaleria } from './galeria.js';
+import { iniciarGaleria, iniciarCarrossel } from './galeria.js';
 /* `planoEnvio` estava em falta nesta lista e era usado no `enviarPedido`:
    um ReferenceError no clique em "Confirmar e enviar", depois de o
    resumo ja ter fechado — o pedido desaparecia sem mensagem nenhuma.
@@ -877,3 +877,4 @@ document.getElementById('ano').textContent = new Date().getFullYear();
 iniciarHero();
 iniciarMapa();
 iniciarGaleria(document.querySelector('[data-gal]'), document.getElementById('luz'));
+iniciarCarrossel(document.querySelector('[data-gal]'));
