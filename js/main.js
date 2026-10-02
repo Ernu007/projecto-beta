@@ -141,17 +141,9 @@ if (etapas.length && TEM_IO) {
 }
 
 /* =========================================================
-   HERO — rota a desenhar-se + caixas 3D
-   ========================================================= */
-/* =========================================================
    HERO — voo da carga (Pemba -> Maputo) e revelacao do titulo
    ========================================================= */
-import { iniciarVoo, ROTA } from './hero-voo.js';
-
-const NOME_PALAVRA = {
-  0: 'Cabo Delgado', 1: 'Nampula', 2: 'Zambézia',
-  3: 'Sofala', 4: 'Gaza', 5: 'Maputo',
-};
+import { iniciarVoo } from './hero-voo.js';
 
 function iniciarHero() {
   const canvas = document.getElementById('canvasHero');
@@ -179,7 +171,6 @@ function iniciarHero() {
             const v = Math.max(0, Math.min(1, (prog - alvo) / 0.16));
             el.style.setProperty('--p', v.toFixed(3));
           });
-          marca.length; void NOME_PALAVRA; void ROTA;
         },
       });
     } catch (erro) {
@@ -187,13 +178,14 @@ function iniciarHero() {
       reporTitulo();
     }
   });
-  /* Rede de segurança: se daqui a 9 s o título ainda estiver apagado,
-     é porque o IntersectionObserver nunca disparou. */
+  /* Rede de segurança: se daqui a 14 s o título ainda estiver apagado,
+     é porque o IntersectionObserver nunca disparou. O voo dura 11 s
+     (Fase 8: dez províncias em vez de seis), por isso a margem. */
   setTimeout(() => {
     if (palavras.some((el) => Number(el.style.getPropertyValue('--p')) < 1)) {
       reporTitulo();
     }
-  }, 9000);
+  }, 14000);
 }
 
 /* =========================================================
@@ -203,7 +195,7 @@ function iniciarHero() {
    geoBoundaries ADM1. Aqui so se faz a projecao, o brilho
    quando a rota passa e as etiquetas.
    ========================================================= */
-import { BBOX, PROVINCIAS, CAPITAIS } from './mapa-dados.js';
+import { BBOX, PAIS, PROVINCIAS, CAPITAIS, ROTA, agencyPoint } from './mapa-dados.js';
 
 function iniciarMapa() {
   const canvas = document.getElementById('canvasMapa');
@@ -216,7 +208,7 @@ function iniciarMapa() {
   let w = 0, h = 0, esc = 1, ox = 0, oy = 0;
   let visivel = false;
   let t0 = performance.now();
-  const hub = CAPITAIS['Maputo'];
+  const hub = agencyPoint('Maputo');
   const brilho = {};
 
   function resize() {
@@ -234,8 +226,8 @@ function iniciarMapa() {
     oy = pad + (h - pad - padB - ALT * esc) / 2;
   }
 
-  /* BBOX ja vem projectado (lon*cos, -lat): subtrair a origem e obrigatorio,
-     senao o mapa e desenhado fora do canvas. */
+  /* As coordenadas vêm projectadas (lon·cos, −lat): subtrair a origem é
+     obrigatório, senão o mapa é desenhado fora do canvas. */
   const X = (lx) => ox + (lx - BBOX[0]) * esc;
   const Y = (ly) => oy + (ly - BBOX[1]) * esc;
 
@@ -262,20 +254,66 @@ function iniciarMapa() {
     ctx.restore();
   }
 
+  /* ------------------------------------------------------------
+     Fase 8A (A1) — o contorno do país.
+
+     `iniciarMapa` nunca desenhou o `PAIS`. Só o hero o fazia, e o hero é
+     o ecrã que ninguém olha depois dos primeiros três segundos. Na
+     secção de Cobertura — que é onde o cliente foi ver o mapa — as dez
+     províncias apareciam a flutuar sem fronteira nenhuma, e era
+     impossível ler onde terminava Moçambique.
+
+     Pinta-se com a MESMA cor de fundo das províncias, por baixo de
+     todas. Isso também absorve o desvio entre fronteiras partilhadas: as
+     províncias são simplificadas uma a uma, e uma fronteira comum pode
+     divergir ~1 km. Com o país pintado por baixo, dos dois lados da
+     linha a cor é a mesma e a linha desaparece.
+     ------------------------------------------------------------ */
+  function desenharPais(t) {
+    const cx = X((BBOX[0] + BBOX[2]) / 2);
+    const cy = Y((BBOX[1] + BBOX[3]) / 2);
+    const raio = LARG * esc * 0.8;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, raio);
+    g.addColorStop(0, 'rgba(169,207,68,0.13)');
+    g.addColorStop(1, 'rgba(169,207,68,0.03)');
+    for (const anel of PAIS) {
+      if (anel.length < 3) continue;
+      caminho(anel, true);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+  }
+
+  function desenharFronteira() {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(169,207,68,0.75)';
+    ctx.lineWidth = 1.4;
+    for (const anel of PAIS) {
+      if (anel.length < 3) continue;
+      caminho(anel, true);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function desenhar(t) {
     ctx.clearRect(0, 0, w, h);
 
-    // provincia a provincia: exterior desenhado por cima da linha verde
+    desenharPais(t);
+
+    // provincia a provincia: TODOS os anéis são preenchidos. O
+    // `if (anel === PROVINCIAS[nome][0])` que estava aqui preenchia só o
+    // primeiro — e em quatro províncias (Cabo Delgado, Sofala, Inhambane e
+    // Maputo) o primeiro era um resto degenerado de três pontos, pelo que
+    // o continente ficava sem cor nenhuma por baixo do contorno.
     for (const nome in PROVINCIAS) {
       const b = brilho[nome] || 0;
       for (const anel of PROVINCIAS[nome]) {
         caminho(anel, true);
-        if (anel === PROVINCIAS[nome][0]) {
-          ctx.fillStyle = b > 0
-            ? `rgba(169,207,68,${(0.05 + 0.26 * b).toFixed(3)})`
-            : 'rgba(169,207,68,0.035)';
-          ctx.fill();
-        }
+        ctx.fillStyle = b > 0
+          ? `rgba(169,207,68,${(0.05 + 0.26 * b).toFixed(3)})`
+          : 'rgba(169,207,68,0.035)';
+        ctx.fill();
         ctx.strokeStyle = b > 0
           ? `rgba(169,207,68,${(0.4 + 0.5 * b).toFixed(3)})`
           : 'rgba(169,207,68,0.5)';
@@ -328,6 +366,41 @@ function iniciarMapa() {
       ctx.fill();
     }
 
+    /* ------------------------------------------------------------
+       A3 — a agência da JVI, em todas as províncias da rota.
+
+       Aqui já havia um ponto verde em cada capital, mas era o GANCHO
+       da rota para o hub, não a agência: nascia só quando a sua linha
+       começava a desenhar-se e no fim ficava reduzido a 3,4 px, sem
+       legenda nenhuma. Agora é um anel com a cidade escrita por baixo,
+       sempre visível, que acende com a passagem da rota.
+
+       A lista é a mesma do voo — `ROTA`, em `mapa-dados.js`. Uma agência
+       numa província por onde o avião não passa seria um ponto de
+       papel; o que a rota mostra é onde a JVI opera.
+       ------------------------------------------------------------ */
+    for (const nome of ROTA) {
+      const a = agencyPoint(nome);
+      if (!a) continue;
+      const x = X(a.x);
+      const y = Y(a.y);
+      const luz = Math.min(1, (brilho[nome] || 0) + 0.3);
+      const r = 2.8 + 1.8 * luz;
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.55 * luz;
+      ctx.fillStyle = nome === 'Maputo' ? '#EA8240' : '#A9CF44';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.3 + 0.5 * luz;
+      ctx.strokeStyle = nome === 'Maputo' ? '#EA8240' : '#A9CF44';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, r + 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // hub
     const hx = X(hub.x);
     const hy = Y(hub.y);
@@ -353,12 +426,15 @@ function iniciarMapa() {
     ctx.fill();
     ctx.restore();
 
+    desenharFronteira();
+
     // nomes das capitais, por ultimo para ficarem por cima
     if (w > 430) {
-      for (const nome in CAPITAIS) {
-        const c = CAPITAIS[nome];
-        etiqueta(X(c.x) + (c.x < 34 ? -9 : 9), Y(c.y) + 13, c.nome,
-          '#A9CF44', c.x < 34 ? 'right' : 'left');
+      for (const nome of ROTA) {
+        const a = agencyPoint(nome);
+        if (!a) continue;
+        etiqueta(X(a.x) + (a.x < 34 ? -11 : 11), Y(a.y) + 14, a.nome,
+          nome === 'Maputo' ? '#EA8240' : '#A9CF44', a.x < 34 ? 'right' : 'left');
       }
     }
   }

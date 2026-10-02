@@ -30,6 +30,131 @@ que a aplicou.
 | D20 | A alternativa sem key: o telefone do cliente no aviso, nomeado e normalizado | É o que o cliente queria de facto — *"a JVI sabe e telefona"* — e não precisa de API nenhuma: a JVI liga de volta de um telefone normal, sem browser no meio. O número já ia no aviso; o que faltava era o que a 7B tornava impossível fazer. Passa a chamar-se **"Telefone do cliente"** nos três canais (WhatsApp do cliente, e-mail, folha) porque o pedido tem dois números e "WhatsApp" a solo não desambigua. No e-mail e no WhatsApp vai normalizado para `+258 …` — é o número para onde se telefona, não a grafia do formulário. **A folha guarda o valor cru**: é o registo do que o cliente escreveu. |
 | D21 | A política de privacidade foi corrigida no mesmo commit | O site prometia, e com razão na altura: *"o seu endereço IP não é transmitido a servidores externos de Google"* — zero cookies, fontes auto-alojadas. O botão do Maps tornou a promessa falsa. Dizer *"não há consentimento nenhum"* quando há um botão que sai para a Google é pior do que não ter o botão; corrigiu-se a política, e há um teste que falha se a promessa voltar a aparecer sem a ressalva. |
 | D22 | A disposição das acções do hero é escrita: duas na primeira linha, as direcções na segunda e a largura toda | O `.hero__acoes` era um `flex-wrap: wrap` sem mais nada, e quem caía em que linha dependia do comprimento do texto. Medido no Chrome, os três botões davam 204.50 + 221.20 + 217.88 + dois gaps de 13 = **669.58px** contra **660px** de contentor: o "Como chegou" nunca coube na primeira linha e desceu sozinho, com a largura dele, encostado à esquerda debaixo do primário — lia-se como botão órfão. Passou a ser `btn--bloco` com `flex: 1 0 100%`, que põe a base a 100% do contentor e garante a linha inteira. O orçamento continua primário e é o primeiro. Abaixo de 520px de viewport as três passam a coluna de botões inteiros, que é o que se toca melhor no telemóvel. `tests/hero-acoes.test.js` fixa o número de botões na primeira linha e confere o limite contra a largura que sobra no contentor, para ninguém reintroduzir a soma ao acaso. |
+| D23 | A rota do avião passa pelas **dez** províncias, por vizinhança: Pemba → Nampula → Niassa → Zambézia → Tete → Manica → Sofala → Inhambane → Gaza → Maputo | Ver a secção "A rota do avião" abaixo. |
+| D24 | `js/mapa-dados.js` passa a ser gerado por `tools/gerar-mapa.mjs` | O cabeçalho do ficheiro mandava "reexecutar o script gerador" e o script não existia. Ver a secção "O mapa" abaixo. |
+| D25 | A projeção é `x = lon · cos(18,4°)`, `y = −lat`, com **uma** constante | Três blocos do ficheiro mediam em escalas diferentes — porque cada um tinha o seu `cos`. Ver a secção "O mapa" abaixo. |
+| D26 | As coordenadas das capitais vêm do OpenStreetMap, e o ponto tem de cair dentro da sua província | Chimoia estava a **450 km** de Manica. Ver a secção "O mapa" abaixo. |
+| D27 | Os dois canvas preenchem **todos** os anéis de cada província, e a secção de Cobertura desenha o contorno do país | Quatro províncias nunca foram preenchidas, e não havia fronteira nenhuma em volta de Moçambique. Ver a secção "O mapa" abaixo. |
+| D28 | Cada salto tem uma seta, e o avião sai da origem de cada salto | Não havia uma única seta, e a spline Catmull-Rom não passava pelas âncoras nas pontas. Ver a secção "O mapa" abaixo. |
+
+## Fase 8A — o mapa
+
+O cliente escreveu *"Algumas províncias não estão limitadas corretamente"* e
+*"faltam setas e etiquetas"*. As três coisas eram verdade — mas **não pela razão
+que o briefing supunha**, e vale a pena escrever isso porque muda o que se
+corrige.
+
+### O que estava realmente mal
+
+O briefing diz para verificar `js/mapa-dados.js` e "corrigir a geometria". Fui
+verificar antes de mexer, e a geometria de origem estava **certa**: os dez
+polígonos batem com a fonte (geoBoundaries MOZ ADM1, commit `9469f09`) na
+contagem de anéis e de vértices, e as caixas envolventes coincidem dentro de
+0,09 unidades projectadas. Confirmei mais tarde pelas áreas — as áreas das dez
+províncias batem com as oficiais do INE (IV RGPH 2017) dentro de 9%, e a soma
+dá 825 000 km² contra os 801 590 km² de Moçambique.
+
+O que estava errado eram três coisas de **desenho** e de **dados**:
+
+| | Defeito | Efeito no ecrã |
+|---|---|---|
+| 1 | 19 anéis degenerados (restos de polilinha de três pontos, área zero) | Desenhavam-se como pinta-ratos |
+| 2 | `if (anel === PROVINCIAS[nome][0]) ctx.fill()` — preenchia **só o primeiro anel** | Em Cabo Delgado, Sofala, Inhambane e Maputo o primeiro anel era um desses restos, e o continente ficava **sem cor nenhuma**, só com o contorno. É literalmente o que o cliente descreveu. |
+| 3 | `iniciarMapa` nunca desenhou o `PAIS` | As províncias flutuavam sem fronteira de Moçambique, na secção de Cobertura — que é onde ele foi ver |
+
+E um quarto, que não é do briefing: **`CAPITAIS.Chimoio.x` estava 4,3 unidades
+(~450 km) a leste**, dentro da Sofala. O ponto de presença da JVI em Manica
+estava desenhado na província errada. Chimoio estava também 0,1–0,3 fora do sítio,
+assim como Pemba e Lichinga.
+
+### D25 — a projeção passou a ter uma constante só
+
+O ficheiro antigo tinha `BBOX` e as coordenadas das capitais em escalas
+diferentes, porque cada bloco tinha o seu `cos` (e o cabeçalho dizia "projetado
+(lon·cos, −lat)" sem dizer qual). Isso é o que fazia um ponto parecer estar
+na província errada. Agora é `x = lon · cos(18,4°)`, `y = −lat`, com 18,4° a
+latitude média do território — a distorção de escala é de ~1% de oeste a leste,
+menos de 4 px num mapa de 700 px. Uma projeção correcta custaria uma dependência
+ou uma tabela de coeficientes, e nenhuma das duas entra num ficheiro que vai
+para o browser.
+
+### D26 — as coordenadas são copiadas, e o teste é o ponto-in-polígono
+
+As capitais vêm do OpenStreetMap (Nominatim), projectadas com a mesma constante.
+O `tests/mapa.test.js` faz **point-in-polygon**: cada capital tem de cair dentro
+da SUA província, e não pode cair dentro de outra nenhuma. Uma coordenada errada
+dá teste vermelho, não um mapa errado.
+
+Isto pagou-se logo: na primeira versão do gerador "corrigi" a longitude de
+Chimoio de 33,478 para 32,478 por causa de uma memória errada sobre a cidade, e
+o teste apanhou-o no minuto seguinte. **As coordenadas não se corrigem de
+memória** — só se copiam, e o teste é que diz se a cópia é mentira.
+
+### D24 — o gerador, que o cabeçalho prometia e nunca existiu
+
+`tools/gerar-mapa.mjs` regenera o ficheiro a partir da fonte fixada. Faz três
+coisas que à mão não se garantem: **descarta** os anéis degenerados, deixa o
+**maior anel em primeiro** (o continente, nunca uma ilha), e **calcula o BBOX a
+partir dos dados** em vez de o ter escrito à mão — um vértice fora do BBOX é
+desenhado fora do canvas.
+
+A **tolerância de simplificação (0,005) não é um número arbitrário.** Mediu-se:
+a 0,015 a cidade de Inhambane caía FORA da sua província (o delta fragmenta-se
+em lascas de 0,01 e a simplificação apaga-as), e a 0,008 caía fora Beira. A
+0,005 as dez capitais caem dentro das suas províncias.
+
+**Custo desta fase:** `js/mapa-dados.js` passou de 24,7 KB para 46,8 KB
+(5,4 KB → 12,3 KB comprimido). É o preço de a simplificação ser fina o
+bastante para o ponto da JVI cair na província certa. O contorno do país é
+simplificado 4× mais grosso de propósito — é só o halo e a linha exterior por
+baixo de tudo, e 33 KB de JavaScript para o traçar com mais precisão não se
+justificam.
+
+### D27, D28 — setas, agências e a origem de cada salto
+
+Cada salto da rota tem uma seta a 88% do trajeto, encostada ao **destino** e na
+tangente da curva (não na direcção da reta entre capitais, que seria diferente nos
+saltos que dobram). Três estados: por fazer, em curso, feito.
+
+O traçado deixou de ser uma spline Catmull-Rom e passou a ser uma **Bézier
+quadrática por salto**. A Catmull-Rom é interpoladora, mas as tangentes em cada
+nó vêm dos dois vizinhos — e nas pontas não há vizinho de um lado. O primeiro e
+o último salto saíam de um sítio arbitrário: **o avião não partia de Pemba nem
+chegava a Maputo.** A Bézier quadrática passa exactamente pelas duas pontas.
+
+As agências da JVI estão sempre visíveis, e não só quando o avião passa: o que
+se pede é ver onde a JVI opera, e um ponto que só acende à passagem do avião
+esconde metade da informação.
+
+### A rota do avião (D23)
+
+O cliente ditou, ao telefone: *"Pemba, Beira, depois [incompreensível], Zambézia,
+Tete, Nampula, Niassa, Cabo Delgado"*. Duas coisas danso dessa lista:
+
+1. **Acaba onde parte.** A última província é a primeira. E a mesma frase do
+   briefing diz *"o avião parte de Pemba e vai para Maputo"*. São as duas metades
+   do pedido em contradição directa, e o briefing também diz que a transcrição
+   está muito degradada e manda respeitar a ordem geográfica coerente que já
+   existe.
+2. **Não é possível como caminho.** Beira é a capital da Sofala, e Zambézia fica
+   entre Zambézia e Tete — na lista, Nampula vem logo a seguir a Tete, e essas
+   duas não são vizinhas.
+
+Adoptei o percurso por **vizinhança geográfica**, que é o que o briefing manda
+preferir:
+
+```
+Pemba → Nampula → Niassa → Zambézia → Tete → Manica → Sofala → Inhambane → Xai-Xai → Maputo
+```
+
+Cada par consecutivo partilha fronteira (verificado na matriz de adjacência da
+fonte), parte de Pemba, chega a Maputo, e inclui exactamente as províncias que
+o cliente ditou. Se a leitura dele for outra — por exemplo se queria o percurso
+ao contrário, ou sem Niassa — é uma linha na `ROTA` em `js/mapa-dados.js`.
+
+> **DÚVIDA A LEVAR AO CLIENTE:** a ordem da rota. A transcrição é
+> contradictória (ver acima) e escolhi a leitura que o resto do briefing
+> sustenta. Confirmar em dez segundos se está certa.
 
 ## Fase 7: direcções para o terminal, sem API key
 
