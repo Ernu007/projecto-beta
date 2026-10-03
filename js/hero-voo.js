@@ -13,6 +13,13 @@
    A cena notifica o progresso (0..1) para o texto do hero se
    revelar palavra a palavra à medida que o avião avança.
 
+   Fase 9 (9.2). O voo deixou de acabar em Pemba: chega, contorna, e
+   volta a Maputo pelo mesmo percurso — e repete, sem fim. Três coisas
+   que um loop infinito obriga a escrever, e que estão mais abaixo:
+   o avião RODA na viragem (`rumoDoAviao`), o relógio só anda com o hero
+   à vista (`passoDoRelogio`), e o fundo do mapa deixa de ser repintado
+   a cada frame assim que pára de mudar (`camadaFundo`).
+
    Fase 8 (A2, A3). Antes disto a rota tinha seis províncias e o
    desenho tinha três falhas que o cliente viu e descreveu:
 
@@ -44,14 +51,74 @@ const CLARO = [232, 237, 245];
    províncias por vizinhança geográfica, de Maputo (a sede) a Pemba. A ordem
    veio da revisão do cliente na Fase 8C; `docs/decisoes.md` diz porque é esta
    e não a que ele ditou ao telefone. */
-const DURACAO = 11000;         // ms de voo — dez províncias a uma velocidade de leitura
+const DURACAO = 11000;         // ms de cada perna — dez províncias a uma velocidade de leitura
 const CURVA = 0.16;            // quanto cada salto se afasta da linha recta
 const PASSOS_POR_SALTO = 26;   // amostras por salto — desenham a curva, não a reta
+const VIRAGEM = 0.08;          // fracção da perna que o avião gasta a dar a volta
+const PASSO_MAX = 100;         // ms — o máximo que um só frame faz andar o relógio
+
+function ease(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+/* ------------------------------------------------------------
+   Fase 9 (9.2) — o estado do voo, em função do tempo de voo.
+
+   O voo é uma sequência de PERNAS de `DURACAO` cada: as pares são a ida
+   (Maputo -> Cabo Delgado), as ímpares a volta. `pos` é a posição no
+   traçado, 0 em Maputo e 1 em Pemba, nos dois sentidos — a volta é o
+   mesmo percurso lido ao contrário, e não um segundo traçado.
+
+   O `ease` é por perna: o avião abranda ao chegar a cada ponta e arranca
+   devagar, que é o que deixa a viragem ler-se como uma manobra e não como
+   um ricochete.
+
+   Pura de propósito: `tests/mapa.test.js` corre-a sem canvas.
+   ------------------------------------------------------------ */
+export function estadoVoo(decorrido) {
+  const ms = Math.max(0, decorrido);
+  const perna = Math.floor(ms / DURACAO);
+  const t = (ms - perna * DURACAO) / DURACAO;
+  const sentido = perna % 2 === 0 ? 1 : -1;
+  const avanco = ease(t);
+  return { perna, sentido, t, avanco, pos: sentido === 1 ? avanco : 1 - avanco };
+}
+
+/* O rumo do avião. `tangente` é a direcção do traçado no sentido da ida.
+
+   Na volta o nariz aponta para o lado contrário: sem os π, o avião
+   percorria o caminho de regresso de cauda, que é o tipo de erro que se
+   vê logo. E a viragem é uma rotação: nos primeiros `VIRAGEM` de cada
+   perna o avião roda meia volta a partir do rumo com que chegou, em vez
+   de aparecer virado de um frame para o outro. Nessa altura quase não se
+   desloca (o `ease` arranca do zero), por isso roda sobre a ponta do
+   percurso. A primeira partida não tem viragem: sai de Maputo já de nariz
+   para norte. */
+export function rumoDoAviao(tangente, estado) {
+  const rumo = estado.sentido === 1 ? tangente : tangente + Math.PI;
+  if (estado.perna === 0 || estado.t >= VIRAGEM) return rumo;
+  const u = estado.t / VIRAGEM;
+  const suave = u * u * (3 - 2 * u);
+  return rumo - Math.PI * (1 - suave);
+}
+
+/* Quanto anda o relógio do voo neste frame. O tempo é ACUMULADO frame a
+   frame, e não `agora - inicio`: fora do ecrã não há frames, logo o
+   relógio pára, e ao voltar o avião está onde ficou. O tecto serve o
+   separador que esteve escondido — o primeiro frame depois de um minuto
+   não pode fazer o avião saltar meio país. */
+export function passoDoRelogio(ultimo, agora) {
+  if (ultimo === null) return 0;
+  return Math.max(0, Math.min(PASSO_MAX, agora - ultimo));
+}
 
 export function iniciarVoo(canvas, opcoes = {}) {
   const aoProgredir = opcoes.aoProgredir || (() => {});
-  const ctx = canvas.getContext('2d', { alpha: true });
-  if (!ctx) return () => {};
+  const ctxEcra = canvas.getContext('2d', { alpha: true });
+  if (!ctxEcra) return () => {};
+  /* As funções de desenho pintam em `ctx`. É o do ecrã, excepto enquanto
+     `camadaFundo` o troca pelo da camada estática. */
+  let ctx = ctxEcra;
 
   const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -61,7 +128,9 @@ export function iniciarVoo(canvas, opcoes = {}) {
   let saltos = [];            // {de, para, x0, y0, x1, y1, cx, cy, t0, t1}
   let mapa = {};              // provincia -> factor de iluminação 0..1
   let visivel = false;
-  let inicio = performance.now();
+  let decorrido = 0;          // ms de voo, só contados com o hero à vista
+  let ultimo = null;          // instante do frame anterior
+  let fundo = null;           // camada estática: país, províncias e agências
   let parar = false;
 
   /* ------------------------------------------------ geometria */
@@ -78,7 +147,7 @@ export function iniciarVoo(canvas, opcoes = {}) {
     if (!w || !h) return;
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctxEcra.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const areaW = w < 760 ? w * 0.80 : w * FRAÇÃO_LARGURA;
     const areaH = h * 0.82;
@@ -126,9 +195,15 @@ export function iniciarVoo(canvas, opcoes = {}) {
      primeiro salto saía de um sítio arbitrário e o último chegava a um
      sítio arbitrário — o avião não partia de Pemba nem chegava a Maputo. */
   function construirRota() {
+    /* As âncoras ficam em coordenadas do MAPA. Quem as projecta para o
+       ecrã é `saltoDe` (e a última linha desta função): estavam a ser
+       projectadas aqui e outra vez lá, e o traçado, as setas e o avião
+       iam parar a ~33 000 px da origem — fora de qualquer canvas. Foi o
+       "faltou só o avião" do cliente. `tests/mapa.test.js` corre o
+       desenho e confere que fica dentro do canvas. */
     const ancoras = ROTA.map((n) => {
       const c = CAPITAIS[n];
-      return { x: X(c.x), y: Y(c.y), nome: n, rotulo: c.nome };
+      return { x: c.x, y: c.y, nome: n, rotulo: c.nome };
     });
     const lista = [];
     for (let i = 0; i < ancoras.length - 1; i += 1) {
@@ -199,7 +274,7 @@ export function iniciarVoo(canvas, opcoes = {}) {
     ctx.restore();
   }
 
-  function desenharProvincias(prog) {
+  function desenharProvincias() {
     for (const nome in PROVINCIAS) {
       const luz = mapa[nome] || 0;
       /* TODOS os anéis são preenchidos, não só o primeiro. O
@@ -232,30 +307,34 @@ export function iniciarVoo(canvas, opcoes = {}) {
         ctx.restore();
       }
     }
-    void prog;
   }
 
   /* ------------------------------------------- desenho: rota */
-  function desenharRota(prog) {
-    const n = Math.max(2, Math.floor(pontos.length * prog));
+  /* O traço percorrido é o da PERNA em curso: na ida cresce de Maputo até
+     ao avião, na volta de Pemba até ao avião. O degradê vai sempre do
+     verde, na ponta de onde se partiu, ao laranja, junto ao avião. */
+  function desenharRota(estado) {
+    const ultimoPonto = pontos.length - 1;
+    const i = Math.max(1, Math.min(ultimoPonto, Math.floor(pontos.length * estado.pos)));
+    const de = estado.sentido === 1 ? 0 : ultimoPonto;
+    const ate = estado.sentido === 1 ? i : Math.min(i, ultimoPonto - 1);
     ctx.save();
     ctx.setLineDash([5, 6]);
     ctx.lineWidth = 1.6;
     // A rota e uma lista de {x, y}, nao de pares [x, y], por isso nao
     // passa pelo caminho() — desenhamos a la mao.
     ctx.beginPath();
-    pontos.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+    pontos.forEach((p, k) => (k === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
     ctx.strokeStyle = 'rgba(169,207,68,0.20)';
     ctx.stroke();
     // traço percorrido
     ctx.beginPath();
-    for (let i = 0; i < n; i += 1) {
-      const p = pontos[i];
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
+    ctx.moveTo(pontos[de].x, pontos[de].y);
+    for (let k = de; k !== ate; k += estado.sentido) {
+      const p = pontos[k + estado.sentido];
+      ctx.lineTo(p.x, p.y);
     }
-    const ult = pontos[n - 1];
-    const grad = ctx.createLinearGradient(pontos[0].x, pontos[0].y, ult.x, ult.y);
+    const grad = ctx.createLinearGradient(pontos[de].x, pontos[de].y, pontos[ate].x, pontos[ate].y);
     grad.addColorStop(0, 'rgba(169,207,68,0.95)');
     grad.addColorStop(1, 'rgba(234,130,64,0.95)');
     ctx.setLineDash([]);
@@ -268,12 +347,12 @@ export function iniciarVoo(canvas, opcoes = {}) {
 
     // pontos de partida e chegada
     desenharPortal(pontos[0], LARANJA, 1);
-    desenharPortal(pontos[pontos.length - 1], LARANJA, 1);
+    desenharPortal(pontos[ultimoPonto], LARANJA, 1);
   }
 
   function desenharPortal(p, cor, escala = 1) {
     ctx.save();
-    const pulso = 9 + Math.sin(inicio / 260) * 3;
+    const pulso = 9 + Math.sin(decorrido / 900) * 3;
     const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pulso * 2.2);
     g.addColorStop(0, `rgba(${cor.join(',')},0.5)`);
     g.addColorStop(1, 'transparent');
@@ -302,17 +381,25 @@ export function iniciarVoo(canvas, opcoes = {}) {
      voo naquele instante — não a direcção da reta entre capitais, que
      seria diferente nos saltos que dobram.
 
-     Três estados: por fazer (apagada), em curso (meia), feito (a
-    ceso). A rota inteira lê-se antes de o avião lá chegar, que é o que
-     permite perceber para onde vai sem esperar 11 segundos.
+     Três estados: por fazer (apagada), em curso (meia), feito (acesa).
+     A rota inteira lê-se antes de o avião lá chegar, que é o que permite
+     perceber para onde vai sem esperar 11 segundos.
+
+     Fase 9: na volta a seta VIRA-SE com o avião. Passa para os 12% do
+     salto — encostada ao destino da volta, que é a origem da ida — e
+     aponta para sul. Uma seta para norte com o avião a ir para sul dizia
+     duas coisas ao mesmo tempo.
      ------------------------------------------------------------ */
-  function desenharSeta(s, prog) {
-    const p = em(s, 0.88);
-    const antes = em(s, 0.84);
+  function desenharSeta(s, estado) {
+    const ida = estado.sentido === 1;
+    const p = em(s, ida ? 0.88 : 0.12);
+    const antes = em(s, ida ? 0.84 : 0.16);
     const ang = Math.atan2(p.y - antes.y, p.x - antes.x);
-    const r = 4 + 2 * esc;
-    const feita = prog >= s.t1;
-    const viva = prog >= s.t0;
+    /* Um tamanho de seta, em píxeis. Era `4 + 2 * esc`, e `esc` são os
+       píxeis por grau do mapa: dava setas de 90 px. */
+    const r = w < 760 ? 4.5 : 6;
+    const feita = ida ? estado.pos >= s.t1 : estado.pos <= s.t0;
+    const viva = ida ? estado.pos >= s.t0 : estado.pos <= s.t1;
 
     ctx.save();
     ctx.translate(p.x, p.y);
@@ -329,9 +416,9 @@ export function iniciarVoo(canvas, opcoes = {}) {
     ctx.restore();
   }
 
-  function desenharSetas(prog) {
+  function desenharSetas(estado) {
     ctx.save();
-    for (const s of saltos) desenharSeta(s, prog);
+    for (const s of saltos) desenharSeta(s, estado);
     ctx.restore();
   }
 
@@ -489,10 +576,12 @@ export function iniciarVoo(canvas, opcoes = {}) {
     ctx.restore();
   }
 
-  function desenharRastro(p, ang, i) {
+  /* O rastro fica ATRÁS do avião: na ida são os pontos anteriores do
+     traçado, na volta os seguintes. */
+  function desenharRastro(i, sentido) {
     const N = 26;
     for (let k = N; k >= 1; k -= 1) {
-      const idx = Math.max(0, i - k);
+      const idx = Math.max(0, Math.min(pontos.length - 1, i - k * sentido));
       const q = pontos[idx];
       const a = (1 - k / N) * 0.34;
       if (a <= 0.01) continue;
@@ -503,77 +592,105 @@ export function iniciarVoo(canvas, opcoes = {}) {
       ctx.fill();
       ctx.restore();
     }
-    void p; void ang;
+  }
+
+  /* ------------------------------------------------------------
+     Fase 9 (9.2) — a camada do fundo.
+
+     O país, as dez províncias e as agências são ~1 100 `lineTo` e dezenas
+     de `fill` e `stroke`. Enquanto o voo acabava ao fim de 11 s, isso
+     pagava-se 11 s. Com o loop infinito pagava-se enquanto o hero
+     estivesse à vista — o mesmo desperdício que o commit 1088b90 tirou do
+     mapa de cobertura.
+
+     Depois da primeira ida as províncias estão todas acesas e o fundo já
+     não muda. Pinta-se UMA vez para um canvas fora do ecrã, e cada frame
+     copia-o com um `drawImage`; por cima só vai o que mexe — o traço, as
+     setas, o rastro e o avião. `montar` deita a camada fora quando o
+     canvas muda de tamanho.
+     ------------------------------------------------------------ */
+  function camadaFundo() {
+    if (fundo) return fundo;
+    fundo = document.createElement('canvas');
+    fundo.width = canvas.width;
+    fundo.height = canvas.height;
+    ctx = fundo.getContext('2d', { alpha: true });
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    for (const nome in PROVINCIAS) mapa[nome] = 1;
+    desenharPais();
+    desenharProvincias();
+    desenharAgencias();
+    ctx = ctxEcra;
+    return fundo;
   }
 
   /* -------------------------------------------------- ciclo */
-  function normalizar(t) {
-    return Math.max(0, Math.min(1, t));
-  }
-
-  function ease(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
-
   function frame(agora) {
     if (parar) return;
-    /* Saiu do ecrã: deixa de pedir frames. O `inicio` fica guardado, de
-       modo que voltar a entrar retoma de onde ia em vez de recomeçar. */
+    /* Saiu do ecrã: deixa de pedir frames. É a ÚNICA coisa que pára o
+       ciclo, agora que o voo não tem fim — por isso vem antes de tudo. O
+       relógio é acumulado, de modo que voltar a entrar retoma o voo de
+       onde ia. */
     if (!visivel) return;
-    const t = reduzir ? 1 : normalizar((agora - inicio) / DURACAO);
-    const prog = ease(t);
+    decorrido += passoDoRelogio(ultimo, agora);
+    ultimo = agora;
+    const estado = estadoVoo(decorrido);
+    const idx = Math.min(pontos.length - 1, Math.floor(estado.pos * (pontos.length - 1)));
 
     ctx.clearRect(0, 0, w, h);
-    desenharPais();
 
-    /* Iluminar ANTES de desenhar, senão o brilho atrasa-se um frame e a
-       província de onde o avião acaba de sair fica apagada no instante em
-       que sai dela. */
-    const idx = Math.min(pontos.length - 1, Math.floor(prog * (pontos.length - 1)));
-    for (let i = 0; i <= idx; i += 1) {
-      const n = pontos[i].de;
-      mapa[n] = Math.max(mapa[n] || 0, Math.min(1, (mapa[n] || 0) + 0.035));
-      /* A província de DESTINO acende mal o avião lá entra. Sem isto, quem
-         olha para Niassa ou Beira não a vê acender: o salto inteiro passa a
-         custo zero, e a província só ganhava brilho no frame em que o avião
-         já lá estava — ou seja, nunca se via. */
-      if (i > 0 && pontos[i].para !== pontos[i].de) {
-        const d = pontos[i].para;
-        mapa[d] = Math.max(mapa[d] || 0, Math.min(1, (mapa[d] || 0) + 0.02));
+    if (estado.perna === 0) {
+      desenharPais();
+
+      /* Iluminar ANTES de desenhar, senão o brilho atrasa-se um frame e a
+         província de onde o avião acaba de sair fica apagada no instante em
+         que sai dela. */
+      for (let i = 0; i <= idx; i += 1) {
+        const n = pontos[i].de;
+        mapa[n] = Math.max(mapa[n] || 0, Math.min(1, (mapa[n] || 0) + 0.035));
+        /* A província de DESTINO acende mal o avião lá entra. Sem isto, quem
+           olha para Niassa ou Beira não a vê acender: o salto inteiro passa a
+           custo zero, e a província só ganhava brilho no frame em que o avião
+           já lá estava — ou seja, nunca se via. */
+        if (i > 0 && pontos[i].para !== pontos[i].de) {
+          const d = pontos[i].para;
+          mapa[d] = Math.max(mapa[d] || 0, Math.min(1, (mapa[d] || 0) + 0.02));
+        }
       }
+
+      desenharProvincias();
+      desenharAgencias();
+    } else {
+      /* Da primeira volta em diante o fundo é sempre o mesmo. */
+      ctx.drawImage(camadaFundo(), 0, 0, w, h);
     }
 
-    desenharProvincias(prog);
-    desenharAgencias();
-    desenharSetas(prog);
-    desenharRota(prog);
+    desenharSetas(estado);
+    desenharRota(estado);
 
-    if (t > 0.02) {
-      const p = pontoEm(prog);
+    if (estado.perna > 0 || estado.t > 0.02) {
+      const p = pontoEm(estado.pos);
       /* A direcção vem da tangente da curva, não da reta entre o ponto
          actual e o seguinte. Nos saltos que dobram, a reta entre dois
          pontos da mesma curva aponta para fora dela — o avião virava a
          esquina antes de a curva virar. */
-      const iSalto = saltos.findIndex((s) => prog < s.t1);
+      const iSalto = saltos.findIndex((s) => estado.pos < s.t1);
       const salto = saltos[iSalto === -1 ? saltos.length - 1 : iSalto];
       const dentro = salto.t1 > salto.t0
-        ? Math.min(1, Math.max(0, (prog - salto.t0) / (salto.t1 - salto.t0)))
+        ? Math.min(1, Math.max(0, (estado.pos - salto.t0) / (salto.t1 - salto.t0)))
         : 0;
       const d0 = em(salto, Math.max(0, dentro - 0.02));
       const d1 = em(salto, Math.min(1, dentro + 0.02));
-      const ang = Math.atan2(d1.y - d0.y, d1.x - d0.x);
+      const tangente = Math.atan2(d1.y - d0.y, d1.x - d0.x);
       const tam = (w < 760 ? 15 : 24);
-      desenharRastro(p, ang, idx);
-      desenharAviao(p.x, p.y, ang, tam);
+      desenharRastro(idx, estado.sentido);
+      desenharAviao(p.x, p.y, rumoDoAviao(tangente, estado), tam);
     }
 
-    aoProgredir(prog);
+    /* O título acende palavra a palavra durante a PRIMEIRA ida, e fica
+       aceso: na volta não se apaga outra vez. */
+    aoProgredir(estado.perna === 0 ? estado.avanco : 1);
 
-    if (t >= 1) {
-      // no fim fica estatico, a resplandor em Pemba
-      setTimeout(() => { parar = true; }, 600);
-      return;
-    }
     requestAnimationFrame(frame);
   }
 
@@ -587,41 +704,52 @@ export function iniciarVoo(canvas, opcoes = {}) {
      redimensionada. */
     saltos = [];
     pontos = construirRota();
-    mapa = {};
-    for (const nome in PROVINCIAS) mapa[nome] = 0;
+    /* A camada do fundo tem as coordenadas do tamanho antigo. */
+    fundo = null;
+    /* O brilho das províncias só se perde se o voo ainda vai na primeira
+       ida; depois disso estão todas acesas e assim ficam. */
+    if (!estadoVoo(decorrido).perna) {
+      mapa = {};
+      for (const nome in PROVINCIAS) mapa[nome] = 0;
+    }
   }
   montar();
+
+  if (reduzir) {
+    // sem animação: mostra o país, as agências e a rota completa, estático
+    const estatico = () => {
+      /* O fim da ida: a rota toda traçada, as setas a apontar para norte. */
+      const chegada = { perna: 0, sentido: 1, t: 1, avanco: 1, pos: 1 };
+      ctx.clearRect(0, 0, w, h);
+      desenharPais();
+      for (const nome in PROVINCIAS) mapa[nome] = 0.32;
+      desenharProvincias();
+      desenharAgencias();
+      desenharSetas(chegada);
+      desenharRota(chegada);
+      aoProgredir(1);
+    };
+    requestAnimationFrame(estatico);
+    window.addEventListener('resize', () => { montar(); estatico(); }, { passive: true });
+    return () => {};
+  }
 
   window.addEventListener('resize', () => {
     if (!parar) { montar(); }
   }, { passive: true });
 
-  if (reduzir) {
-    // sem animação: mostra o país, as agências e a rota completa, estático
-    requestAnimationFrame(() => {
-      const prog = ease(1);
-      ctx.clearRect(0, 0, w, h);
-      desenharPais();
-      for (const nome in PROVINCIAS) mapa[nome] = 0.32;
-      desenharProvincias(prog);
-      desenharAgencias();
-      desenharSetas(prog);
-      desenharRota(prog);
-      aoProgredir(prog);
-    });
-    return () => {};
-  }
-
   if ('IntersectionObserver' in window) {
-    /* Pausa nos DOBOS sentidos: sem isto, se o utilizador descer o
+    /* Pausa nos DOIS sentidos: sem isto, se o utilizador descer o
        scroll durante o voo, o canvas continuava a pintar fora
        do ecrã. O mapa (`iniciarMapa`, em main.js) já fazia assim.
-       `inicio` mantém-se, por isso voltar a entrar retoma o voo de
-       onde ia em vez de recomeçar. */
+       Com o loop infinito isto deixou de ser um cuidado e passou a ser a
+       única paragem do ciclo: sem hero à vista não há frames. `ultimo`
+       volta a null para o relógio não contar o tempo que esteve fora. */
     new IntersectionObserver((e) => {
       const dentro = e[0].isIntersecting;
       if (dentro && !visivel && !parar) {
         visivel = true;
+        ultimo = null;
         requestAnimationFrame(frame);
       } else if (!dentro) {
         visivel = false;
@@ -635,4 +763,4 @@ export function iniciarVoo(canvas, opcoes = {}) {
   return () => { parar = true; visivel = false; };
 }
 
-export { ROTA, DURACAO, PASSOS_POR_SALTO };
+export { ROTA, DURACAO, PASSOS_POR_SALTO, VIRAGEM };

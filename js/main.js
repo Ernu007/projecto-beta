@@ -141,7 +141,8 @@ if (etapas.length && TEM_IO) {
 }
 
 /* =========================================================
-   HERO — voo da carga (Maputo -> Pemba) e revelacao do titulo
+   HERO — voo da carga (Maputo -> Pemba -> Maputo, em loop) e
+   revelacao do titulo
    ========================================================= */
 import { iniciarVoo } from './hero-voo.js';
 
@@ -179,8 +180,9 @@ function iniciarHero() {
     }
   });
   /* Rede de segurança: se daqui a 14 s o título ainda estiver apagado,
-     é porque o IntersectionObserver nunca disparou. O voo dura 11 s
-     (Fase 8: dez províncias em vez de seis), por isso a margem. */
+     é porque o IntersectionObserver nunca disparou. A primeira ida dura
+     11 s (Fase 8: dez províncias em vez de seis), por isso a margem; da
+     volta em diante o voo já não mexe no título. */
   setTimeout(() => {
     if (palavras.some((el) => Number(el.style.getPropertyValue('--p')) < 1)) {
       reporTitulo();

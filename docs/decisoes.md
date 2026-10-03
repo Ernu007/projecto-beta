@@ -680,3 +680,38 @@ chamadas.
 **Dúvida que fica:** o ícone do cartão do WhatsApp na carta é um envelope (✉),
 porque a carta usa caracteres e não SVG; se o cliente quiser o logótipo do
 WhatsApp no PDF, é preciso desenhá-lo lá.
+
+### O voo é de ida e volta, em loop infinito (D39)
+
+O avião do hero fazia Maputo → Pemba e terminava. Passa a chegar a Pemba, dar a
+volta, regressar a Maputo **pelo mesmo percurso**, e repetir sem fim.
+
+**O avião nunca se tinha visto — e foi isso o "faltou só o avião".** Ao escrever
+os testes do loop apareceu um bug que vinha da Fase 8A: `construirRota`
+convertia as capitais para coordenadas de ecrã e passava-as a `saltoDe`, que as
+convertia outra vez. O traçado, as setas e o avião eram desenhados a ~33 000 px
+da origem, fora de qualquer canvas. Os testes que existiam liam o texto do
+ficheiro; nenhum corria o desenho. As setas, quando finalmente apareceram, tinham
+90 px (`r = 4 + 2 * esc`, com `esc` a valer os píxeis por grau do mapa): passaram
+a 6 px no computador e 4,5 px no telemóvel.
+
+| Decisão | Razão |
+|---|---|
+| `estadoVoo(ms)` é uma função pura, exportada | O voo é uma sequência de "pernas" de 11 s: as pares são a ida, as ímpares a volta. `pos` vai de 0 (Maputo) a 1 (Pemba) nos dois sentidos — a volta é o mesmo traçado lido ao contrário, e não um segundo traçado que pudesse divergir. Testa-se sem canvas. |
+| O avião **roda** na viragem (`rumoDoAviao`) | Na volta o nariz aponta para sul (tangente + 180°). E não aparece virado de um frame para o outro: nos primeiros 8% de cada perna roda meia volta a partir do rumo com que chegou. Como o `ease` arranca do zero, nessa altura quase não se desloca — roda sobre a ponta do percurso, que é o "contorna" do cliente. |
+| As setas viram-se com o avião | Na volta passam para o outro extremo de cada salto e apontam para sul. Uma seta para norte com o avião a ir para sul dizia duas coisas ao mesmo tempo. |
+| O traço percorrido é o da perna em curso | Na ida cresce de Maputo até ao avião; na volta, de Pemba até ao avião. |
+| O título só acende na primeira ida | Da volta em diante `aoProgredir` recebe sempre 1: o título não volta a apagar-se a cada ciclo. |
+| O relógio é **acumulado** (`passoDoRelogio`), não `agora − início` | Fora do ecrã não há frames, logo o relógio pára; ao voltar, o avião está onde ficou. O passo de um frame tem tecto de 100 ms, para um separador que esteve escondido não fazer o avião saltar meio país. |
+| A única paragem do ciclo é o `IntersectionObserver` | O briefing avisa para não reintroduzir o desperdício que o `1088b90` tirou do mapa de cobertura. Sem hero à vista (menos de 20%) não há `requestAnimationFrame`. A guarda `if (!visivel) return` vem antes de qualquer desenho, e há teste para a ordem. |
+| O fundo passa a uma camada (`camadaFundo`) depois da primeira ida | País, províncias e agências são ~1 100 `lineTo` e dezenas de `fill`/`stroke` por frame. Num voo de 11 s pagava-se 11 s; num loop infinito pagava-se sempre. Com as províncias todas acesas o fundo deixa de mudar: pinta-se uma vez para um canvas fora do ecrã e cada frame copia-o (`drawImage`). Por cima só vai o que mexe. O `resize` deita a camada fora. |
+| `prefers-reduced-motion`: sem voo | Como antes: o mapa estático com a rota toda traçada, sem avião e sem ciclo. Passou a redesenhar-se no `resize`, que antes deixava o canvas em branco. |
+| Há um teste que **corre** o desenho | `tests/mapa.test.js` chama `iniciarVoo` com um canvas que regista cada `translate` e `rotate`, a 1280 px e a 360 px, e confere que tudo fica dentro do canvas, que o avião sobe na ida e desce na volta, que os rumos são opostos e que a volta pinta menos do que a ida. É o teste que teria apanhado o avião fora do ecrã. |
+
+**Verificado no Chrome** (headless, 1280×800 e 360×740): a meio da ida, a meio da
+viragem em Pemba, a meio da volta, e com movimento reduzido.
+
+**Dúvida que fica:** o mapa de **Cobertura** (mais abaixo na página) não tem
+avião — tem pontos a sair da sede para cada capital, e pára quando acaba de se
+desenhar (é o `1088b90`). O pedido fala no avião, que só existe no hero; a
+Cobertura ficou como estava.

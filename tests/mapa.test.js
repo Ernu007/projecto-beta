@@ -298,7 +298,7 @@ test('o voo tem uma seta por salto — uma por par de províncias vizinhas', asy
 
   assert.match(fonte, /function desenharSeta/,
     'o hero não tem nenhuma função que desenhe seta');
-  assert.match(fonte, /for \(const s of saltos\) desenharSeta\(s, prog\)/,
+  assert.match(fonte, /for \(const s of saltos\) desenharSeta\(s, estado\)/,
     'a função de desenhar a seta existe mas ninguém a chama');
   assert.equal(PASSOS_POR_SALTO > 0, true);
   assert.ok(DURACAO >= 7000, 'o voo passou a ser mais curto do que era');
@@ -352,4 +352,333 @@ test('o mapa de cobertura desenha o contorno do país', () => {
     'a secção de Cobertura nunca desenhou o contorno de Moçambique');
   assert.match(fonte, /import \{[^}]*\bPAIS\b[^}]*\} from '\.\/mapa-dados\.js'/,
     'o mapa de cobertura não importa o PAIS');
+});
+/* ---------- Fase 9 (9.2): o voo é de ida e volta, em loop infinito ---------- */
+
+/* O cliente: "ao chegar a Cabo Delgado, ele contorna e volta fazendo o mesmo
+   percurso, saindo de lá para Maputo, criando um loop infinito."
+
+   Até aqui o voo fazia Maputo -> Pemba e TERMINAVA (`parar = true`). O que
+   se fixa aqui é o estado do voo em função do tempo — `estadoVoo` é pura, e
+   por isso testa-se sem canvas — e as duas coisas que um loop infinito
+   estraga se forem esquecidas: o avião a voar de cauda na volta, e o canvas
+   a pintar para sempre fora do ecrã (o desperdício que o commit 1088b90
+   tirou do mapa de cobertura). */
+
+const voo = await import('../js/hero-voo.js');
+const TAU = Math.PI * 2;
+/** Diferença entre dois ângulos, em [0, π]. */
+const afastamento = (a, b) => {
+  const d = (((a - b) % TAU) + TAU) % TAU;
+  return Math.min(d, TAU - d);
+};
+
+test('9.2: a ida vai de Maputo a Cabo Delgado e a volta desfaz o mesmo percurso', () => {
+  const { estadoVoo, DURACAO } = voo;
+  assert.equal(typeof estadoVoo, 'function', 'o hero-voo.js não exporta estadoVoo');
+
+  const partida = estadoVoo(0);
+  assert.deepEqual([partida.perna, partida.sentido, partida.pos], [0, 1, 0]);
+
+  const meiaIda = estadoVoo(DURACAO / 2);
+  assert.equal(meiaIda.sentido, 1);
+  assert.ok(Math.abs(meiaIda.pos - 0.5) < 1e-9);
+
+  assert.ok(estadoVoo(DURACAO - 1).pos > 0.999, 'a ida não chega a Cabo Delgado');
+
+  /* A volta: a mesma posição no percurso, percorrida ao contrário. */
+  const meiaVolta = estadoVoo(DURACAO * 1.5);
+  assert.deepEqual([meiaVolta.perna, meiaVolta.sentido], [1, -1]);
+  assert.ok(Math.abs(meiaVolta.pos - 0.5) < 1e-9);
+  for (const f of [0.1, 0.3, 0.7, 0.9]) {
+    const ida = estadoVoo(DURACAO * f).pos;
+    const volta = estadoVoo(DURACAO * (2 - f)).pos;
+    assert.ok(Math.abs(ida - volta) < 1e-9,
+      `a volta não passa pelo mesmo sítio da ida (${ida} vs ${volta})`);
+  }
+  assert.ok(estadoVoo(DURACAO * 2 - 1).pos < 0.001, 'a volta não chega a Maputo');
+});
+
+test('9.2: o voo não acaba — repete, e não dá saltos nas viragens', () => {
+  const { estadoVoo, DURACAO } = voo;
+
+  /* Depois da volta recomeça em Maputo, outra vez para norte. */
+  const segunda = estadoVoo(DURACAO * 2);
+  assert.deepEqual([segunda.perna, segunda.sentido, segunda.pos], [2, 1, 0]);
+
+  /* Mil ciclos depois continua a ser um voo, e não um avião parado em Pemba. */
+  const longe = estadoVoo(DURACAO * 2001.5);
+  assert.equal(longe.sentido, -1);
+  assert.ok(Math.abs(longe.pos - 0.5) < 1e-6);
+
+  /* Nas duas pontas o avião não se teletransporta: o milissegundo antes e o
+     milissegundo depois da viragem estão no mesmo sítio. */
+  for (const k of [1, 2, 3, 4]) {
+    const antes = estadoVoo(DURACAO * k - 1).pos;
+    const depois = estadoVoo(DURACAO * k + 1).pos;
+    assert.ok(Math.abs(antes - depois) < 0.001, `salto na viragem ${k}: ${antes} -> ${depois}`);
+  }
+
+  /* E em cada perna só anda num sentido. */
+  let anterior = -1;
+  for (let ms = 0; ms < DURACAO; ms += DURACAO / 200) {
+    const { pos } = estadoVoo(ms);
+    assert.ok(pos >= anterior, 'a ida recua');
+    anterior = pos;
+  }
+  anterior = 2;
+  for (let ms = DURACAO; ms < DURACAO * 2; ms += DURACAO / 200) {
+    const { pos } = estadoVoo(ms);
+    assert.ok(pos <= anterior, 'a volta avança para norte');
+    anterior = pos;
+  }
+});
+
+test('9.2: o avião vira-se na volta — não voa de cauda', () => {
+  const { estadoVoo, rumoDoAviao, DURACAO, VIRAGEM } = voo;
+  assert.equal(typeof rumoDoAviao, 'function', 'o hero-voo.js não exporta rumoDoAviao');
+  assert.ok(VIRAGEM > 0 && VIRAGEM <= 0.15, `a viragem ocupa ${VIRAGEM} da perna`);
+
+  /* `tangente` é a direcção do traçado no sentido Maputo -> Pemba. */
+  for (const tangente of [-Math.PI / 2, -1.1, 0.4, 2.6]) {
+    const ida = rumoDoAviao(tangente, estadoVoo(DURACAO * 0.5));
+    assert.ok(afastamento(ida, tangente) < 1e-9, 'na ida o nariz não segue o traçado');
+
+    const volta = rumoDoAviao(tangente, estadoVoo(DURACAO * 1.5));
+    assert.ok(afastamento(volta, tangente + Math.PI) < 1e-9,
+      `na volta o avião aponta para ${volta} e o percurso vai para ${tangente + Math.PI}: voa de cauda`);
+
+    /* Na segunda ida volta a apontar para norte. */
+    const outraIda = rumoDoAviao(tangente, estadoVoo(DURACAO * 2.5));
+    assert.ok(afastamento(outraIda, tangente) < 1e-9, 'na segunda ida o avião ficou virado para sul');
+  }
+});
+
+test('9.2: a viragem é uma rotação contínua, não um salto de 180 graus', () => {
+  const { estadoVoo, rumoDoAviao, DURACAO, VIRAGEM } = voo;
+  const tangente = -1.2;
+
+  /* A primeira partida não tem viragem: o avião sai de Maputo já de nariz
+     para norte. */
+  assert.ok(afastamento(rumoDoAviao(tangente, estadoVoo(0)), tangente) < 1e-9);
+
+  for (const perna of [1, 2, 3]) {
+    const inicio = DURACAO * perna;
+    const fimDaAnterior = rumoDoAviao(tangente, estadoVoo(inicio - 1));
+    const comeco = rumoDoAviao(tangente, estadoVoo(inicio));
+    assert.ok(afastamento(fimDaAnterior, comeco) < 0.01,
+      `perna ${perna}: o avião roda ${afastamento(fimDaAnterior, comeco).toFixed(2)} rad de um frame para o outro`);
+
+    /* A meio da viragem está de lado; no fim dela, já no rumo novo. */
+    const meio = rumoDoAviao(tangente, estadoVoo(inicio + DURACAO * VIRAGEM * 0.5));
+    assert.ok(Math.abs(afastamento(meio, comeco) - Math.PI / 2) < 0.2, 'a meio da viragem o avião não está de lado');
+    const fim = rumoDoAviao(tangente, estadoVoo(inicio + DURACAO * VIRAGEM));
+    assert.ok(afastamento(fim, comeco) > Math.PI - 1e-6, 'a viragem não completa os 180 graus');
+
+    /* Passo a passo, sem saltos. */
+    let antes = comeco;
+    for (let k = 1; k <= 60; k += 1) {
+      const agora = rumoDoAviao(tangente, estadoVoo(inicio + (DURACAO * VIRAGEM * k) / 60));
+      assert.ok(afastamento(antes, agora) < 0.15, 'a rotação dá um salto');
+      antes = agora;
+    }
+  }
+});
+
+test('9.2: o relógio do voo só anda com o hero à vista', () => {
+  const { passoDoRelogio } = voo;
+  assert.equal(typeof passoDoRelogio, 'function', 'o hero-voo.js não exporta passoDoRelogio');
+
+  /* O primeiro frame depois de (re)entrar no ecrã não tem frame anterior. */
+  assert.equal(passoDoRelogio(null, 5000), 0);
+  /* Um frame normal conta o que passou. */
+  assert.ok(Math.abs(passoDoRelogio(1000, 1016.7) - 16.7) < 1e-9);
+  /* Um separador que esteve escondido um minuto não faz o avião saltar
+     meio percurso: o passo é limitado. */
+  assert.ok(passoDoRelogio(1000, 61000) <= 100);
+  /* E o relógio nunca anda para trás. */
+  assert.equal(passoDoRelogio(1000, 900), 0);
+});
+
+test('9.2: o loop infinito só pede frames enquanto o hero está no ecrã', () => {
+  const fonte = codigoDe('js/hero-voo.js');
+  const frame = /function frame\(agora\) \{([\s\S]*?)\n  \}/.exec(fonte)?.[1];
+  assert.ok(frame, 'não encontrei a função frame');
+
+  /* O voo deixou de ter fim… */
+  assert.doesNotMatch(frame, /parar = true/, 'o voo continua a parar no fim da ida');
+  assert.doesNotMatch(frame, /setTimeout/, 'o voo continua a ter um fim marcado');
+  assert.match(frame, /estadoVoo\(decorrido\)/, 'o frame não usa o relógio do loop');
+
+  /* …e por isso a única coisa que o pára é sair do ecrã. A guarda tem de
+     vir ANTES de qualquer desenho e de qualquer novo pedido de frame. */
+  const guarda = frame.indexOf('if (!visivel) return');
+  assert.ok(guarda !== -1, 'o frame não pára quando o hero sai do ecrã');
+  assert.ok(guarda < frame.indexOf('clearRect'), 'o frame desenha antes de saber se está à vista');
+  assert.ok(guarda < frame.indexOf('requestAnimationFrame(frame)'));
+
+  /* Um só pedido de frame por frame, e é o IntersectionObserver que
+     arranca e pára o ciclo. */
+  assert.equal(frame.split('requestAnimationFrame(frame)').length - 1, 1);
+  assert.match(fonte, /new IntersectionObserver\(/);
+  assert.match(fonte, /else if \(!dentro\) \{\s*visivel = false;/,
+    'sair do ecrã não desliga o ciclo');
+
+  /* O relógio é acumulado, não é `agora - inicio`: senão o tempo fora do
+     ecrã contava, e o avião saltava para outro sítio ao voltar. */
+  assert.match(frame, /decorrido \+= passoDoRelogio\(ultimo, agora\)/);
+});
+
+test('9.2: com prefers-reduced-motion não há voo nenhum', () => {
+  const fonte = codigoDe('js/hero-voo.js');
+  const arranque = fonte.slice(fonte.indexOf('if (reduzir) {', fonte.indexOf('montar();')));
+  assert.ok(arranque.startsWith('if (reduzir) {'), 'não encontrei o ramo de movimento reduzido');
+  const ramo = arranque.slice(0, arranque.indexOf('if (\'IntersectionObserver\' in window)'));
+  assert.match(ramo, /return \(\) => \{\};/, 'o ramo de movimento reduzido não sai antes do ciclo');
+  assert.doesNotMatch(ramo, /requestAnimationFrame\(frame\)/,
+    'com movimento reduzido o loop arranca na mesma');
+  assert.doesNotMatch(ramo, /desenharAviao/, 'com movimento reduzido não há avião a meio do percurso');
+});
+
+test('9.2: depois da primeira ida o fundo do mapa é pintado uma vez, não a cada frame', () => {
+  /* O país e as dez províncias são ~1 100 `lineTo` e dezenas de `fill` e
+     `stroke`. Num voo que acabava, pagava-se isso durante 11 s. Num loop
+     infinito pagava-se para sempre — o mesmo desperdício do 1088b90. Assim
+     que as províncias estão todas acesas o fundo já não muda: vai para uma
+     camada e cada frame limita-se a copiá-la. */
+  const fonte = codigoDe('js/hero-voo.js');
+  const frame = /function frame\(agora\) \{([\s\S]*?)\n  \}/.exec(fonte)?.[1] ?? '';
+  assert.match(fonte, /function camadaFundo\(\)/, 'não há camada para o fundo estático');
+  assert.match(frame, /ctx\.drawImage\(camadaFundo\(\)/, 'o frame não usa a camada do fundo');
+  /* A camada é deitada fora quando o canvas muda de tamanho. */
+  const montar = /function montar\(\) \{([\s\S]*?)\n  \}/.exec(fonte)?.[1] ?? '';
+  assert.match(montar, /fundo = null/, 'a camada do fundo sobrevive a um resize e fica desalinhada');
+});
+
+/* ---------- Fase 9 (9.2): o avião está mesmo NO mapa ---------- */
+
+/* O cliente escreveu "faltou só o avião". Faltava mesmo: `construirRota`
+   projectava as capitais para coordenadas de ecrã e passava-as a `saltoDe`,
+   que as projectava OUTRA vez. O traçado, as setas e o avião eram desenhados
+   a ~33 000 px da origem, fora de qualquer canvas — e nenhum teste o via,
+   porque todos liam o texto do ficheiro e nenhum corria o desenho.
+
+   Este corre. O canvas é um registo: guarda cada `translate` e cada
+   `rotate`, que é como o avião e as setas se põem no sítio. */
+function correrVoo({ largura = 1280, altura = 800, ate, passo = 100 }) {
+  const quadros = [];
+  let actual = null;
+  const registo = () => new Proxy({}, {
+    get(alvo, nome) {
+      if (nome in alvo) return alvo[nome];
+      if (nome === 'createLinearGradient' || nome === 'createRadialGradient') {
+        return () => ({ addColorStop() {} });
+      }
+      if (nome === 'translate') return (x, y) => { actual?.translates.push([x, y]); };
+      if (nome === 'rotate') return (a) => { actual?.rotates.push(a); };
+      if (nome === 'arc') return (x, y) => { actual?.arcos.push([x, y]); };
+      return () => {};
+    },
+    set(alvo, nome, valor) { alvo[nome] = valor; return true; },
+  });
+  const tela = () => ({ width: 0, height: 0, clientWidth: largura, clientHeight: altura, getContext: registo });
+
+  let pedido = null;
+  const antes = {
+    window: globalThis.window, document: globalThis.document, raf: globalThis.requestAnimationFrame,
+  };
+  globalThis.window = {
+    devicePixelRatio: 1,
+    matchMedia: () => ({ matches: false }),
+    addEventListener() {},
+  };
+  globalThis.document = { createElement: tela };
+  globalThis.requestAnimationFrame = (f) => { pedido = f; };
+  try {
+    const progressos = [];
+    voo.iniciarVoo(tela(), { aoProgredir: (v) => progressos.push(v) });
+    for (let agora = 0; agora <= ate; agora += passo) {
+      assert.ok(pedido, `o ciclo deixou de pedir frames aos ${agora} ms`);
+      const f = pedido;
+      pedido = null;
+      actual = { ms: agora, translates: [], rotates: [], arcos: [] };
+      f(agora);
+      quadros.push(actual);
+    }
+    return { quadros, progressos, largura, altura };
+  } finally {
+    globalThis.window = antes.window;
+    globalThis.document = antes.document;
+    globalThis.requestAnimationFrame = antes.raf;
+  }
+}
+
+/** O avião de um quadro: o penúltimo `translate` (o último é a sombra dele). */
+const aviaoDe = (q) => {
+  const [x, y] = q.translates[q.translates.length - 2];
+  /* `desenharAviao` roda para o rumo e a sombra desfaz a rotação: o rumo
+     é o penúltimo `rotate`. */
+  return { x, y, rumo: q.rotates[q.rotates.length - 2] };
+};
+
+for (const [largura, altura] of [[1280, 800], [360, 740]]) {
+  test(`9.2: a ${largura}px o avião, as setas e o traçado ficam dentro do canvas`, () => {
+    const { quadros } = correrVoo({ largura, altura, ate: voo.DURACAO * 2.2 });
+    for (const q of quadros.filter((x) => x.ms > 400)) {
+      for (const [x, y] of q.translates.slice(0, -1)) {
+        assert.ok(x >= 0 && x <= largura && y >= 0 && y <= altura,
+          `aos ${q.ms} ms há um desenho em (${Math.round(x)}, ${Math.round(y)}), fora do canvas de ${largura}×${altura}`);
+      }
+    }
+  });
+}
+
+test('9.2: o avião sobe o mapa na ida, desce na volta, e vira o nariz', () => {
+  const D = voo.DURACAO;
+  const { quadros, progressos } = correrVoo({ ate: D * 3.5 });
+  const em = (ms) => aviaoDe(quadros.find((q) => q.ms >= ms));
+
+  /* No canvas o norte é para cima: y menor. */
+  assert.ok(em(D * 0.75).y < em(D * 0.25).y, 'na ida o avião não vai para norte');
+  assert.ok(em(D * 1.75).y > em(D * 1.25).y, 'na volta o avião não vai para sul');
+  assert.ok(em(D * 2.75).y < em(D * 2.25).y, 'o voo não repete: a segunda ida não sobe');
+
+  /* No mesmo sítio do percurso, ida e volta têm rumos opostos. */
+  const ida = em(D * 0.5);
+  const volta = em(D * 1.5);
+  assert.ok(Math.hypot(ida.x - volta.x, ida.y - volta.y) < 12, 'a volta não passa pelo percurso da ida');
+  assert.ok(afastamento(volta.rumo, ida.rumo + Math.PI) < 0.1,
+    `rumo na ida ${ida.rumo.toFixed(2)}, na volta ${volta.rumo.toFixed(2)}: o avião voa de cauda`);
+
+  /* O avião parte de Maputo e chega a Pemba, e não a um sítio parecido. */
+  const porCima = (ponto, q) => Math.min(...q.arcos.map(([x, y]) => Math.hypot(x - ponto.x, y - ponto.y)));
+  assert.ok(porCima(em(D - 100), quadros[5]) < 3, 'o fim da ida não é em cima de uma agência');
+  assert.ok(porCima(em(D * 2 - 100), quadros[5]) < 3, 'o fim da volta não é em cima de uma agência');
+
+  /* E o título acende na primeira ida e não volta a apagar-se. */
+  assert.ok(progressos[3] < 0.05);
+  assert.equal(Math.min(...progressos.slice(Math.ceil(D / 100) + 1)), 1,
+    'o título volta a apagar-se depois da primeira ida');
+});
+
+test('9.2: da primeira volta em diante cada frame pinta muito menos', () => {
+  const D = voo.DURACAO;
+  const { quadros } = correrVoo({ ate: D * 1.5 });
+  const arcos = (ms) => quadros.find((q) => q.ms >= ms).arcos.length;
+  /* Os `arc` das agências (dois por província) saem do frame: passam a vir
+     na camada do fundo. */
+  assert.ok(arcos(D * 1.4) <= arcos(D * 0.5) - 2 * ROTA.length,
+    `na volta cada frame ainda desenha ${arcos(D * 1.4)} arcos (na ida ${arcos(D * 0.5)})`);
+});
+
+test('9.2: a seta de cada salto tem tamanho de seta, e não o da escala do mapa', () => {
+  /* O raio era `4 + 2 * esc`, e `esc` são os píxeis por grau do mapa
+     (~45 no computador): setas de 90 px, maiores do que uma província. Nunca
+     se viu porque estavam fora do canvas, com o avião. */
+  const fonte = codigoDe('js/hero-voo.js');
+  const seta = /function desenharSeta\(s, estado\) \{([\s\S]*?)\n  \}/.exec(fonte)?.[1] ?? '';
+  const m = /const r = w < 760 \? ([\d.]+) : ([\d.]+);/.exec(seta);
+  assert.ok(m, 'o raio da seta voltou a depender de outra coisa que não a largura do ecrã');
+  assert.ok(Number(m[1]) >= 3 && Number(m[1]) <= Number(m[2]) && Number(m[2]) <= 8,
+    `raio da seta: ${m[1]} px no telemóvel, ${m[2]} px no computador`);
 });
