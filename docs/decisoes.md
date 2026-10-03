@@ -131,6 +131,19 @@ registada com regras de uso próprias.
 das províncias, Matola). Onde a 8C e uma fase anterior discordam, ganha a 8C:
 é a revisão completa (22 min) e não um excerto.
 
+### C8 — formulário (substitui partes do C2, C3 e C5 da 8B)
+
+| Campo | O que ficou | Decisão |
+|---|---|---|
+| Apelido | `Ex.: Machava` | "Sissu" não é um apelido comum; Machava é dos mais frequentes no sul. |
+| Morada | `Ex.: Sommerschield, Maputo` | **[INCERTO]** a transcrição dá "somar chile"; Sommerschield é o único bairro de Maputo que soa assim. Substitui a Malhangalene que a 8B tinha escolhido. |
+| Dimensões | **removidas** do formulário, das mensagens e do resumo | O servidor continua a aceitar `dimensao` (vazia) para não mudar as colunas da folha de cálculo. |
+| Descrição | **opcional**, `(ex.: camisetas)` | **[INCERTO]** "exemplo entre parênteses, opcional" — li "opcional" como do campo, não do exemplo. O servidor deixou de a exigir. Se a JVI precisar sempre da descrição, é voltar a pôr `required` e a linha em `validar()`. |
+| Pagamento | e-Mola e M-Pesa **num só cartão** ("Dinheiro móvel"), transferência no outro | Lá dentro continuam dois rádios: o valor guardado não muda (`e-Mola`/`M-Pesa`), e a JVI sabe para que conta pedir o dinheiro. |
+| Quando paga | ajuda "Paga no acto de envio ou no acto de levantamento da carga." | Ligada ao grupo por `aria-describedby`. |
+| Termos | obrigatórios (já eram); o **cartão** saiu de vez | A 8B tirou o fundo em `css/orcamento.css`, mas `css/privacidade.css` continuava a desenhar o cartão por baixo. O teste passou a olhar para as duas folhas. |
+| Resumo | a linha "WhatsApp" do resumo de confirmação passou a "Telefone" | Coerente com o rótulo do campo. |
+
 ### C5 + C6 — botões Google e o panfleto
 
 - **C5 [INCERTO] — cor por botão:** segui a leitura natural do briefing:

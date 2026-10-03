@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { PROVINCIAS, PAGAMENTOS } from '../js/orcamento.js';
 import { ROTA } from '../js/mapa-dados.js';
-import { PAGAMENTOS as PAGAMENTOS_SERVIDOR, PROVINCIAS as PROVINCIAS_SERVIDOR } from '../functions/submit.js';
+import { PAGAMENTOS as PAGAMENTOS_SERVIDOR, PROVINCIAS as PROVINCIAS_SERVIDOR, validar as validarServidor } from '../functions/submit.js';
 
 /* ---------------------------------------------------------------------------
    FASE 8 — o formulário (C1 a C6 do BRIEFING-FASE8-REVISAO.md).
@@ -44,11 +44,13 @@ test('C2: o rótulo do telefone é só "Telefone" e o exemplo não é o número 
     `o exemplo do telefone é o número real da JVI: ${ph}`);
 });
 
-test('C2: os exemplos do nome, do apelido e da morada', () => {
+test('8C/C8: os exemplos do nome, do apelido e da morada', () => {
   assert.match(TPL, /id="orcNome"[^>]*placeholder="Ex\.: João Pedro"/);
-  assert.match(TPL, /id="orcApelido"[^>]*placeholder="Ex\.: [^"]+"/);
-  /* Malhangalene: bairro do distrito municipal KaMpfumo, em Maputo. */
-  assert.match(TPL, /id="orcMorada"[^>]*placeholder="Ex\.: Malhangalene, Maputo"/);
+  /* Um apelido comum em Moçambique. */
+  assert.match(TPL, /id="orcApelido"[^>]*placeholder="Ex\.: Machava"/);
+  /* Sommerschield: o bairro que o cliente ditou ("somar chile" na
+     transcrição), no distrito municipal KaMpfumo, em Maputo. */
+  assert.match(TPL, /id="orcMorada"[^>]*placeholder="Ex\.: Sommerschield, Maputo"/);
 });
 
 /* ---------- C3: passo 2 ---------- */
@@ -58,10 +60,21 @@ test('C3: o passo 2 chama-se "A sua carga"', () => {
   assert.doesNotMatch(TPL, /O que transportamos/);
 });
 
-test('C3: as dimensões são opcionais', () => {
-  const dim = /<input id="orcDimensao"[^>]*>/.exec(TPL)?.[0];
-  assert.ok(dim, 'o campo das dimensões desapareceu');
-  assert.doesNotMatch(dim, /\brequired\b/, 'as dimensões voltaram a ser obrigatórias');
+test('8C/C8: as dimensões saíram do formulário — "não é preciso"', () => {
+  assert.doesNotMatch(TPL, /orcDimensao|name="dimensao"|Dimensões/);
+  assert.doesNotMatch(JS, /Dimensões/, 'as mensagens e o resumo ainda falam de dimensões');
+});
+
+test('8C/C8: a descrição da mercadoria é opcional, com o exemplo entre parênteses', () => {
+  const txt = /<textarea id="orcDescricao"[^>]*>/.exec(TPL)?.[0];
+  assert.ok(txt, 'a descrição desapareceu');
+  assert.doesNotMatch(txt, /\brequired\b/, 'a descrição continua obrigatória');
+  assert.match(TPL, /<label for="orcDescricao">Descrição da mercadoria <span class="opc">opcional<\/span><\/label>/);
+  assert.deepEqual(validarServidor({
+    nome: 'A', apelido: 'B', provincia: 'Maputo', morada: 'C', telefone: '841234567',
+    destinatario: 'D', provinciaDestino: 'Gaza', descricao: '', peso: '15',
+    pagamento: 'M-Pesa', pagarNoLevantamento: 'nao',
+  }), [], 'o servidor rejeita um pedido sem descrição');
 });
 
 test('8C/C2: as províncias estão por ordem geográfica sul -> norte, e o servidor aceita as mesmas', () => {
@@ -121,6 +134,22 @@ test('C5: as formas de pagamento são e-Mola, M-Pesa e transferência bancária'
   assert.deepEqual(radios, esperado);
 });
 
+test('8C/C8: e-Mola e M-Pesa no MESMO cartão; a transferência noutro', () => {
+  const s = seccao(2);
+  const movel = /<div class="opcao opcao--movel">([\s\S]*?)<\/div>/.exec(s)?.[1];
+  assert.ok(movel, 'não há cartão de dinheiro móvel');
+  assert.match(movel, /value="e-Mola"/);
+  assert.match(movel, /value="M-Pesa"/);
+  assert.doesNotMatch(movel, /Transferência/);
+  assert.match(s, /<label class="opcao"><input type="radio" name="pagamento" value="Transferência bancária">/);
+});
+
+test('8C/C8: "quando paga" explica as duas alturas', () => {
+  const bloco = /data-campo="pagarNoLevantamento"[\s\S]*?<span class="campo__erro">/.exec(seccao(2))?.[0];
+  assert.match(bloco, /<span class="campo__ajuda"[^>]*>Paga no acto de envio ou no acto de levantamento da carga\.<\/span>/);
+  assert.match(bloco, /No acto de levantamento<small>Na província de destino<\/small>/);
+});
+
 test('C5: nunca cartão de crédito nem numerário no formulário', () => {
   assert.doesNotMatch(TPL, /cart[ãa]o|Visa|MasterCard|Numerário/i);
 });
@@ -145,8 +174,15 @@ test('C6: aceitar os termos é obrigatório para enviar', () => {
 });
 
 test('C6: os termos deixaram de ser um cartão, e o aviso legal fica no rodapé', () => {
-  const regra = /\.consent\s*\{([^}]*)\}/.exec(CSS)?.[1] ?? '';
-  assert.doesNotMatch(regra, /background/, 'o bloco dos termos voltou a ter fundo de cartão');
+  /* 8C/C8: a regra de css/privacidade.css continuava a desenhar o cartão
+     (fundo + contorno + cantos) por baixo da de css/orcamento.css, que só
+     não acrescentava fundo. Verificam-se as duas folhas. */
+  for (const folha of ['css/orcamento.css', 'css/privacidade.css']) {
+    for (const m of fs.readFileSync(folha, 'utf8').matchAll(/(?:^|\})\s*\.consent\s*\{([^}]*)\}/g)) {
+      assert.doesNotMatch(m[1], /background|border\s*:|border-radius/,
+        `${folha}: o bloco dos termos voltou a ser um cartão`);
+    }
+  }
   const rodape = /<footer class="rodape">([\s\S]*?)<\/footer>/.exec(HTML)?.[1] ?? '';
   assert.match(rodape, /data-legal="privacidade"/, 'o aviso legal saiu do rodapé');
 });

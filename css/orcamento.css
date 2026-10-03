@@ -99,6 +99,17 @@
 .opcao small { display: block; font-size: 11.5px; font-weight: 500; color: var(--texto-fraco); }
 .opcao:has(input:checked) { border-color: var(--verde); background: rgb(var(--verde-rgb) / .1); }
 
+/* 8C/C8: e-Mola e M-Pesa num cartão só, a transferência no outro. */
+@media (min-width: 460px) { .opcoes.opcoes--pag { grid-template-columns: 3fr 2fr; } }
+.opcao--movel { flex-direction: column; align-items: stretch; gap: 10px; cursor: default; }
+.opcao__subs { display: flex; gap: 8px; }
+.opcao .opcao__sub {
+  flex: 1; display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 9px 12px; border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14.5px; font-weight: 700;
+}
+.opcao__sub:has(input:checked) { border-color: var(--verde); background: rgb(var(--verde-rgb) / .12); }
+
 /* ---------- Navegação ---------- */
 .orc__nav { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .orc__conta { margin-inline: auto; font-size: 12.5px; color: var(--texto-fraco); }
@@ -128,13 +139,6 @@
 .verif:has(input:checked) { background: rgb(var(--verde-rgb) / .16); border-color: var(--verde); }
 .campo--verif { margin-top: 16px; }
 .campo--verif[data-erro="true"] .verif { border-color: var(--erro); }
-
-/* C3: dimensões recolhidas por omissão. */
-.campo--dobra summary {
-  cursor: pointer; font-size: 14px; font-weight: 600; color: var(--texto-suave);
-  padding: 6px 0; list-style-position: inside;
-}
-.campo--dobra[open] summary { margin-bottom: 8px; }
 
 /* ---------- Anti-spam (honeypot) ---------- */
 .hp {

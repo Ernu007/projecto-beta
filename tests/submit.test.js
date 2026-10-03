@@ -28,8 +28,9 @@ test('um pedido completo nao tem problemas', () => {
 });
 
 test('faltam os campos obrigatorios um a um', () => {
+  /* A descrição da mercadoria passou a opcional na Fase 8C (C8). */
   for (const campo of ['nome', 'apelido', 'provincia', 'morada',
-    'destinatario', 'provinciaDestino', 'descricao']) {
+    'destinatario', 'provinciaDestino']) {
     const p = validar({ ...BOM, [campo]: '' });
     assert.ok(p.length > 0, `faltava detectar ${campo} em falta`);
   }

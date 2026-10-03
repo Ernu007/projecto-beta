@@ -866,7 +866,7 @@
           </div>
           <div class="campo" data-campo="apelido">
             <label for="orcApelido">Apelido <span class="ob">*</span></label>
-            <input id="orcApelido" name="apelido" type="text" maxlength="80" placeholder="Ex.: Sissu" required autocomplete="family-name">
+            <input id="orcApelido" name="apelido" type="text" maxlength="80" placeholder="Ex.: Machava" required autocomplete="family-name">
             <span class="campo__erro">Indique o apelido.</span>
           </div>
           <div class="campo" data-campo="provincia">
@@ -876,7 +876,7 @@
           </div>
           <div class="campo" data-campo="morada">
             <label for="orcMorada">Morada / bairro <span class="ob">*</span></label>
-            <input id="orcMorada" name="morada" type="text" maxlength="200" placeholder="Ex.: Malhangalene, Maputo" required autocomplete="street-address">
+            <input id="orcMorada" name="morada" type="text" maxlength="200" placeholder="Ex.: Sommerschield, Maputo" required autocomplete="street-address">
             <span class="campo__erro">Indique a morada ou bairro.</span>
           </div>
           <div class="campo campo--largo" data-campo="telefone">
@@ -915,18 +915,11 @@
             <span class="campo__ajuda">Pode escrever 11,7 — a vírgula é aceite.</span>
             <span class="campo__erro">Indique o peso em quilogramas, entre 0,1 e 100 000.</span>
           </div>
-          <!-- C3: as dimensões não fazem falta a quem pede do telemóvel.
-               Ficam opcionais e recolhidas: quem as sabe abre e escreve. -->
-          <details class="campo campo--dobra" data-campo="dimensao">
-            <summary>Dimensões (cm) <span class="opc">opcional</span></summary>
-            <label class="sr-only" for="orcDimensao">Dimensões (cm)</label>
-            <input id="orcDimensao" name="dimensao" type="text" maxlength="60" placeholder="Ex.: 60 x 40 x 40">
-            <span class="campo__ajuda">Comprimento × largura × altura.</span>
-          </details>
+          <!-- 8C/C8: as dimensões saíram ("não é preciso"), e a descrição
+               passou a opcional, com o exemplo entre parênteses. -->
           <div class="campo campo--largo" data-campo="descricao">
-            <label for="orcDescricao">Descrição da mercadoria <span class="ob">*</span></label>
-            <textarea id="orcDescricao" name="descricao" rows="3" maxlength="1200" placeholder="(ex.: camisetas)" required></textarea>
-            <span class="campo__erro">Descreva a mercadoria.</span>
+            <label for="orcDescricao">Descrição da mercadoria <span class="opc">opcional</span></label>
+            <textarea id="orcDescricao" name="descricao" rows="3" maxlength="1200" placeholder="(ex.: camisetas)"></textarea>
           </div>
         </div>
 
@@ -960,9 +953,17 @@
         <div class="campos">
           <div class="campo campo--largo" data-campo="pagamento">
             <span class="campo__rotulo" id="rotPag">Forma de pagamento <span class="ob">*</span></span>
-            <div class="opcoes" role="radiogroup" aria-labelledby="rotPag">
-              <label class="opcao"><input type="radio" name="pagamento" value="e-Mola" checked> <span>e-Mola<small>Movitel</small></span></label>
-              <label class="opcao"><input type="radio" name="pagamento" value="M-Pesa"> <span>M-Pesa<small>Vodacom</small></span></label>
+            <!-- 8C/C8: e-Mola e M-Pesa na mesma opção (dinheiro móvel). Os
+                 dois rádios continuam separados lá dentro: o valor guardado
+                 é o mesmo de sempre, e a JVI sabe por qual dos dois cobrar. -->
+            <div class="opcoes opcoes--pag" role="radiogroup" aria-labelledby="rotPag">
+              <div class="opcao opcao--movel">
+                <span class="opcao__t">Dinheiro móvel<small>Movitel ou Vodacom</small></span>
+                <span class="opcao__subs">
+                  <label class="opcao__sub"><input type="radio" name="pagamento" value="e-Mola" checked> e-Mola</label>
+                  <label class="opcao__sub"><input type="radio" name="pagamento" value="M-Pesa"> M-Pesa</label>
+                </span>
+              </div>
               <label class="opcao"><input type="radio" name="pagamento" value="Transferência bancária"> <span>Transferência bancária<small>Para a conta da JVI</small></span></label>
             </div>
           </div>
@@ -973,7 +974,8 @@
                  `sim`/`nao` de "paga no levantamento", que é o que a função
                  serverless e as mensagens já conhecem. -->
             <span class="campo__rotulo" id="rotLev">Quando paga <span class="ob">*</span></span>
-            <div class="opcoes opcoes--simnao" role="radiogroup" aria-labelledby="rotLev">
+            <span class="campo__ajuda" id="ajudaLev">Paga no acto de envio ou no acto de levantamento da carga.</span>
+            <div class="opcoes opcoes--simnao" role="radiogroup" aria-labelledby="rotLev" aria-describedby="ajudaLev">
               <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="nao" required> <span>No acto de envio<small>Ao entregar a carga à JVI</small></span></label>
               <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="sim"> <span>No acto de levantamento<small>Na província de destino</small></span></label>
             </div>

@@ -174,7 +174,7 @@ export function validar(d) {
   }
   if (sem(d.destinatario)) problemas.push('quem recebe');
   if (!PROVINCIAS.includes(d.provinciaDestino)) problemas.push('província de destino');
-  if (sem(d.descricao)) problemas.push('descrição da mercadoria');
+  // A descrição da mercadoria é opcional desde a Fase 8C (C8).
 
   const peso = numPeso(d.peso);
   if (!Number.isFinite(peso) || peso <= 0 || peso > 100000) problemas.push('peso');

@@ -96,7 +96,7 @@ test('a mensagem da empresa leva os dados completos e o orcamento', () => {
   assert.match(t, /Ana Maria/);
   assert.match(t, /Cabo Delgado/);
   assert.match(t, /11\.7 kg/);
-  assert.match(t, /60 x 40 x 40/);
+  assert.doesNotMatch(t, /Dimensões/, 'as dimensões saíram do formulário (8C/C8)');
   assert.match(t, /tintas PLASCON/);
   assert.match(t, /e-Mola/);
   assert.match(t, /no levantamento: Sim/);

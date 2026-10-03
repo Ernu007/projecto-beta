@@ -39,17 +39,16 @@
 }
 .pp__destaque p:last-child { margin-bottom: 0; }
 
-/* Recolha de consentimento junto ao botão de envio */
+/* Recolha de consentimento junto ao botão de envio. Fase 8C/C8: deixou
+   de ser um cartão (sem fundo, contorno nem cantos) — é uma linha. */
 .consent {
   display: flex; gap: 10px; align-items: flex-start;
-  margin-top: 16px; padding: 12px 15px; border-radius: 12px;
-  background: var(--vidro); border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 16px;
   font-size: 12.5px; color: var(--texto-fraco); line-height: 1.55;
 }
 .consent input { accent-color: var(--verde); width: 17px; height: 17px; flex: none; margin-top: 1px; }
 .consent a { color: var(--verde); text-decoration: underline; text-underline-offset: 2px; }
 .consent a:hover { color: var(--verde-escuro); }
-.consent[data-erro="true"] { border-color: rgba(248, 113, 113, 0.5); }
 
 /* Diálogo legal */
 .legal {

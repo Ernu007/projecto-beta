@@ -24,11 +24,10 @@ test('linhasResumo lista os dados e os tres valores sem omitir nada', () => {
   assert.match(texto, /Emissor: João Pedro Sissu Sissu/);
   assert.match(texto, /Origem: Nampula/);
   assert.match(texto, /Morada: Bairro da Sommachine/);
-  assert.match(texto, /WhatsApp: \+258 84 793 5035/);
+  assert.match(texto, /Telefone: \+258 84 793 5035/);
   assert.match(texto, /Recebe: Ana Maria/);
   assert.match(texto, /Destino: Cabo Delgado/);
   assert.match(texto, /Peso: 11\.7 kg/);
-  assert.match(texto, /Dimensões: 60 x 40 x 40/);
   assert.match(texto, /Mercadoria: tintas PLASCON/);
   assert.match(texto, /Pagamento: e-Mola/);
   assert.match(texto, /Paga no levantamento: Sim/);
@@ -64,7 +63,8 @@ test('linhasResumo com liftamento marcado como nao', () => {
   assert.equal(l.find((x) => x.rotulo === 'Paga no levantamento').valor, 'Não');
 });
 
-test('linhasResumo sem dimensoes diz que nao foram indicadas', () => {
-  const l = linhasResumo({ ...CHEIO, dimensao: '' });
-  assert.equal(l.find((x) => x.rotulo === 'Dimensões').valor, 'não indicadas');
+test('linhasResumo já não tem dimensões nem chama "WhatsApp" ao telefone (8C/C8)', () => {
+  const l = linhasResumo(CHEIO);
+  assert.equal(l.find((x) => x.rotulo === 'Dimensões'), undefined);
+  assert.equal(l.find((x) => x.rotulo === 'WhatsApp'), undefined);
 });
