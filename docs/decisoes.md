@@ -783,3 +783,34 @@ ficava 2 px mais baixo (106,75 contra 108,75 px, medido). Agora são os dois
 **Dúvida que fica:** "a última página" foi lida como o rodapé, que é onde estão
 juntos o "Falar no WhatsApp" e o "Como chegar à JVI". Na secção Contactos o
 WhatsApp é um item de lista com o número (não um botão) e não foi mexido.
+
+### O carrossel cresceu (D42)
+
+O cliente: *"aumente o tamanho das imagens do carrossel, está muito pequeno!"* Na
+Fase 8B tinha pedido "cards pequenos" para passar um de cada vez, e o palco ficou
+com 520 px. Não se contradiz: continua a ser **uma fotografia por ecrã**, mas
+grande.
+
+Medido no Chrome:
+
+| Ecrã | Antes | Agora |
+|---|---|---|
+| Telemóvel, 360 × 740 | 312 × 234 px | **344 × 258 px** (96% da largura do ecrã) |
+| Computador, 1280 × 800 | 520 × 390 px | **832 × 624 px** |
+| Telemóvel deitado, 740 × 360 | 520 × 390 px (não cabia nos 360 de altura) | 374 × 281 px |
+
+| Decisão | Razão |
+|---|---|
+| Máximo de 860 px no computador | "Cresce, mas com um máximo para não ficar gigante." As fotografias têm 1280 px no lado maior; acima disto começavam a ver-se ampliadas. |
+| O palco também é limitado pela altura do ecrã (`78svh × 4/3`) | A 860 px de largura o cartão tem 645 px de altura: num portátil baixo ou num telemóvel deitado a fotografia não cabia inteira. O limite é na **largura**, para a proporção se manter. |
+| No telemóvel o palco sai 16 px para fora de cada margem do contentor | "A imagem ocupa praticamente a largura toda do ecrã": ficam 8 px de cada lado. Não vai até à borda para se continuar a ver o canto arredondado e perceber que é um cartão que se arrasta. |
+| A proporção ficou nos 4:3, com `object-fit: cover` | "Mantém a proporção — nada de esticar." As fotografias têm proporções muito diferentes (de 644 × 1178 a 1280 × 576); o cartão recorta, nunca deforma, e a fotografia inteira continua a um toque de distância, na luzbox. |
+| `scroll-snap-stop: always` | Um gesto, uma fotografia. Sem isto um gesto rápido com o dedo atravessava três ou quatro. |
+| O índice vem do início de cada cartão (`indiceMaisProximo`), não de `scrollLeft / clientWidth` | A conta antiga ignorava os 16 px entre fotografias; o erro acumulava e, num ecrã de 312 px, a penúltima fotografia já contava como a última — o contador e o passo automático seguinte ficavam errados depois de arrastar. |
+| A luzbox não mudou | Cada cartão continua a ser o `<button>` com `data-gal-src`. `tests/dom.test.js` passou a conferir, cartão a cartão, que o ficheiro existe, que é a mesma fotografia do cartão e que o contador bate com o número de cartões. Verificado no Chrome a 360 px: o décimo cartão abre "10 de 11 · Airwaybill JVI nº 003871". |
+
+**Dúvida que fica:** a fotografia do Airwaybill (a décima) mostra, impressos no
+próprio documento, os contactos antigos da JVI — "+258 87 555 8005 / +258 84 470
+0012" e "IVA 17%". Agora que a fotografia é maior e o 84 470 0012 voltou a ser um
+número da empresa, o outro número lê-se ao lado dele. É uma fotografia real e não
+foi alterada; se o cliente preferir, tira-se essa fotografia do carrossel.

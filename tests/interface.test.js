@@ -317,6 +317,121 @@ test('o carrossel tem um item visível de cada vez', () => {
     `o item do carrossel não ocupa a largura toda: ${item.replace(/\s+/g, ' ')}`);
 });
 
+/* ---------- Fase 9 (9.5): as imagens do carrossel estavam pequenas ---------- */
+
+/* O cliente: "aumente o tamanho das imagens do carrossel, está muito
+   pequeno!" Na Fase 8B tinha pedido "cards pequenos" para o carrossel
+   passar um de cada vez, e o palco ficou com 520 px. Não se contradiz:
+   continua a ser um item por ecrã — mas grande. */
+
+const GALERIA = fs.readFileSync('css/galeria.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
+
+/** O corpo da primeira regra de galeria.css com este selector exacto. */
+const regraGal = (sel, folha = GALERIA) => new RegExp(
+  `(?:^|[}\\s])${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 'm',
+).exec(folha)?.[1];
+
+/** A primeira `@media (max-width: Npx)` de galeria.css que mexe no palco. */
+function mediaDoPalco() {
+  for (const m of GALERIA.matchAll(/@media\s*\(\s*max-width:\s*(\d+)px\s*\)\s*\{/g)) {
+    let fim = m.index + m[0].length;
+    for (let nivel = 1; nivel > 0; fim += 1) {
+      if (GALERIA[fim] === '{') nivel += 1;
+      else if (GALERIA[fim] === '}') nivel -= 1;
+    }
+    const dentro = GALERIA.slice(m.index + m[0].length, fim - 1);
+    const palco = regraGal('.gal__palco', dentro);
+    if (palco) return { limite: Number(m[1]), palco };
+  }
+  return null;
+}
+
+test('9.5: no computador o carrossel cresceu, mas com um máximo', () => {
+  const palco = regraGal('.gal__palco');
+  assert.ok(palco, 'não há regra para .gal__palco');
+  const larguras = [...(/max-width\s*:\s*([^;]+)/.exec(palco)?.[1] ?? '').matchAll(/(\d+)px/g)].map((m) => Number(m[1]));
+  assert.ok(larguras.length, 'o palco do carrossel não tem largura máxima: fica gigante num ecrã largo');
+  const maximo = Math.max(...larguras);
+  assert.ok(maximo >= 760, `o carrossel continua pequeno: ${maximo}px de largura máxima (eram 520)`);
+  assert.ok(maximo <= 960, `o carrossel ficou gigante: ${maximo}px`);
+});
+
+test('9.5: no telemóvel a imagem ocupa praticamente a largura toda do ecrã', () => {
+  const media = mediaDoPalco();
+  assert.ok(media, 'não há regra de telemóvel para o palco do carrossel');
+  assert.ok(media.limite >= 520, `a regra só vale até ${media.limite}px`);
+
+  /* O palco sai para fora das margens do contentor: a margem lateral é
+     negativa, e o que sobra de cada lado é a margem do contentor menos isso. */
+  const margem = Number(/margin-inline\s*:\s*(-?[\d.]+)px/.exec(media.palco)?.[1]);
+  assert.ok(margem < 0, 'no telemóvel o carrossel fica preso às margens do contentor');
+  const contentor = Number(/\.container\s*\{[^}]*padding-inline:\s*(\d+)px/.exec(CSS)?.[1]);
+  assert.ok(contentor > 0, 'não consegui ler a margem do .container');
+  const sobra = contentor + margem;
+  assert.ok(sobra >= 0, `o carrossel sai ${-sobra}px para fora do ecrã`);
+
+  for (const viewport of [360, 320]) {
+    const imagem = viewport - 2 * sobra;
+    assert.ok(imagem / viewport >= 0.93,
+      `a ${viewport}px a imagem tem ${imagem}px: ${(100 * imagem / viewport).toFixed(0)}% do ecrã`);
+  }
+});
+
+test('9.5: as fotografias mantêm a proporção — crescem, não esticam', () => {
+  const item = regraGal('.gal__item');
+  assert.match(item, /aspect-ratio\s*:\s*4\s*\/\s*3/, 'o cartão do carrossel mudou de proporção');
+  const img = regraGal('.gal__item img');
+  assert.match(img, /object-fit\s*:\s*cover/, 'a fotografia deixou de ser recortada e passa a esticar');
+  assert.doesNotMatch(GALERIA, /\.gal__item img[^{]*\{[^}]*object-fit\s*:\s*fill/);
+  /* Em nenhum ecrã se fixa uma altura ao cartão: é a largura que manda, e
+     a altura sai da proporção. */
+  for (const m of GALERIA.matchAll(/\.gal__item\s*\{([^}]*)\}/g)) {
+    assert.doesNotMatch(m[1], /(?:^|;)\s*height\s*:/, 'o cartão do carrossel tem uma altura fixa');
+  }
+  /* Num telemóvel deitado o cartão não pode ser mais alto do que o ecrã:
+     o limite vem da altura do viewport, mantendo os 4:3. */
+  assert.match(regraGal('.gal__palco'), /svh\s*\*\s*4\s*\/\s*3/,
+    'o palco não tem limite pela altura do ecrã: num telemóvel deitado a fotografia não cabe');
+});
+
+test('9.5: continua a ser um item por ecrã, a passar bem com o dedo', () => {
+  const item = regraGal('.gal__item');
+  assert.match(item, /flex\s*:\s*0 0 100%/);
+  assert.match(item, /scroll-snap-align\s*:\s*(start|center)/);
+  /* Um gesto, uma fotografia: sem isto um gesto rápido salta três. */
+  assert.match(item, /scroll-snap-stop\s*:\s*always/,
+    'um gesto rápido passa várias fotografias de uma vez');
+  const pista = regraGal('.gal__grelha');
+  assert.match(pista, /scroll-snap-type\s*:\s*x mandatory/);
+  assert.match(pista, /overflow-x\s*:\s*auto/, 'a pista deixou de se arrastar com o dedo');
+
+  /* Os controlos são alvos de toque de 44 px. */
+  const ctl = regraGal('.gal__ctl');
+  for (const prop of ['width', 'height']) {
+    const v = Number(new RegExp(`(?:^|;|\\s)${prop}\\s*:\\s*(\\d+)px`).exec(ctl)?.[1]);
+    assert.ok(v >= 44, `os botões do carrossel têm ${v}px de ${prop}`);
+  }
+});
+
+test('9.5: quem arrasta com o dedo fica na fotografia que vê', async () => {
+  /* O índice saía de `scrollLeft / clientWidth`, que ignora o intervalo de
+     16 px entre fotografias: o erro acumula, e na penúltima fotografia de
+     um ecrã de 312 px a conta já arredondava para a seguinte. O índice
+     passa a ser o da fotografia cujo início está mais perto. */
+  const { indiceMaisProximo } = await import('../js/galeria.js');
+  assert.equal(typeof indiceMaisProximo, 'function', 'galeria.js não exporta indiceMaisProximo');
+  for (const largura of [272, 312, 344, 520, 860]) {
+    const inicios = Array.from({ length: 11 }, (_, k) => k * (largura + 16));
+    inicios.forEach((x, k) => {
+      assert.equal(indiceMaisProximo(x, inicios), k, `largura ${largura}: fotografia ${k + 1}`);
+      /* E um encaixe que ficou a uns píxeis do sítio é a mesma fotografia. */
+      assert.equal(indiceMaisProximo(x + 6, inicios), k);
+      assert.equal(indiceMaisProximo(x - 6, inicios), k);
+    });
+  }
+  assert.equal(indiceMaisProximo(0, []), 0);
+});
+
 test('o carrossel passa sozinho e em ciclo contínuo', () => {
   const fonte = fs.readFileSync('js/galeria.js', 'utf8');
   assert.match(fonte, /setInterval|setTimeout/,

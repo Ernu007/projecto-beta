@@ -75,6 +75,18 @@ export function iniciarGaleria(raiz, luz) {
    ========================================================= */
 const INTERVALO_MS = 4500;
 
+/** O índice da fotografia cujo início (`offsetLeft`) está mais perto do
+ *  scroll actual. Era `scrollLeft / clientWidth`, que ignora o intervalo
+ *  entre fotografias: o erro acumulava de cartão em cartão, e num ecrã de
+ *  312px a penúltima fotografia já contava como a última. */
+export function indiceMaisProximo(scrollLeft, inicios) {
+  let melhor = 0;
+  for (let k = 1; k < inicios.length; k += 1) {
+    if (Math.abs(inicios[k] - scrollLeft) < Math.abs(inicios[melhor] - scrollLeft)) melhor = k;
+  }
+  return melhor;
+}
+
 export function iniciarCarrossel(raiz) {
   const pista = raiz?.querySelector('[data-gal-pista]');
   if (!pista) return;
@@ -124,8 +136,7 @@ export function iniciarCarrossel(raiz) {
   pista.addEventListener('scroll', () => {
     clearTimeout(fimScroll);
     fimScroll = setTimeout(() => {
-      const k = Math.round(pista.scrollLeft / (pista.clientWidth || 1));
-      i = Math.min(Math.max(k, 0), itens.length - 1);
+      i = indiceMaisProximo(pista.scrollLeft, itens.map((it) => it.offsetLeft));
       if (contador) contador.textContent = `${i + 1} / ${itens.length}`;
     }, 120);
   }, { passive: true });

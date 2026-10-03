@@ -146,6 +146,46 @@ test('a raiz da galeria esta dentro de <main>', () => {
   assert.ok(r.existe && r.dentro, 'data-gal nao esta onde o main.js a procura');
 });
 
+/* Fase 9 (9.5). O carrossel cresceu, e o que não pode partir-se com isso é
+   a luzbox: cada cartão continua a ser o `<button>` que a abre, com o
+   `data-gal-src` da fotografia grande. `iniciarGaleria` procura
+   `[data-gal-src]` dentro de `[data-gal]`, e `iniciarCarrossel` procura os
+   cartões dentro de `[data-gal-pista]`: têm de ser os mesmos. */
+test('9.5: cada cartao do carrossel continua a abrir a sua fotografia na luzbox', () => {
+  const pista = /<div class="gal__grelha" data-gal-pista[^>]*>([\s\S]*?)<\/div>\s*<div class="gal__controlos">/.exec(HTML)?.[1];
+  assert.ok(pista, 'não encontrei a pista do carrossel');
+
+  const cartoes = [...pista.matchAll(/<button class="gal__item" type="button"([^>]*)>([\s\S]*?)<\/button>/g)];
+  assert.ok(cartoes.length >= 2, `o carrossel só tem ${cartoes.length} cartões`);
+
+  for (const [, atributos, dentro] of cartoes) {
+    const grande = /data-gal-src="([^"]+)"/.exec(atributos)?.[1];
+    assert.ok(grande, `um cartão do carrossel perdeu o data-gal-src: ${atributos.trim().slice(0, 60)}`);
+    assert.ok(fs.existsSync(grande), `${grande} não existe`);
+    assert.match(atributos, /data-gal-alt="[^"]+"/, `${grande}: a luzbox fica sem texto alternativo`);
+    /* A fotografia do cartão é a que a luzbox amplia, e leva as dimensões
+       reais — é o que impede o cartão de saltar enquanto carrega, agora
+       que é maior. */
+    const img = /<img src="([^"]+)" width="(\d+)" height="(\d+)"/.exec(dentro);
+    assert.ok(img, `${grande}: a fotografia do cartão não tem src, width e height`);
+    assert.equal(img[1], grande);
+    assert.match(dentro, /<span class="gal__legenda">[^<]+<\/span>/, `${grande}: sem legenda`);
+  }
+
+  /* Nenhum `[data-gal-src]` fora da pista: a luzbox e o carrossel contam
+     os mesmos itens, senão "3 de 11" numa não é a terceira do outro. */
+  assert.equal((HTML.match(/data-gal-src=/g) ?? []).length, cartoes.length);
+  assert.match(HTML, new RegExp(`data-gal-contador[^>]*>1 / ${cartoes.length}<`),
+    'o contador do carrossel não bate com o número de fotografias');
+
+  /* E a pista está dentro de `[data-gal]`, que é onde as duas funções a
+     procuram. */
+  const r = dentroDe('[data-gal-pista]', 'topo');
+  assert.ok(r.existe && r.dentro);
+  assert.ok(T.get('[data-gal-pista]').length > T.get('[data-gal]').length,
+    'a pista do carrossel saiu de dentro de [data-gal]');
+});
+
 test('o template do formulario esta no topo do documento, nao dentro do modal', () => {
   const caminho = T.get('#tplOrc');
   assert.ok(caminho, 'não encontrei #tplOrc');

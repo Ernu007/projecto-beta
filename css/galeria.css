@@ -38,17 +38,37 @@
 
 .gal__item {
   position: relative; display: block; padding: 0; overflow: hidden;
-  /* Um item de cada vez: o cartão ocupa a largura toda do carrossel,
-     e é o carrossel que é pequeno (`.gal__palco`). */
+  /* Um item de cada vez: o cartão ocupa a largura toda do carrossel, e
+     quem dá o tamanho é o palco (`.gal__palco`). */
   flex: 0 0 100%;
   scroll-snap-align: start;
+  /* Um gesto, uma fotografia: sem isto, um gesto rápido com o dedo
+     atravessava três ou quatro de uma vez. */
+  scroll-snap-stop: always;
   border-radius: var(--raio-sm); border: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--base-3); cursor: zoom-in; aspect-ratio: 4 / 3;
 }
 
-/* O palco: o carrossel com os controlos por baixo. Largura limitada —
-   "cards pequenos", nas palavras do cliente. */
-.gal__palco { max-width: 520px; margin-inline: auto; }
+/* O palco: o carrossel com os controlos por baixo.
+
+   Fase 9 (9.5): "aumente o tamanho das imagens do carrossel, está muito
+   pequeno!" Eram 520px, dos "cards pequenos" da Fase 8B. Continua a ser
+   uma fotografia de cada vez — mas grande: 860px no computador, com esse
+   máximo para não ficar gigante num ecrã largo. A altura sai dos 4:3 do
+   cartão, e a segunda declaração limita o palco pela altura do ecrã, para
+   a fotografia caber inteira num telemóvel deitado ou num portátil baixo
+   (quem não conhece `svh` fica com a primeira). */
+.gal__palco {
+  max-width: 860px;
+  max-width: min(860px, calc(78svh * 4 / 3));
+  margin-inline: auto;
+}
+/* No telemóvel a fotografia ocupa praticamente a largura toda do ecrã: o
+   palco sai 16px para fora de cada margem do contentor (24px), e ficam
+   8px de cada lado — 344 dos 360px. */
+@media (max-width: 640px) {
+  .gal__palco { margin-inline: -16px; }
+}
 .gal__grelha { position: relative; }
 .gal__controlos {
   display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -71,7 +91,7 @@
 .gal__legenda {
   position: absolute; inset: auto 0 0 0; padding: 40px 16px 16px;
   background: linear-gradient(to top, rgba(5, 9, 18, 0.95) 40%, transparent);
-  font-size: 13px; font-weight: 600; color: var(--claro); text-align: left;
+  font-size: 14px; font-weight: 600; color: var(--claro); text-align: left;
   transition: opacity var(--transicao);
 }
 .gal__item:hover .gal__legenda { opacity: 1; }
