@@ -193,13 +193,15 @@ const CAPITAIS_FONTE = {
 };
 
 /* A rota do avião. Percorre as dez províncias por vizinhança — cada par
-   consecutivo partilha fronteira — parte de Pemba (Cabo Delgado) e chega a
-   Maputo, que é o que a etiqueta do hero promete. A ordem veio da revisão do
-   cliente na Fase 8; `docs/decisoes.md` diz porque é esta e não a que ele
-   ditou ao telefone. */
+   consecutivo partilha fronteira — parte de Maputo, a sede da JVI, e chega a
+   Pemba (Cabo Delgado). A Fase 8A tinha-a ao contrário; o cliente corrigiu na
+   Fase 8C: o avião SAI da sede para as províncias. `docs/decisoes.md` diz
+   porque é esta ordem e não a que ele ditou ao telefone (Inhambane entra
+   entre Gaza e Sofala; Tete → Zambézia → Niassa → Nampula evita saltos entre
+   províncias que não fazem fronteira). */
 const ROTA = [
-  'Cabo Delgado', 'Nampula', 'Niassa', 'Zambézia', 'Tete',
-  'Manica', 'Sofala', 'Inhambane', 'Gaza', 'Maputo',
+  'Maputo', 'Gaza', 'Inhambane', 'Sofala', 'Manica',
+  'Tete', 'Zambézia', 'Niassa', 'Nampula', 'Cabo Delgado',
 ];
 
 /* ---------------------------------------------------------- correr */
@@ -336,7 +338,7 @@ L[L.length - 1] = L[L.length - 1].replace(/,$/, '');
 L.push('};');
 L.push('');
 L.push(`/* Rota do avião: ${ROTA.length} províncias por vizinhança geográfica, de`);
-L.push('   Pemba a Maputo. Cada par consecutivo partilha fronteira, o que o');
+L.push('   Maputo (a sede) a Pemba. Cada par consecutivo partilha fronteira, o que o');
 L.push('   mesmo teste confirma. */');
 L.push(`export const ROTA = ${JSON.stringify(ROTA)};`);
 L.push('');

@@ -125,6 +125,31 @@ registada com regras de uso próprias.
 
 `tests/formulario.test.js` fixa C1–C6.
 
+## Fase 8C — correcções do áudio completo
+
+`BRIEFING-FASE8C-CORRECCOES.md` contradiz três coisas já feitas (rota, ordem
+das províncias, Matola). Onde a 8C e uma fase anterior discordam, ganha a 8C:
+é a revisão completa (22 min) e não um excerto.
+
+### C1 — a rota sai de Maputo (substitui D23)
+
+```
+Maputo → Gaza → Inhambane → Sofala → Manica → Tete → Zambézia → Niassa → Nampula → Cabo Delgado
+```
+
+A sede é em Maputo e o avião tem de **sair** da sede. Dois desvios conscientes
+à cadeia ditada ("Maputo, Gaza, Beira, Chimoio, Zambézia, Tete, Nampula,
+Lichinga, Cabo Delgado"), os mesmos que o briefing propõe:
+
+1. **Inhambane entre Gaza e Sofala** — Gaza e Sofala não são vizinhas.
+2. **Tete → Zambézia → Niassa → Nampula** — Tete não faz fronteira com
+   Nampula. Os extremos são os dele; todos os saltos são entre vizinhas, que é
+   o que `tests/mapa.test.js` verifica.
+
+A etiqueta da rota no hero (`#heroRotaTxt`) passou a ter um teste que a obriga a
+ser a `ROTA` pela mesma ordem — o comentário do HTML dizia que esse teste
+existia, e não existia.
+
 ## Fase 8A — o mapa
 
 O cliente escreveu *"Algumas províncias não estão limitadas corretamente"* e
@@ -240,7 +265,9 @@ fonte), parte de Pemba, chega a Maputo, e inclui exactamente as províncias que
 o cliente ditou. Se a leitura dele for outra — por exemplo se queria o percurso
 ao contrário, ou sem Niassa — é uma linha na `ROTA` em `js/mapa-dados.js`.
 
-> **DÚVIDA A LEVAR AO CLIENTE:** a ordem da rota. A transcrição é
+> **Resolvido na Fase 8C:** a rota passou a sair de Maputo — ver "C1" acima.
+>
+> **DÚVIDA A LEVAR AO CLIENTE (histórico):** a ordem da rota. A transcrição é
 > contradictória (ver acima) e escolhi a leitura que o resto do briefing
 > sustenta. Confirmar em dez segundos se está certa.
 

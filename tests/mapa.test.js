@@ -213,15 +213,36 @@ test('agencyPoint dá a mesma coisa que CAPITAIS — uma fonte, dois nomes', () 
 
 /* ---------- A2: a rota ---------- */
 
-test('a rota parte de Pemba e chega a Maputo', () => {
-  assert.equal(ROTA[0], 'Cabo Delgado', 'o avião tem de partir de Pemba');
-  assert.equal(ROTA[ROTA.length - 1], 'Maputo', 'o avião tem de chegar a Maputo');
+test('a rota parte de Maputo (a sede) e chega a Pemba', () => {
+  /* Fase 8C: a Fase 8A tinha-a ao contrário. A sede da JVI é em Maputo e o
+     avião SAI da sede para as províncias — uma seta a apontar para Maputo
+     dizia que a JVI é um destino, não uma origem que serve o país. */
+  assert.equal(ROTA[0], 'Maputo', 'o avião tem de partir de Maputo, a sede');
+  assert.equal(ROTA[ROTA.length - 1], 'Cabo Delgado', 'o avião tem de chegar a Pemba');
+});
+
+test('a rota é a ordem geográfica sul -> norte do briefing 8C', () => {
+  assert.deepEqual(ROTA, [
+    'Maputo', 'Gaza', 'Inhambane', 'Sofala', 'Manica',
+    'Tete', 'Zambézia', 'Niassa', 'Nampula', 'Cabo Delgado',
+  ]);
+});
+
+test('a etiqueta da rota no hero é a ROTA, pela mesma ordem', () => {
+  /* O comentário do index.html dizia que este ficheiro impedia o texto de
+     divergir da ROTA — e nenhum teste o fazia. Passa a fazer. */
+  const html = fs.readFileSync('index.html', 'utf8');
+  const m = html.match(/<span id="heroRotaTxt">([^<]*)<\/span>/);
+  assert.ok(m, 'o hero perdeu a etiqueta da rota');
+  const cidade = (nome) => (nome === 'Maputo' ? 'Maputo' : CAPITAIS[nome].nome);
+  assert.equal(m[1].trim(), ROTA.map(cidade).join(' → '));
 });
 
 test('a rota passa pelas províncias que o cliente ditou', () => {
-  /* O áudio degradado dá: Pemba, Beira (Sofala), Zambézia, Tete, Nampula,
-     Niassa, Cabo Delgado. Todas têm de estar na rota. */
-  for (const p of ['Cabo Delgado', 'Sofala', 'Zambézia', 'Tete', 'Nampula', 'Niassa', 'Maputo']) {
+  /* O áudio da 8C dá: Maputo, Gaza, Beira (Sofala), Chimoio (Manica),
+     Zambézia, Tete, Nampula, Lichinga (Niassa), Cabo Delgado. Todas têm de
+     estar na rota. */
+  for (const p of ['Maputo', 'Gaza', 'Sofala', 'Manica', 'Zambézia', 'Tete', 'Nampula', 'Niassa', 'Cabo Delgado']) {
     assert.ok(ROTA.includes(p), `a rota não passa por ${p}`);
   }
 });

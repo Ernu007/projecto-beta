@@ -6,9 +6,9 @@
 
    Espaço de coordenadas: x = lon · cos(18.4°) = lon · 0.948876,
    y = −lat. Unidades projectadas, tolerância de
-   simplificação 0.005 (≈ 1 km).
+   simplificação 0.005 (≈ 555 m).
 
-   10 províncias, 1 anéis de país,
+   10 províncias, 1 anel de país,
    2781 vértices.
    Cada lista de anéis está por ordem de área descendente: o anel 0 é
    o continente. Nenhum anel tem área zero — são os restos de
@@ -48,9 +48,9 @@ export const CAPITAIS = {
 };
 
 /* Rota do avião: 10 províncias por vizinhança geográfica, de
-   Pemba a Maputo. Cada par consecutivo partilha fronteira, o que o
+   Maputo (a sede) a Pemba. Cada par consecutivo partilha fronteira, o que o
    mesmo teste confirma. */
-export const ROTA = ["Cabo Delgado","Nampula","Niassa","Zambézia","Tete","Manica","Sofala","Inhambane","Gaza","Maputo"];
+export const ROTA = ["Maputo","Gaza","Inhambane","Sofala","Manica","Tete","Zambézia","Niassa","Nampula","Cabo Delgado"];
 
 /** O ponto de presença da JVI na província, ou null se não houver. */
 export function agencyPoint(provincia) {

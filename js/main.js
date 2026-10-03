@@ -141,7 +141,7 @@ if (etapas.length && TEM_IO) {
 }
 
 /* =========================================================
-   HERO — voo da carga (Pemba -> Maputo) e revelacao do titulo
+   HERO — voo da carga (Maputo -> Pemba) e revelacao do titulo
    ========================================================= */
 import { iniciarVoo } from './hero-voo.js';
 

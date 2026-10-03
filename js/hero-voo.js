@@ -1,9 +1,10 @@
 /* =========================================================
    Voo da carga — cena do hero
    ------------------------------------------------------------
-   Um avião de carga parte de Pemba (Cabo Delgado) e percorre as dez
-   províncias por vizinhança geográfica até Maputo, seguindo a promessa
-   da JVI: "de Rovuma ao Maputo".
+   Um avião de carga parte de Maputo, a sede da JVI, e percorre as dez
+   províncias por vizinhança geográfica até Pemba (Cabo Delgado): a JVI
+   é uma origem que serve o país, não um destino. Fase 8C — até aí o voo
+   fazia o caminho inverso.
 
    Desenhado em canvas 2D com sombreamento 3D, sem bibliotecas
    externas e sem pedidos de rede — para carregar depressa em
@@ -40,9 +41,9 @@ const LARANJA = [234, 130, 64];
 const CLARO = [232, 237, 245];
 
 /* A rota vem de `mapa-dados.js` (que a gera `tools/gerar-mapa.mjs`): as dez
-   províncias por vizinhança geográfica, de Pemba a Maputo. A ordem veio da
-   revisão do cliente na Fase 8; `docs/decisoes.md` diz porque é esta e não a
-   que ele ditou ao telefone. */
+   províncias por vizinhança geográfica, de Maputo (a sede) a Pemba. A ordem
+   veio da revisão do cliente na Fase 8C; `docs/decisoes.md` diz porque é esta
+   e não a que ele ditou ao telefone. */
 const DURACAO = 11000;         // ms de voo — dez províncias a uma velocidade de leitura
 const CURVA = 0.16;            // quanto cada salto se afasta da linha recta
 const PASSOS_POR_SALTO = 26;   // amostras por salto — desenham a curva, não a reta
@@ -569,7 +570,7 @@ export function iniciarVoo(canvas, opcoes = {}) {
     aoProgredir(prog);
 
     if (t >= 1) {
-      // no fim fica estatico, a resplandor no Maputo
+      // no fim fica estatico, a resplandor em Pemba
       setTimeout(() => { parar = true; }, 600);
       return;
     }
