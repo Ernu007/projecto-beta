@@ -189,7 +189,11 @@ const CAPITAIS_FONTE = {
   Sofala: ['Beira', 34.8358, -19.8341],
   Gaza: ['Xai-Xai', 33.6407, -25.0445],
   Inhambane: ['Inhambane', 35.3844, -23.866],
-  Maputo: ['Matola', 32.467, -25.9669],
+  /* Fase 8C/C3: a Matola saiu ("faz parte de Maputo") e o ponto passa a ser
+     a SEDE — o Terminal de Cargas do Aeroporto de Maputo (FQMA, OurAirports:
+     -25.9208, 32.5726). NOTA: o desenho usa o centróide do anel principal
+     (ver `CAPITAIS` abaixo); daqui só se lê o rótulo. */
+  Maputo: ['Maputo', 32.5726, -25.9208],
 };
 
 /* A rota do avião. Percorre as dez províncias por vizinhança — cada par

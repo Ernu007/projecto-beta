@@ -44,7 +44,7 @@ export const CAPITAIS = {
   "Sofala": { x: 32.93, y: 19.05, nome: "Beira" },
   "Gaza": { x: 31.13, y: 23.32, nome: "Xai-Xai" },
   "Inhambane": { x: 32.75, y: 22.81, nome: "Inhambane" },
-  "Maputo": { x: 30.79, y: 25.54, nome: "Matola" }
+  "Maputo": { x: 30.79, y: 25.54, nome: "Maputo" }
 };
 
 /* Rota do avião: 10 províncias por vizinhança geográfica, de

@@ -131,6 +131,37 @@ registada com regras de uso próprias.
 das províncias, Matola). Onde a 8C e uma fase anterior discordam, ganha a 8C:
 é a revisão completa (22 min) e não um excerto.
 
+### C3 + C4 — cobertura: Matola fora, Maputo sede, cartões
+
+- **Matola** saiu da lista da cobertura e do rótulo do ponto de Maputo
+  (`CAPITAIS.Maputo.nome` passou de "Matola" a "Maputo"). A **carta de
+  apresentação** (`carta/`) ainda lista a Matola; não mexi — é o documento da
+  empresa, não a secção de cobertura, e o briefing fala só desta.
+- **Sede, visível:** a pastilha laranja diz "Maputo — Sede", a legenda do mapa
+  diz "Sede:" em vez de "Hub principal:", e no canvas o ponto laranja tem o
+  rótulo "Maputo · Sede".
+- **Setas no mapa de cobertura:** as rotas iam das capitais **para** Maputo
+  (o ponto animado chegava à sede). Invertido: saem da sede, e cada uma acaba
+  numa ponta de seta junto da capital. O rótulo de cada ponto passou a ser o
+  nome da **província** de destino (era o da cidade); as pastilhas ao lado
+  continuam com as cidades, onde estão as agências.
+- **"Porquê a JVI."** e **"Fluxo de entrada."**: são as etiquetas das secções
+  Diferenciais e Fluxo — não há outros "cartões" com esses nomes na página.
+  Ganharam ponto final (como as tabs do menu) e a classe `etiqueta--larga`,
+  que as estende para a direita. **[INCERTO]** o cliente disse "Fluxo
+  operacional do colégio"; "colégio" é quase de certeza a transcrição de
+  outra palavra — o texto da página nunca o teve. Ponto final também no
+  "Fluxo de entrada." por coerência com o outro, embora o briefing só o peça
+  para "Porquê a JVI".
+- **"Outras províncias"** ocupa agora as duas colunas, centrado, com título
+  maior. Para não deixar o cartão 03 sozinho numa linha, o cartão 01 (o das
+  duas fotografias lado a lado) ocupa duas linhas: `1 | 2 / 1 | 3 / 4 4`.
+  Abaixo de 640 px tudo continua numa coluna.
+- **[DÚVIDA]** `tools/gerar-mapa.mjs` desenha cada ponto no **centróide** da
+  província, não na coordenada de `CAPITAIS_FONTE` (só o rótulo é lido de lá),
+  apesar de o comentário dizer o contrário. Não é desta fase; deixei a
+  coordenada da sede (aeroporto, FQMA) na tabela para quando isso se corrigir.
+
 ### C2 — províncias por ordem geográfica (substitui o C3 da 8B)
 
 Os dois selects do formulário seguem a ordem da rota: Maputo, Gaza, Inhambane,

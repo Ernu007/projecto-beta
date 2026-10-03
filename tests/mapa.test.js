@@ -234,8 +234,7 @@ test('a etiqueta da rota no hero é a ROTA, pela mesma ordem', () => {
   const html = fs.readFileSync('index.html', 'utf8');
   const m = html.match(/<span id="heroRotaTxt">([^<]*)<\/span>/);
   assert.ok(m, 'o hero perdeu a etiqueta da rota');
-  const cidade = (nome) => (nome === 'Maputo' ? 'Maputo' : CAPITAIS[nome].nome);
-  assert.equal(m[1].trim(), ROTA.map(cidade).join(' → '));
+  assert.equal(m[1].trim(), ROTA.map((nome) => CAPITAIS[nome].nome).join(' → '));
 });
 
 test('a rota passa pelas províncias que o cliente ditou', () => {

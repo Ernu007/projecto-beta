@@ -322,7 +322,9 @@ function iniciarMapa() {
       }
     }
 
-    // rota de cada capital ate ao hub
+    /* Fase 8C/C4: cada rota SAI da sede (Maputo) para a capital, e acaba
+       numa seta. Até à 8B as linhas iam das províncias para Maputo, e o
+       ponto que corria nelas chegava à sede — o contrário do que a JVI é. */
     for (const nome in CAPITAIS) {
       if (nome === 'Maputo') continue;
       const c = CAPITAIS[nome];
@@ -341,15 +343,15 @@ function iniciarMapa() {
       ctx.strokeStyle = 'rgba(169,207,68,0.75)';
       ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.quadraticCurveTo(ccx, ccy, hx, hy);
+      ctx.moveTo(hx, hy);
+      ctx.quadraticCurveTo(ccx, ccy, x, y);
       ctx.stroke();
       ctx.setLineDash([]);
 
       const e = p * p * (3 - 2 * p);
       const m = 1 - e;
-      const tx = m * m * x + 2 * m * e * ccx + e * e * hx;
-      const ty = m * m * y + 2 * m * e * ccy + e * e * hy;
+      const tx = m * m * hx + 2 * m * e * ccx + e * e * x;
+      const ty = m * m * hy + 2 * m * e * ccy + e * e * y;
       const rg = ctx.createRadialGradient(tx, ty, 0, tx, ty, 9);
       rg.addColorStop(0, '#A9CF44');
       rg.addColorStop(1, 'transparent');
@@ -359,6 +361,8 @@ function iniciarMapa() {
       ctx.arc(tx, ty, 9, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
+
+      setaDestino(hx, hy, ccx, ccy, x, y, p);
 
       ctx.fillStyle = '#A9CF44';
       ctx.beginPath();
@@ -433,10 +437,43 @@ function iniciarMapa() {
       for (const nome of ROTA) {
         const a = agencyPoint(nome);
         if (!a) continue;
-        etiqueta(X(a.x) + (a.x < 34 ? -11 : 11), Y(a.y) + 14, a.nome,
+        etiqueta(X(a.x) + (a.x < 34 ? -11 : 11), Y(a.y) + 14, rotuloDe(nome),
           nome === 'Maputo' ? '#EA8240' : '#A9CF44', a.x < 34 ? 'right' : 'left');
       }
     }
+  }
+
+  /* O rótulo de cada ponto é a PROVÍNCIA de destino da seta, que é o que
+     o cliente pediu ("as setas com o nome da província"). Maputo não é
+     destino: é a sede, e é isso que diz. */
+  function rotuloDe(nome) {
+    return nome === 'Maputo' ? 'Maputo · Sede' : nome;
+  }
+
+  /* A ponta de seta de uma rota, a 90% da curva hub -> capital e na
+     tangente desse ponto — encostada ao destino, lê-se "vai para aqui".
+     Acende à medida que a rota se desenha (`p`). */
+  function setaDestino(hx, hy, ccx, ccy, x, y, p) {
+    const em = (u) => {
+      const m = 1 - u;
+      return [m * m * hx + 2 * m * u * ccx + u * u * x, m * m * hy + 2 * m * u * ccy + u * u * y];
+    };
+    const [px, py] = em(0.9);
+    const [ax, ay] = em(0.86);
+    const r = 5.5;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(Math.atan2(py - ay, px - ax));
+    ctx.globalAlpha = 0.35 + 0.6 * p;
+    ctx.fillStyle = '#A9CF44';
+    ctx.beginPath();
+    ctx.moveTo(r, 0);
+    ctx.lineTo(-r * 0.8, r * 0.75);
+    ctx.lineTo(-r * 0.35, 0);
+    ctx.lineTo(-r * 0.8, -r * 0.75);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   function distancia(a, b) {
