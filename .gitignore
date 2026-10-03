@@ -25,3 +25,4 @@ dist/
 
 # Scratch de execucao de planos (ledger, briefs, pacotes de review)
 .superpowers/
+graphify-out/
