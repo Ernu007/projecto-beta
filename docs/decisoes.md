@@ -715,3 +715,25 @@ viragem em Pemba, a meio da volta, e com movimento reduzido.
 avião — tem pontos a sair da sede para cada capital, e pára quando acaba de se
 desenhar (é o `1088b90`). O pedido fala no avião, que só existe no hero; a
 Cobertura ficou como estava.
+
+### O cartão com os nomes saiu do hero (D40)
+
+O cliente: *"renova esse card que vem escrito os nomes das províncias, não vejo a
+necessidade de ter! Pois as províncias já estão escritas no mapa!"* O briefing
+situa-o na **página 1**, que é o hero.
+
+O que saiu foi a etiqueta `.hero__rota` — o cartão no canto do hero com a rota
+por extenso, "Maputo → Xai-Xai → Inhambane → … → Pemba". O mapa do hero escreve
+o nome de cada província e o da cidade de cada agência, e agora que o avião se
+vê (D39) a ordem também se lê no próprio voo.
+
+| Decisão | Razão |
+|---|---|
+| Saiu o HTML, o CSS (`.hero__rota`, `.hero__rota-ponto`, `@keyframes pulsaPonto`) e os dois `id` da lista do `tools/verificar-html.py` | Sem restos: um cartão escondido por CSS voltava ao primeiro ajuste de estilos. |
+| Saiu também o `padding-bottom: 136px` do hero acima de 760px | Existia só para as provas não ficarem por baixo desse cartão (D36). Sem ele era um vazio de 56px a guardar lugar a nada. |
+| Os dois testes que fixavam o cartão foram virados ao contrário | `tests/mapa.test.js` obrigava o texto a acompanhar a `ROTA`, e `tests/percurso.test.js` media o espaço reservado. Passam a impedir que o cartão e a reserva voltem, e a conferir que é o canvas que escreve os nomes. |
+| A lista de destinos da secção **Cobertura** (`.rotas`: "Maputo — Sede", "Xai-Xai", …) **ficou** | O briefing diz página 1. E na Cobertura a lista não é só eco do mapa: é texto real para quem não vê o canvas (leitor de ecrã, motor de busca) e leva "Aeroportos nacionais", que o mapa não diz. |
+
+**Dúvida que fica:** se o cartão a que o cliente se referia era o da Cobertura e
+não o do hero, falta tirar o `<div class="rotas">` do `index.html` (e o teste do
+C3 que fixa "Maputo — Sede" nessa lista). É uma remoção de dez linhas.

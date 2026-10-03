@@ -148,25 +148,16 @@ test('o percurso do hero fica fora de .hero__acoes: as accoes continuam a ser tr
   assert.match(HTML, /<div class="hero__acoes">[\s\S]*?<\/div>\s*<div class="percurso">/);
 });
 
-/* Com o percurso o conteúdo do hero cresceu. A etiqueta da rota
-   (`.hero__rota`) está presa a 96px do fundo do hero e as provas acabam
-   onde começa o `padding-bottom`: com os 80px de base, a última linha das
-   provas ficava por baixo da etiqueta. Onde a etiqueta existe (acima de
-   760px), o hero tem de lhe guardar o espaço. */
-test('o hero guarda espaco para a etiqueta da rota, que o percurso empurrava', () => {
-  const rota = /\.hero__rota\s*\{([^}]*)\}/.exec(CSS)?.[1] ?? '';
-  const bottom = Number(/bottom:\s*(\d+)px/.exec(rota)?.[1]);
-  const padV = Number(/padding:\s*(\d+)px/.exec(rota)?.[1]);
-  const letra = Number(/font-size:\s*([\d.]+)px/.exec(rota)?.[1]);
-  assert.ok(bottom > 0 && padV > 0 && letra > 0, 'não consegui ler a geometria de .hero__rota');
-  /* Topo da etiqueta, medido do fundo do hero: 2 de borda, o padding
-     vertical e uma linha de texto (line-height ~1.6). */
-  const topo = bottom + 2 + 2 * padV + Math.ceil(letra * 1.6);
-
-  const media = /@media \(min-width: 761px\)\s*\{\s*\.hero\s*\{\s*padding-bottom:\s*(\d+)px;\s*\}\s*\}/.exec(CSS);
-  assert.ok(media, 'falta a regra que dá espaço à etiqueta da rota acima de 760px');
-  assert.ok(Number(media[1]) >= topo,
-    `o hero guarda ${media[1]}px e a etiqueta da rota chega aos ${topo}px`);
-  /* E é mesmo a 760px que a etiqueta desaparece. */
-  assert.match(CSS, /@media \(max-width: 760px\)\s*\{\s*\.hero__rota\s*\{\s*display:\s*none;/);
+/* Com o percurso o conteúdo do hero cresceu, e acima de 760px o hero
+   guardava 136px em baixo para as provas não ficarem por baixo da etiqueta
+   da rota (`.hero__rota`). Na Fase 9 (9.3) a etiqueta saiu, a pedido do
+   cliente; a reserva saiu com ela, senão ficava um vazio de 56px no fundo
+   do hero a guardar lugar a uma coisa que já não existe. */
+test('9.3: sem a etiqueta da rota, o hero deixa de lhe guardar espaco', () => {
+  const css = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  assert.doesNotMatch(css, /\.hero__rota/, 'a etiqueta da rota continua no CSS');
+  assert.doesNotMatch(css, /@media \(min-width: 761px\)\s*\{\s*\.hero\s*\{\s*padding-bottom/,
+    'o hero continua a guardar espaço para a etiqueta que saiu');
+  /* O hero fica com o padding de base, igual em todas as larguras. */
+  assert.match(css, /\.hero\s*\{[^}]*padding:\s*130px 0 80px/);
 });

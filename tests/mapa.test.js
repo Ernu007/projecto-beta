@@ -228,13 +228,29 @@ test('a rota é a ordem geográfica sul -> norte do briefing 8C', () => {
   ]);
 });
 
-test('a etiqueta da rota no hero é a ROTA, pela mesma ordem', () => {
-  /* O comentário do index.html dizia que este ficheiro impedia o texto de
-     divergir da ROTA — e nenhum teste o fazia. Passa a fazer. */
+test('9.3: o hero não tem o cartão com a lista de nomes — o mapa já os escreve', () => {
+  /* Fase 9 (9.3). O cliente: "renova esse card que vem escrito os nomes das
+     províncias, não vejo a necessidade de ter! Pois as províncias já estão
+     escritas no mapa!" Era a etiqueta `.hero__rota`, com as dez cidades da
+     rota por extenso, e este teste obrigava-a a acompanhar a `ROTA`. A
+     remoção é intencional: o teste passa a impedir que ela volte. */
   const html = fs.readFileSync('index.html', 'utf8');
-  const m = html.match(/<span id="heroRotaTxt">([^<]*)<\/span>/);
-  assert.ok(m, 'o hero perdeu a etiqueta da rota');
-  assert.equal(m[1].trim(), ROTA.map((nome) => CAPITAIS[nome].nome).join(' → '));
+  const hero = /<section class="hero" id="hero">([\s\S]*?)<\/section>/.exec(html)?.[1];
+  assert.ok(hero, 'não encontrei o hero');
+  assert.doesNotMatch(html, /heroRota|hero__rota/, 'o cartão da rota continua no HTML');
+  const lista = ROTA.map((nome) => CAPITAIS[nome].nome).join(' → ');
+  assert.ok(!hero.replace(/<!--[\s\S]*?-->/g, '').includes(' → '),
+    `o hero continua a ter uma lista de nomes por extenso (era "${lista}")`);
+
+  /* E quem escreve os nomes é o canvas: a província e a cidade de cada
+     agência, em `js/hero-voo.js`. */
+  const fonte = codigoDe('js/hero-voo.js');
+  assert.match(fonte, /ctx\.fillText\(nome\.toUpperCase\(\)/, 'o mapa do hero deixou de escrever as províncias');
+  assert.match(fonte, /ctx\.fillText\(a\.nome,/, 'o mapa do hero deixou de escrever as cidades');
+
+  /* Sem cartão não sobra CSS dele, nem a reserva de espaço que ele pedia. */
+  const css = fs.readFileSync('css/styles.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  assert.doesNotMatch(css, /hero__rota|pulsaPonto/, 'ficou CSS do cartão removido');
 });
 
 test('a rota passa pelas províncias que o cliente ditou', () => {

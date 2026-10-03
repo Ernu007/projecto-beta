@@ -17,7 +17,7 @@ SELECTORES = {
     "js/main.js": [
         "modal", "orcRaiz", "tplOrc", "confirm", "ano", "menu", "menuBtn",
         "menuFundo", "header", "barraTopo", "canvasHero", "canvasMapa",
-        "fluxoLinha", "heroRota", "heroRotaTxt", "legalPrivacidade",
+        "fluxoLinha", "legalPrivacidade",
         "luz",
     ],
     "js/orcamento.js": [
