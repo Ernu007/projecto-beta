@@ -162,11 +162,20 @@ function iniciarHero() {
      piso de opacidade em CSS segura-se, mas melhor é repô-lo. */
   const reporTitulo = () => marca.forEach((el) => el.style.setProperty('--p', '1'));
 
+  /* Fase 9 (9.8): no telemóvel o mapa fica por baixo do conteúdo, fora do
+     primeiro ecrã, e o voo só arranca quando se rola até lá. O título não
+     pode ficar desfocado à espera de um avião que não está à vista: acende
+     logo, e o voo deixa de lhe mexer. O limite é o do CSS (`.hero__fundo`
+     em fluxo abaixo de 760px). */
+  const mapaAbaixo = window.matchMedia('(max-width: 759px)').matches;
+  if (mapaAbaixo) reporTitulo();
+
   requestAnimationFrame(() => {
     hero.classList.add('pronto');
     try {
       iniciarVoo(canvas, {
         aoProgredir(prog) {
+          if (mapaAbaixo) return;
           palavras.forEach((el, i) => {
             const alvo = (i + 0.35) / palavras.length;
             const v = Math.max(0, Math.min(1, (prog - alvo) / 0.16));
@@ -242,9 +251,16 @@ function iniciarMapa() {
     if (fechar) ctx.closePath();
   }
 
+  /* A etiqueta mede-se antes de se escrever. Num canvas de telemóvel
+     (310px) um nome à direita de Pemba saía pela borda: quando não cabe
+     do lado pedido, vira para o outro lado do ponto (os 22px são os 11 de
+     afastamento, de um lado e do outro). */
   function etiqueta(x, y, t, cor, align) {
     ctx.save();
-    ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
+    ctx.font = `700 ${w < 430 ? 10 : 11}px "Plus Jakarta Sans", sans-serif`;
+    const largura = ctx.measureText(t).width;
+    if (align === 'left' && x + largura > w - 4) { align = 'right'; x -= 22; }
+    else if (align === 'right' && x - largura < 4) { align = 'left'; x += 22; }
     ctx.textAlign = align;
     ctx.textBaseline = 'middle';
     ctx.lineWidth = 3.5;
@@ -434,14 +450,14 @@ function iniciarMapa() {
 
     desenharFronteira();
 
-    // nomes das capitais, por ultimo para ficarem por cima
-    if (w > 430) {
-      for (const nome of ROTA) {
-        const a = agencyPoint(nome);
-        if (!a) continue;
-        etiqueta(X(a.x) + (a.x < 34 ? -11 : 11), Y(a.y) + 14, rotuloDe(nome),
-          nome === 'Maputo' ? '#EA8240' : '#A9CF44', a.x < 34 ? 'right' : 'left');
-      }
+    /* Os nomes, por último para ficarem por cima. Em TODOS os ecrãs: até à
+       Fase 9 só eram escritos acima de 430px, e num telemóvel o mapa de
+       cobertura eram dez pontos sem nome. */
+    for (const nome of ROTA) {
+      const a = agencyPoint(nome);
+      if (!a) continue;
+      etiqueta(X(a.x) + (a.x < 34 ? -11 : 11), Y(a.y) + 14, rotuloDe(nome),
+        nome === 'Maputo' ? '#EA8240' : '#A9CF44', a.x < 34 ? 'right' : 'left');
     }
   }
 

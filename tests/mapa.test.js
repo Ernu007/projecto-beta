@@ -593,6 +593,14 @@ function correrVoo({ largura = 1280, altura = 800, ate, passo = 100 }) {
       if (nome === 'translate') return (x, y) => { actual?.translates.push([x, y]); };
       if (nome === 'rotate') return (a) => { actual?.rotates.push(a); };
       if (nome === 'arc') return (x, y) => { actual?.arcos.push([x, y]); };
+      if (nome === 'lineTo' || nome === 'moveTo') {
+        return (x, y) => {
+          if (!actual || actual.translates.length) return;   // só o mapa, antes das setas e do avião
+          const c = actual.caixa;
+          c[0] = Math.min(c[0], x); c[1] = Math.min(c[1], y);
+          c[2] = Math.max(c[2], x); c[3] = Math.max(c[3], y);
+        };
+      }
       return () => {};
     },
     set(alvo, nome, valor) { alvo[nome] = valor; return true; },
@@ -617,7 +625,7 @@ function correrVoo({ largura = 1280, altura = 800, ate, passo = 100 }) {
       assert.ok(pedido, `o ciclo deixou de pedir frames aos ${agora} ms`);
       const f = pedido;
       pedido = null;
-      actual = { ms: agora, translates: [], rotates: [], arcos: [] };
+      actual = { ms: agora, translates: [], rotates: [], arcos: [], caixa: [Infinity, Infinity, -Infinity, -Infinity] };
       f(agora);
       quadros.push(actual);
     }
@@ -697,4 +705,51 @@ test('9.2: a seta de cada salto tem tamanho de seta, e não o da escala do mapa'
   assert.ok(m, 'o raio da seta voltou a depender de outra coisa que não a largura do ecrã');
   assert.ok(Number(m[1]) >= 3 && Number(m[1]) <= Number(m[2]) && Number(m[2]) <= 8,
     `raio da seta: ${m[1]} px no telemóvel, ${m[2]} px no computador`);
+});
+
+/* ---------- Fase 9 (9.8): o mapa legível num ecrã estreito ---------- */
+
+test('9.8: a 360 px o mapa do hero enche a caixa que tem, sem sair dela', () => {
+  /* No telemóvel o canvas do hero deixou de estar por trás do texto e tem
+     a sua própria caixa (360 × 540). O país ocupava 80% da largura e 82%
+     da altura do canvas, o que numa caixa só dele era um mapa pequeno
+     dentro de margens grandes. */
+  for (const [largura, altura] of [[360, 540], [320, 480]]) {
+    const { quadros } = correrVoo({ largura, altura, ate: 300 });
+    const [x0, y0, x1, y1] = quadros[1].caixa;
+    assert.ok(x0 >= 0 && y0 >= 0 && x1 <= largura && y1 <= altura,
+      `a ${largura}px o mapa sai do canvas: ${[x0, y0, x1, y1].map(Math.round)}`);
+    assert.ok((x1 - x0) / largura >= 0.8,
+      `a ${largura}px o país tem ${Math.round(x1 - x0)}px de largura: ${(100 * (x1 - x0) / largura).toFixed(0)}% do ecrã`);
+    /* E centrado, não encostado a um lado. */
+    assert.ok(Math.abs((x0 + x1) / 2 - largura / 2) < 2);
+  }
+});
+
+test('9.8: no telemóvel o título não fica à espera de um avião que não está à vista', () => {
+  /* As palavras do título acendem com o avanço do voo. No telemóvel o mapa
+     fica abaixo do conteúdo: o voo só arranca quando se rola até lá, e até
+     lá o título ficava desfocado — 14 s, até à rede de segurança. */
+  const fonte = codigoDe('js/main.js');
+  const hero = /function iniciarHero\(\) \{([\s\S]*?)\n\}/.exec(fonte)?.[1] ?? '';
+  assert.match(hero, /matchMedia\('\(max-width: 759px\)'\)/, 'o hero não distingue o telemóvel');
+  assert.match(hero, /if \(mapaAbaixo\) reporTitulo\(\);/, 'no telemóvel o título continua preso ao voo');
+  assert.match(hero, /aoProgredir\(prog\) \{\s*if \(mapaAbaixo\) return;/,
+    'no telemóvel o voo volta a apagar o título quando arranca');
+});
+
+test('9.8: o mapa de cobertura escreve os nomes também no telemóvel', () => {
+  /* As etiquetas só eram desenhadas com o canvas acima de 430 px: num
+     telemóvel o mapa de cobertura era dez pontos sem nome nenhum — e foi
+     por "as províncias já estarem escritas no mapa" que o cartão dos nomes
+     saiu (9.3). */
+  const fonte = codigoDe('js/main.js');
+  assert.doesNotMatch(fonte, /if \(w > 430\)/, 'o mapa de cobertura continua sem nomes abaixo de 430px');
+  assert.match(fonte, /etiqueta\([^;]*rotuloDe\(nome\)/);
+
+  /* Num canvas de 310 px um nome à direita de Pemba saía pela borda: a
+     etiqueta mede-se e vira para o outro lado quando não cabe. */
+  const etiqueta = /function etiqueta\(x, y, t, cor, align\) \{([\s\S]*?)\n  \}/.exec(fonte)?.[1] ?? '';
+  assert.match(etiqueta, /measureText\(t\)\.width/, 'a etiqueta não mede o texto antes de o escrever');
+  assert.match(etiqueta, /> w - /, 'a etiqueta não confere a borda direita do canvas');
 });

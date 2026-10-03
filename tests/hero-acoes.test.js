@@ -34,6 +34,7 @@ const HTML = fs.readFileSync('index.html', 'utf8');
 const CSS = fs.readFileSync(path.join('css', 'styles.css'), 'utf8');
 /* `.btn--wa` vive em orcamento.css, que é carregado depois de styles.css. */
 const CSS_ORC = fs.readFileSync(path.join('css', 'orcamento.css'), 'utf8');
+const CSS_PRIV = fs.readFileSync(path.join('css', 'privacidade.css'), 'utf8');
 
 /* As larguras de cima, medidas no browser. O `.btn` usa `font-size: 15px`
    fixo (não é um `clamp()`), portanto valem em qualquer viewport. */
@@ -380,4 +381,149 @@ test('9.7: no rodapé o WhatsApp tem a largura e a altura do "Como chegar à JVI
   const semComentarios = CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
   assert.doesNotMatch(semComentarios, /\.rodape__accoes \.btn--wa\s*\{[^}]*justify-self\s*:\s*start/,
     'o WhatsApp do rodapé continua encostado à esquerda, com a largura do texto');
+});
+
+/* ---------- Fase 9 (9.8): o resto do ecrã, no telemóvel ---------- */
+
+/* "Faça o formato para a versão mobile também, pois é nela que 99% dos
+   clientes irão ver a página!" Os limites daqui para baixo foram medidos
+   num Chrome a 360 × 740 antes de serem escritos: o botão de orçamento do
+   topo tinha 40,6 px de altura, os links do rodapé 20,6 px, o fechar do
+   pop-up 40 px, o mapa do hero estava por trás do texto, e os botões
+   fixos tapavam uma faixa de 156 px que nem se via. */
+
+/** A regra de um selector dentro da `@media (max-width: …)` que a tem. */
+const noTelemovel = (selector, folha = CSS) => {
+  const media = mediaMaxComRegra(selector, folha);
+  assert.ok(media, `não há regra de telemóvel para ${selector}`);
+  return media;
+};
+
+test('9.8: o botão de orçamento do topo é um alvo de 44 px em qualquer telemóvel', () => {
+  /* Abaixo de 900 px o botão encolhe (padding 10 px, letra 13,5 px) e
+     ficava com 42,3 px; abaixo de 380 px, com 40,6 px. */
+  for (const m of CSS.matchAll(/@media\s*\(\s*max-width:\s*(\d+)px\s*\)\s*\{\s*(?:\/\*[\s\S]*?\*\/\s*)?\.header__cta \.btn\s*\{([^}]*)\}/g)) {
+    assert.ok(px(decl(m[2], 'min-height')) >= TOQUE,
+      `abaixo de ${m[1]}px o botão de orçamento do topo não tem altura mínima`);
+  }
+  const media = noTelemovel('.header__cta .btn');
+  assert.ok(media.limite >= MOVEL);
+  assert.ok(px(decl(media.corpo, 'min-height')) >= TOQUE);
+
+  /* O botão do menu, ao lado, e a marca. */
+  /* A regra própria do botão, e não `.header__cta + .menu-btn`. */
+  const menu = /^\.menu-btn \{([^}]*)\}/m.exec(CSS)?.[1];
+  assert.ok(px(decl(menu, 'width')) >= TOQUE && px(decl(menu, 'height')) >= TOQUE);
+  const marca = corpo('.brand');
+  assert.ok(px(decl(marca, 'min-width')) >= TOQUE && px(decl(marca, 'min-height')) >= TOQUE,
+    'o logótipo é um link de 38 px de largura');
+});
+
+test('9.8: o cabeçalho fixo não come o ecrã pequeno nem tapa os títulos', () => {
+  const vertical = (regra) => px(decl(regra, 'padding'));
+  const botao = px(decl(noTelemovel('.header__cta .btn').corpo, 'min-height'));
+
+  /* Em repouso: o padding e o logótipo. Preso (depois de rolar): o padding
+     menor e o botão, que passa a ser o mais alto. */
+  const repouso = 2 * vertical(corpo('.header')) + Math.max(px(decl(corpo('.brand__logo'), 'height')), botao);
+  const preso = 2 * vertical(corpo('.header--preso')) + Math.max(px(decl(corpo('.header--preso .brand__logo'), 'height')), botao);
+
+  /* Um telemóvel pequeno tem ~640 px de altura útil. O cabeçalho preso —
+     o que acompanha a página toda — fica abaixo de um décimo disso. */
+  const ECRA_BAIXO = 640;
+  assert.ok(preso <= ECRA_BAIXO * 0.1, `o cabeçalho preso tem ${preso}px: ${(100 * preso / ECRA_BAIXO).toFixed(0)}% de um ecrã de ${ECRA_BAIXO}px`);
+  assert.ok(repouso <= ECRA_BAIXO * 0.125, `o cabeçalho em repouso tem ${repouso}px`);
+
+  /* E não tapa conteúdo: quem salta para uma secção pelo menu encontra o
+     título abaixo do cabeçalho, porque cada secção começa com mais espaço
+     do que a altura dele. */
+  const espaco = px(/clamp\(\s*(\d+)px/.exec(decl(corpo('.seccao'), 'padding'))?.[1]);
+  assert.ok(espaco >= preso, `as secções começam com ${espaco}px e o cabeçalho preso tem ${preso}px: tapa o título`);
+});
+
+test('9.8: os botões fixos não roubam toques ao conteúdo que não tapam', () => {
+  /* O contentor dos três botões media 156 × 162 px — a largura das
+     legendas, que estão invisíveis — e os botões só 48 px. Os outros
+     108 px eram uma faixa transparente por cima da página que engolia os
+     toques: quem tocava no fim de um botão largo não acertava em nada. */
+  assert.match(decl(corpo('.fixos'), 'pointer-events') ?? '', /^none$/,
+    'a caixa invisível dos botões fixos intercepta os toques');
+  assert.match(decl(corpo('.fixo__btn'), 'pointer-events') ?? '', /^auto$/,
+    'os botões fixos deixaram de se poder tocar');
+});
+
+test('9.8: no telemóvel os botões fixos são uma fila em baixo, e o rodapé guarda-lhes o lugar', () => {
+  /* Em coluna tapavam 162 px de altura na borda direita — o fim dos três
+     botões do hero, de uma vez. Em fila tapam 48 px, num canto. */
+  const fixos = noTelemovel('.fixos');
+  assert.match(decl(fixos.corpo, 'flex-direction') ?? '', /^row$/, 'os botões fixos continuam em coluna no telemóvel');
+  assert.ok(fixos.limite >= MOVEL);
+
+  const dentro = (sel) => new RegExp(`${escapar(sel)}\\s*\\{([^}]*)\\}`).exec(fixos.bloco)?.[1];
+  const botao = px(decl(dentro('.fixo__btn'), 'height'));
+  assert.ok(botao >= TOQUE, `os botões fixos têm ${botao}px no telemóvel`);
+  assert.equal(px(decl(dentro('.fixo__btn'), 'width')), botao);
+  /* As legendas só aparecem com o rato por cima: num ecrã de toque não
+     aparecem nunca, e só alargavam a caixa. */
+  assert.match(decl(dentro('.fixo__txt'), 'display') ?? '', /^none$/);
+
+  /* O fim da página não fica por baixo deles: o rodapé acaba com espaço
+     para a fila (a altura do botão mais a distância ao fundo, duas vezes). */
+  const fundo = px(decl(fixos.corpo, 'bottom'));
+  const reserva = px(decl(dentro('.rodape'), 'padding-bottom'));
+  assert.ok(reserva >= botao + 2 * fundo,
+    `o rodapé guarda ${reserva}px e a fila de botões ocupa ${botao + 2 * fundo}px: tapa os links legais`);
+});
+
+test('9.8: os alvos pequenos do rodapé e dos diálogos chegam aos 44 px', () => {
+  /* Links legais do rodapé: eram texto de 12,5 px, com 20,6 px de altura. */
+  const links = corpo('.rodape__links a');
+  assert.ok(px(decl(links, 'min-height')) >= TOQUE, 'os links do rodapé não têm altura de toque');
+  assert.match(decl(links, 'display') ?? '', /flex/, 'sem display flex o min-height não se aplica a um link em linha');
+
+  /* Os botões de fechar: 40 px. */
+  for (const [nome, regra] of [['.modal__fechar', corpo('.modal__fechar')], ['.legal__fechar', corpo('.legal__fechar', CSS_PRIV)]]) {
+    assert.ok(px(decl(regra, 'width')) >= TOQUE && px(decl(regra, 'height')) >= TOQUE, `${nome} tem menos de 44 px`);
+  }
+});
+
+test('9.8: no telemóvel o mapa do hero sai de trás do texto', () => {
+  /* O canvas ocupava o hero inteiro, por trás do conteúdo. No computador o
+     país fica à direita e o texto à esquerda; num ecrã estreito ficavam um
+     em cima do outro, e com as províncias acesas o parágrafo e os botões
+     liam-se por cima de um mapa verde. Passa a ter o seu próprio espaço,
+     por baixo do conteúdo. */
+  const fundo = noTelemovel('.hero__fundo');
+  assert.match(decl(fundo.corpo, 'position') ?? '', /^relative$/, 'o mapa continua por trás do texto no telemóvel');
+  assert.ok(decl(fundo.corpo, 'height'), 'o mapa do hero não tem altura no telemóvel');
+  assert.ok(Number(decl(fundo.corpo, 'order')) > 0, 'o mapa não fica depois do conteúdo');
+
+  /* O limite é o mesmo em que o `hero-voo.js` muda para o desenho de
+     telemóvel (`w < 760`): um px de diferença punha o desenho de
+     computador numa caixa de telemóvel. */
+  const js = fs.readFileSync(path.join('js', 'hero-voo.js'), 'utf8');
+  const limites = [...js.matchAll(/w < (\d+)/g)].map((m) => Number(m[1]));
+  assert.ok(limites.length >= 2);
+  assert.deepEqual([...new Set(limites)], [fundo.limite + 1]);
+
+  /* O véu que escurecia o texto por cima do mapa deixa de fazer falta —
+     e, a ficar, escurecia o mapa. */
+  const veu = /\.hero__glow::after\s*\{([^}]*)\}/.exec(fundo.bloco)?.[1];
+  assert.match(decl(veu ?? '', 'background') ?? '', /^none$/, 'o véu do hero continua por cima do mapa no telemóvel');
+});
+
+test('9.8: os nomes dos passos do formulário não ficam cortados a 360 px', () => {
+  /* "Emissor" e "Pagamento" acabavam em reticências: cada passo tinha
+     44 px para o texto, ao lado do número. No telemóvel o nome passa para
+     baixo do número e fica com a coluna inteira. */
+  const passo = noTelemovel('.orc-passo', CSS_ORC);
+  assert.ok(passo.limite >= MOVEL);
+  assert.match(decl(passo.corpo, 'flex-direction') ?? '', /^column$/);
+
+  /* E o pop-up não gasta um terço do ecrã em margens: a 360 px os campos
+     ficam com pelo menos 290 px. */
+  const fora = px(decl(noTelemovel('.modal', CSS_ORC).corpo, 'padding'));
+  const [, lateral] = decl(noTelemovel('.modal__caixa', CSS_ORC).corpo, 'padding').split(/\s+/);
+  const campo = MOVEL - 2 * fora - 2 * px(lateral) - 2;
+  assert.ok(campo >= 290, `a 360px os campos do formulário têm ${campo}px`);
 });

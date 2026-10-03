@@ -26,6 +26,17 @@
 .orc-passo[data-estado="ativo"] .orc-passo__n { background: var(--verde); color: var(--base); }
 .orc-passo[data-estado="ativo"] { color: var(--texto); }
 
+/* Fase 9 (9.8): a 360px cada passo tinha 44px para o nome, ao lado do
+   número, e "Emissor" e "Pagamento" acabavam em reticências. No telemóvel
+   o nome passa para baixo do número e fica com a coluna inteira. E o
+   pop-up deixa de gastar 104px em margens: os campos passam de 256 para
+   302px. */
+@media (max-width: 480px) {
+  .modal { padding: 10px; }
+  .modal__caixa { padding: 26px 18px 22px; }
+  .orc-passo { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
+
 .orc__barra { height: 4px; border-radius: 100px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
 .orc__barra span {
   display: block; height: 100%; width: 33%; border-radius: 100px;

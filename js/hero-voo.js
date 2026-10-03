@@ -149,8 +149,11 @@ export function iniciarVoo(canvas, opcoes = {}) {
     canvas.height = Math.floor(h * dpr);
     ctxEcra.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const areaW = w < 760 ? w * 0.80 : w * FRAÇÃO_LARGURA;
-    const areaH = h * 0.82;
+    /* No telemóvel o canvas é uma caixa só do mapa, por baixo do conteúdo
+       (Fase 9, 9.8): o país enche-a, em vez de ficar pequeno dentro das
+       margens que fazia sentido deixar quando estava por trás do texto. */
+    const areaW = w < 760 ? w * 0.88 : w * FRAÇÃO_LARGURA;
+    const areaH = w < 760 ? h * 0.94 : h * 0.82;
     esc = Math.min(areaW / larg, areaH / alt);
     // ox/oy sao o canto superior esquerdo do pais no ecra, para ficar centrado
     ox = (w < 760 ? w * 0.5 : w * 0.66) - (larg * esc) / 2;

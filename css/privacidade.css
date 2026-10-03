@@ -67,7 +67,7 @@
 .legal__caixa > p { margin-bottom: 24px; }
 .legal__fechar {
   position: absolute; top: 16px; right: 16px;
-  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
   background: var(--vidro); color: var(--texto-suave);
   transition: all var(--transicao);
 }
