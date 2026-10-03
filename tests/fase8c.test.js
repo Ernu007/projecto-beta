@@ -91,3 +91,89 @@ test('C4: no mapa de cobertura as rotas SAEM da sede, com seta e nome do destino
   assert.match(MAIN, /function rotuloDe\(nome\)/);
   assert.match(MAIN, /etiqueta\([^;]*rotuloDe\(nome\)/);
 });
+
+/* ---------- C5: os botões de contacto com as cores do Google ---------- */
+
+/** O valor de um token do :root. */
+function token(nome) {
+  const m = new RegExp(`${nome}\s*:\s*([^;]+);`).exec(CSS);
+  assert.ok(m, `token ${nome} não existe`);
+  return m[1].trim();
+}
+const hex = (h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16));
+const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+const lum = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+const contraste = (a, b) => {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
+
+test('C5: as cores do Google estão no :root, uma por botão', () => {
+  assert.equal(token('--google-vermelho').toUpperCase(), '#EA4335');
+  assert.equal(token('--google-verde').toUpperCase(), '#34A853');
+  assert.equal(token('--google-branco').toUpperCase(), '#FFFFFF');
+});
+
+test('C5: e-mail = vermelho, WhatsApp = verde, telefone = branco', () => {
+  assert.match(regra('.fixo--mail .fixo__btn'), /background\s*:\s*var\(--google-vermelho\)/);
+  assert.match(regra('.fixo--wa   .fixo__btn'), /background\s*:\s*var\(--google-verde\)/);
+  assert.match(regra('.fixo--tel  .fixo__btn'), /background\s*:\s*var\(--google-branco\)/);
+});
+
+test('C5: o ícone de cada botão lê-se sobre a cor nova (3:1, gráfico)', () => {
+  const pares = [
+    ['.fixo--mail .fixo__btn', '--google-vermelho'],
+    ['.fixo--wa   .fixo__btn', '--google-verde'],
+    ['.fixo--tel  .fixo__btn', '--google-branco'],
+  ];
+  for (const [sel, fundo] of pares) {
+    const cor = /(?:^|;)\s*color\s*:\s*var\((--[a-z-]+)\)/.exec(regra(sel))?.[1];
+    assert.ok(cor, `${sel} não declara a cor do ícone com um token`);
+    const r = contraste(hex(token(cor)), hex(token(fundo)));
+    assert.ok(r >= 3, `${sel}: ícone ${cor} sobre ${fundo} dá ${r.toFixed(2)}:1`);
+  }
+});
+
+test('C5: a legenda de cada botão lê-se sobre o fundo escuro (AA)', () => {
+  for (const sel of ['.fixo--wa .fixo__txt', '.fixo--tel .fixo__txt', '.fixo--mail .fixo__txt']) {
+    const cor = /color\s*:\s*var\((--[a-z-]+)\)/.exec(regra(sel))?.[1];
+    assert.ok(cor, `${sel} não tem cor`);
+    const r = contraste(hex(token(cor)), hex(token('--base')));
+    assert.ok(r >= 4.5, `${sel}: ${cor} sobre --base dá ${r.toFixed(2)}:1`);
+  }
+});
+
+test('C5: o botão do telefone não mudou — só a cor', () => {
+  /* "O telefone está bom." O HTML é o mesmo, byte a byte, da Fase 8B. */
+  assert.ok(HTML.includes(`<span class="fixo fixo--tel">
+    <span class="fixo__txt">Ligar</span>
+    <a class="fixo__btn" href="tel:+258847935035" aria-label="Ligar para +258 84 793 5035">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.79a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.29-1.29a2 2 0 0 1 2.11-.45c.89.34 1.83.57 2.79.7A2 2 0 0 1 22 16.92z"/></svg>
+    </a>
+  </span>`), 'o botão do telefone mudou além da cor');
+});
+
+test('C5: o botão de e-mail é um botão do Gmail', () => {
+  const mail = /<span class="fixo fixo--mail">([\s\S]*?)<\/span>\s*<\/nav>/.exec(HTML)?.[1];
+  assert.ok(mail, 'não encontrei o botão de e-mail');
+  assert.match(mail, /<svg class="ico-gmail"/, 'o e-mail não tem o ícone do Gmail');
+  assert.match(mail, /<span class="fixo__txt">Gmail<\/span>/);
+});
+
+/* ---------- C6: a secção "Nossa empresa" tem o panfleto ---------- */
+
+test('C6: onde estava o camião ("Vamos conectar o seu negócio?") está o panfleto', () => {
+  const cont = seccao('contactos');
+  assert.doesNotMatch(cont, /camiao\.webp/, 'o camião continua nos contactos');
+  assert.match(cont, /<a class="cont-figura__link" href="carta\/jvi-carta-apresentacao\.pdf"[^>]*>\s*<img src="assets\/img\/carta-capa\.webp"/,
+    'o panfleto não está nos contactos, ou não abre a carta');
+});
+
+test('C6: a secção chama-se "Nossa empresa" e mostra o panfleto, larga', () => {
+  const emp = seccao('empresa');
+  assert.match(emp, /<h2 class="titulo-seccao">[^<]*<span class="verde">Nossa empresa<\/span>/);
+  assert.match(emp, /<img src="assets\/img\/carta-capa\.webp"/);
+  assert.doesNotMatch(emp, /camiao/);
+  const larg = /max-width\s*:\s*(\d+)px/.exec(regra('.empresa__carta'))?.[1];
+  assert.ok(Number(larg) >= 480, `o panfleto continua estreito (${larg}px)`);
+});

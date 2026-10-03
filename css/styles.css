@@ -41,9 +41,15 @@
 
   /* Canais */
   --wa:    #25D366;
-  --tel:   #2563EB;
-  --mail:  #EA8240;
-  --tel-claro: #93C5FD;      /* tom claro do azul, para texto sobre o botão */
+
+  /* Fase 8C/C5: os botões fixos de contacto com a paleta do Google —
+     "vermelho, verde e branco", um por botão. Os "-claro" são os tons da
+     própria paleta para a legenda sobre o fundo escuro (AA). */
+  --google-vermelho:       #EA4335;
+  --google-verde:          #34A853;
+  --google-branco:         #FFFFFF;
+  --google-vermelho-claro: #F28B82;
+  --google-verde-claro:    #81C995;
 
   /* Estados. O mesmo estado semântico tinha três vermelhos
      diferentes espalhados por quatro componentes. */
@@ -54,7 +60,6 @@
   /* Texto sobre fundos sólidos de cor viva */
   --sobre-laranja: #1A0D03;
   --sobre-wa:      #05230F;
-  --sobre-mail:    #2A1206;
 
   /* Tipografia */
   --fonte: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -684,18 +689,19 @@ body.modal-aberto { overflow: hidden; }
 .carta-download__t { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
 .carta-download p { font-size: 15px; color: var(--texto-suave); }
 
-/* A figura do camião nos contactos. Estava com o estilo todo em
-   `style=` inline, com as cores da marca escritas por extenso.
-   O aspect-ratio vem das dimensões reais declaradas no HTML, para a
-   caixa não saltar enquanto a imagem carrega. */
-.cont-figura { margin: 0; }
+/* A figura dos contactos. Fase 8C/C6: era o camião, passou a ser o
+   panfleto (a capa da carta de apresentação), e abre a carta — "porque
+   eles vão conhecer a empresa". O aspect-ratio vem das dimensões reais
+   declaradas no HTML, para a caixa não saltar enquanto a imagem carrega. */
+.cont-figura { margin: 0; max-width: 460px; justify-self: center; width: 100%; }
+.cont-figura__link { display: block; border-radius: var(--raio); transition: transform var(--transicao); }
+.cont-figura__link:hover { transform: translateY(-4px); }
 .cont-figura img {
   border-radius: var(--raio); border: 1px solid var(--linha);
-  background: linear-gradient(160deg, var(--base-3), var(--base));
-  padding: 24px;
-  aspect-ratio: 800 / 527;
-  object-fit: contain;
+  aspect-ratio: 794 / 1123; width: 100%; height: auto;
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
 }
+.cont-figura figcaption { margin-top: 12px; font-size: 13.5px; color: var(--texto-fraco); text-align: center; }
 
 .rodape { border-top: 1px solid var(--linha); padding: 40px 0 34px; background: var(--rodape); }
 .rodape__topo { display: flex; flex-wrap: wrap; gap: 26px; align-items: center; justify-content: space-between; margin-bottom: 30px; }
@@ -725,7 +731,7 @@ body.modal-aberto { overflow: hidden; }
    ========================================================= */
 .empresa { display: grid; gap: 40px; align-items: center; }
 @media (min-width: 860px) { .empresa { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 64px; } }
-.empresa__carta { margin: 0; max-width: 420px; justify-self: center; }
+.empresa__carta { margin: 0; max-width: 520px; width: 100%; justify-self: center; }
 .empresa__carta img {
   width: 100%; height: auto; border-radius: var(--raio-sm);
   border: 1px solid var(--borda); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
@@ -762,14 +768,14 @@ body.modal-aberto { overflow: hidden; }
 .fixo { position: relative; }
 .fixo__btn { position: relative; }
 @keyframes pulso { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(1.55); opacity: 0; } }
-.fixo--wa   .fixo__btn { background: var(--wa);   color: var(--sobre-wa); }
-.fixo--tel  .fixo__btn { background: var(--tel);  color: #fff; }
-.fixo--mail .fixo__btn { background: var(--mail); color: var(--sobre-mail); }
+.fixo--wa   .fixo__btn { background: var(--google-verde);    color: var(--sobre-wa); }
+.fixo--tel  .fixo__btn { background: var(--google-branco);   color: var(--base); }
+.fixo--mail .fixo__btn { background: var(--google-vermelho); color: var(--google-branco); }
 .fixo__btn:hover { transform: scale(1.1); }
 .fixo:hover .fixo__txt, .fixo__btn:focus-visible + .fixo__txt { opacity: 1; transform: translateX(0); }
-.fixo--wa .fixo__txt { color: var(--wa); }
-.fixo--tel .fixo__txt { color: var(--tel-claro); }
-.fixo--mail .fixo__txt { color: var(--aviso-txt); }
+.fixo--wa .fixo__txt { color: var(--google-verde-claro); }
+.fixo--tel .fixo__txt { color: var(--google-branco); }
+.fixo--mail .fixo__txt { color: var(--google-vermelho-claro); }
 
 @media (max-width: 560px) {
   .fixos { right: 12px; bottom: 12px; gap: 9px; }

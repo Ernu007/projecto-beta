@@ -131,6 +131,31 @@ registada com regras de uso próprias.
 das províncias, Matola). Onde a 8C e uma fase anterior discordam, ganha a 8C:
 é a revisão completa (22 min) e não um excerto.
 
+### C5 + C6 — botões Google e o panfleto
+
+- **C5 [INCERTO] — cor por botão:** segui a leitura natural do briefing:
+  **e-mail = vermelho** (Gmail, `#EA4335`), **WhatsApp = verde** (Google,
+  `#34A853`), **telefone = branco**. São os botões fixos do canto (os únicos
+  botões de contacto sempre à vista). As legendas usam os tons claros da
+  mesma paleta (`#F28B82`, `#81C995`) para passar AA sobre o fundo escuro;
+  `tests/fase8c.test.js` mede os contrastes.
+- **"Façam um botão do Gmail":** o ícone do e-mail passou a ser o "M" do Gmail
+  (monocromático, branco sobre o vermelho) e a legenda diz "Gmail".
+  **[INCERTO]** "coloque os poucos cruzados" não tem leitura segura; li-o como
+  "os logótipos" e foi o que motivou o "M". Não acrescentei mais nada.
+- **Telefone:** só o fundo (branco) e a cor do ícone (o azul-noite da marca,
+  para se ver sobre o branco). O HTML do botão é o mesmo byte a byte — há um
+  teste que o compara.
+- Saíram os tokens `--tel`, `--mail`, `--tel-claro` e `--sobre-mail`, que
+  ficaram sem uso.
+- **C6:** o camião da secção "Vamos conectar o seu negócio?" (Contactos) foi
+  substituído pelo **panfleto** — a capa da carta de apresentação — e a imagem
+  abre o PDF. A secção "Nossa empresa" já tinha o panfleto; o título `h2`
+  passou a ser **"Nossa empresa."** (a frase antiga ficou na etiqueta) e a
+  imagem cresceu de 420 para 520 px. **[DÚVIDA]** a capa aparece agora duas
+  vezes (Nossa empresa e Contactos). É o que o cliente pediu para os
+  Contactos, mas se preferir uma só, a dos Contactos é a que sai.
+
 ### C3 + C4 — cobertura: Matola fora, Maputo sede, cartões
 
 - **Matola** saiu da lista da cobertura e do rótulo do ponto de Maputo
