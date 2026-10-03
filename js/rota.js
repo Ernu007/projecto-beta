@@ -57,3 +57,29 @@ export function linkDirecoes(destino = MORADA_JVI, travelmode = MODO_POR_OMISSAO
     + `&destination=${encodeURIComponent(d || MORADA_JVI)}`
     + `&travelmode=${encodeURIComponent(modo)}`;
 }
+
+/**
+ * O percurso até à JVI, em passos com seta, para mostrar no ecrã junto
+ * ao botão "Como chegar à JVI".
+ *
+ * NÃO É UMA ROTA CALCULADA, e é de propósito. O projecto tem três nomes
+ * confirmados pelo cliente — os da `MORADA_JVI` — e mais nada: não tem
+ * coordenadas, não tem cruzamentos e não sabe de onde o cliente parte.
+ * Por isso os passos vão do sítio maior para o mais pequeno (aeroporto,
+ * avenida, terminal), todos com a seta de seguir em frente, e nenhum diz
+ * para que lado se vira. Uma viragem à direita inventada manda metade
+ * dos clientes para o lado errado; as viragens ficam para o Maps, que é
+ * o que o botão abre.
+ *
+ * `local` tem de ser um pedaço literal da `MORADA_JVI`. O
+ * `tests/percurso.test.js` verifica-o, e compara estes passos com os
+ * que estão escritos à mão no `index.html`.
+ */
+export const PASSOS_PERCURSO = [
+  { seta: '↑', texto: 'Siga para o', local: 'Aeroporto de Maputo' },
+  { seta: '↑', texto: 'Siga pela', local: 'Av. 19 de Outubro' },
+  { seta: 'chegada', texto: 'A JVI fica no', local: 'Terminal de Cargas Nº 113' },
+];
+
+/** O que o ecrã diz sobre o que os passos NÃO dizem. */
+export const NOTA_PERCURSO = 'As viragens dependem de onde parte: o botão acima abre o caminho completo no Google Maps.';

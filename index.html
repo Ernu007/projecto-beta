@@ -206,6 +206,19 @@
           Como chegar à JVI
         </a>
       </div>
+      <div class="percurso">
+        <!-- O percurso com setas, junto ao botão (D36). SÓ nomeia o que está na
+             morada confirmada e não diz para que lado se vira: o lado depende de
+             onde o cliente parte, e isso é o Maps que sabe. Os passos são os de
+             `PASSOS_PERCURSO` em js/rota.js; é o `tests/percurso.test.js` que
+             garante que as duas cópias não divergem e que ninguém inventa rota. -->
+        <ol class="percurso__passos" aria-label="Percurso até à JVI">
+          <li class="percurso__passo"><span class="percurso__seta" aria-hidden="true">↑</span><span class="percurso__txt">Siga para o <b>Aeroporto de Maputo</b></span></li>
+          <li class="percurso__passo"><span class="percurso__seta" aria-hidden="true">↑</span><span class="percurso__txt">Siga pela <b>Av. 19 de Outubro</b></span></li>
+          <li class="percurso__passo percurso__passo--chegada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="percurso__txt">A JVI fica no <b>Terminal de Cargas Nº 113</b></span></li>
+        </ol>
+        <p class="percurso__nota">As viragens dependem de onde parte: o botão acima abre o caminho completo no Google Maps.</p>
+      </div>
 
       <div class="hero__provas">
         <span class="prova">
@@ -768,6 +781,14 @@
       <a class="btn btn--vidro btn-maps" href="https://www.google.com/maps/dir/?api=1&amp;destination=Av.%2019%20de%20Outubro%2C%20Terminal%20de%20Cargas%20N%C2%BA%20113%2C%20Aeroporto%20de%20Maputo&amp;travelmode=driving" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
         Como chegar à JVI
       </a>
+      <div class="percurso">
+        <ol class="percurso__passos" aria-label="Percurso até à JVI">
+          <li class="percurso__passo"><span class="percurso__seta" aria-hidden="true">↑</span><span class="percurso__txt">Siga para o <b>Aeroporto de Maputo</b></span></li>
+          <li class="percurso__passo"><span class="percurso__seta" aria-hidden="true">↑</span><span class="percurso__txt">Siga pela <b>Av. 19 de Outubro</b></span></li>
+          <li class="percurso__passo percurso__passo--chegada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="percurso__txt">A JVI fica no <b>Terminal de Cargas Nº 113</b></span></li>
+        </ol>
+        <p class="percurso__nota">As viragens dependem de onde parte: o botão acima abre o caminho completo no Google Maps.</p>
+      </div>
     </div>
     <!-- Fase 8C/C7. SEO legítimo: os serviços e os destinos em texto real,
          visível, com links para as secções da própria página. Nada de lista

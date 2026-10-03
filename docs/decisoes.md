@@ -571,7 +571,7 @@ que é configuração.
 
 **O prefixo passou de 84 (Vodacom) para 87 (Movitel).** Verificado, não foi
 preciso mexer no código: `normalizarTelefone` e `telefoneCallback` aceitam
-`^[2-9]d{8}$` depois de tirar o indicativo, e o `RE_TEL` do servidor só conta
+`^[2-9]\d{8}$` depois de tirar o indicativo, e o `RE_TEL` do servidor só conta
 caracteres — nenhum dos três conhece operadoras. `tests/numero.test.js` passou a
 prová-lo com o 87 em todas as escritas, e com os prefixos 82 a 87.
 
@@ -583,3 +583,34 @@ prová-lo com o 87 em todas as escritas, e com os prefixos 82 a 87.
 | O PDF da carta e a imagem da capa foram regenerados | `carta/jvi-carta-apresentacao.pdf` é o que o visitante descarrega e tinha o número antigo em quatro páginas; `assets/img/carta-capa.webp` é a página 1 desse PDF e mostrava-o legível. O PDF saiu do Chrome em modo headless, como o README manda, e a capa foi rasterizada a 96 dpi (794×1123). Comparado página a página com o PDF anterior: mesmas 10 páginas, e a única diferença de conteúdo é o número. |
 | `.p1::before` em `carta/style.css` | Ao regenerar, a capa saía com o título por cima do logótipo. Não era do número: a capa centra o título com `justify-content: space-between`, que precisa de três itens em fluxo, e o primeiro era a `<div class="grelha">` — em fluxo só porque a regra dela nunca casava. Quando a regra passou a `.grelha` (absoluta), o título subiu, mas o PDF não tinha sido regenerado desde então e ninguém viu. O pseudo-elemento repõe o item do topo. As páginas 2 a 9 ganharam a barra lateral de 7 px que esse mesmo commit prometia e que o PDF antigo ainda não tinha. |
 | `dist/` não foi editado à mão | É gerado por `tools/publicar.py`, e está no `.gitignore`. |
+
+## O percurso com setas, junto ao botão "Como chegar à JVI" (D36)
+
+**3 de Outubro de 2026.** O cliente pediu: *"quero que mostre ao cliente com
+setas de direcções para ficar mais fácil de compreender"*. O botão continua a
+abrir o Google Maps, com o mesmo link de sempre. Por baixo dele, no hero e no
+rodapé, passou a haver três passos escritos no próprio ecrã:
+
+> **↑** Siga para o **Aeroporto de Maputo** · **↑** Siga pela **Av. 19 de
+> Outubro** · **(pin)** A JVI fica no **Terminal de Cargas Nº 113**
+>
+> *As viragens dependem de onde parte: o botão acima abre o caminho completo no
+> Google Maps.*
+
+**Não é uma rota calculada, e é de propósito.** É a mesma regra do D16 e do D18:
+não se publica o que não se sabe. O projecto tem três nomes confirmados pelo
+cliente — os da morada — e mais nada: não tem coordenadas, não tem cruzamentos e
+não sabe de onde o cliente parte.
+
+| Decisão | Razão |
+|---|---|
+| Só a seta **↑**; não há **↱** nem **↰**, nem "à esquerda" / "à direita" | O lado de uma viragem depende de onde se vem, e ninguém o confirmou. Uma viragem inventada manda metade dos clientes para o lado errado — é pior do que não a dar. Os passos vão do sítio maior para o mais pequeno (aeroporto, avenida, terminal), e isso é verdade venha o cliente de onde vier. |
+| Não há distância nem tempo, nem "aproximados" | Uma distância precisa de dois pontos. O site não tem coordenadas do terminal (D18) e não pede a posição a ninguém (D17), portanto qualquer número era inventado. O D16 já tinha recusado tempos pela mesma razão. |
+| Não há rotundas, cruzamentos, saídas nem pontos de referência | Nenhum está confirmado no projecto. Se o cliente indicar dois ou três (por exemplo, por onde se entra na Av. 19 de Outubro), acrescentam-se a `PASSOS_PERCURSO` e aí já podem levar seta de viragem. |
+| A nota diz ao cliente o que os passos não dizem | Em vez de calar as viragens, o ecrã diz que dependem de onde se parte e que o botão mostra o caminho completo. É a parte "honesta" do pedido. |
+| A fonte é `PASSOS_PERCURSO` em `js/rota.js`; o HTML é escrito à mão | O mesmo arranjo do link (D17): funciona sem JavaScript. `tests/percurso.test.js` compara as duas cópias e recusa qualquer sítio que não esteja na `MORADA_JVI`, qualquer seta de viragem, qualquer lado, qualquer distância e qualquer número que não seja o 19 da avenida ou o 113 do terminal. |
+| As setas são `aria-hidden`, numa lista ordenada com nome | Quem usa leitor de ecrã ouve "Percurso até à JVI, 1 de 3, siga para o Aeroporto de Maputo" em vez do nome do carácter da seta. |
+| O percurso fica **fora** de `.hero__acoes` | As acções do hero continuam a ser três e uma só primária (D19); os testes do hero contam-nas. No rodapé fica dentro de `.rodape__accoes`, logo por baixo do botão. |
+| No computador os passos ficam em linha; no telemóvel, em lista | Em linha ocupa uma faixa de ~60px, e o hero continua a mostrar os botões e o percurso sem rolar. No telemóvel lê-se como uma lista de instruções. |
+| Acima de 760px o hero passou a ter `padding-bottom: 136px` | Com o percurso o conteúdo cresceu e a última linha das provas ficava por baixo da etiqueta da rota (`.hero__rota`, presa a 96px do fundo). Já acontecia em ecrãs baixos; o percurso trazia-o para os ecrãs normais. O hero guarda agora o espaço da etiqueta, e há um teste que o mede. |
+| A política de privacidade não mudou | O percurso é texto estático: não usa a posição de ninguém, não chama serviço nenhum. O que a política diz sobre o botão continua exacto. |

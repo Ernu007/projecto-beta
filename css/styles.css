@@ -383,6 +383,51 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
 }
 
 
+/* O percurso com setas, junto ao botão "Como chegar à JVI" (D36). É
+   texto: três passos, do aeroporto ao terminal, com a seta de seguir em
+   frente num disco verde e o pin laranja na chegada. Não há setas de
+   viragem porque o projecto não sabe para que lado se vira — ver
+   `PASSOS_PERCURSO` em js/rota.js.
+
+   O fundo é quase opaco de propósito: no hero o percurso fica por cima do
+   mapa, e com o `--vidro` dos cartões as fronteiras das províncias
+   atravessavam o texto. */
+.percurso { font-size: 14px; color: var(--texto-suave); }
+.percurso__passos {
+  list-style: none; margin: 0; padding: 11px 14px;
+  display: flex; flex-wrap: wrap; gap: 10px 30px;
+  border: 1px solid var(--linha); border-radius: var(--raio);
+  background: rgb(var(--base-rgb) / .78);
+}
+.percurso__passo { display: flex; align-items: center; gap: 9px; line-height: 1.3; }
+.percurso__txt b { display: block; color: var(--texto); font-weight: 800; }
+.percurso__seta {
+  flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: rgb(var(--verde-rgb) / .14); color: var(--verde);
+  font-size: 17px; font-weight: 800; line-height: 1;
+}
+.percurso__passo--chegada svg {
+  flex: none; width: 26px; height: 26px; padding: 4px; border-radius: 50%;
+  background: rgb(var(--laranja-rgb) / .16); color: var(--laranja);
+}
+.percurso__nota { margin-top: 7px; font-size: 12.5px; line-height: 1.5; color: var(--texto-fraco); }
+/* No telemóvel os passos ficam uns por baixo dos outros, como numa lista
+   de instruções, e cada um numa linha só. */
+@media (max-width: 760px) {
+  .percurso__passos { flex-direction: column; gap: 9px; }
+  .percurso__txt b { display: inline; }
+}
+/* No hero o percurso fica encostado ao botão, e é ele que passa a dar a
+   distância até às provas. Sem `:has()` a distância ao botão fica nos
+   44px de sempre: mais larga, mas inteira. */
+.hero__acoes:has(+ .percurso) { margin-bottom: 14px; }
+.hero__acoes + .percurso { margin-bottom: 32px; }
+/* Com o percurso o conteúdo do hero cresceu, e as provas passavam a
+   acabar à altura da etiqueta da rota (`.hero__rota`, a 96px do fundo e
+   com ~35px de altura), por baixo dela. A etiqueta só existe acima de
+   760px; é aí que o hero guarda o espaço dela. */
+@media (min-width: 761px) { .hero { padding-bottom: 136px; } }
+
 .hero__provas { display: flex; flex-wrap: wrap; gap: 12px 34px; }
 .prova { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--texto-suave); }
 .prova svg { width: 18px; height: 18px; color: var(--verde); flex: none; }
@@ -811,6 +856,8 @@ body.modal-aberto { overflow: hidden; }
 .hero.pronto .hero__conteudo > *:nth-child(2) { animation-delay: 0.22s; }
 .hero.pronto .hero__conteudo > *:nth-child(3) { animation-delay: 0.34s; }
 .hero.pronto .hero__conteudo > *:nth-child(4) { animation-delay: 0.46s; }
+.hero.pronto .hero__conteudo > *:nth-child(5) { animation-delay: 0.58s; }
+.hero.pronto .hero__conteudo > *:nth-child(6) { animation-delay: 0.70s; }
 @keyframes heroEntra { to { opacity: 1; transform: none; } }
 
 /* Palavras do titulo: cada uma acende quando o aviao passa
