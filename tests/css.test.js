@@ -111,6 +111,49 @@ test('o contraste do texto principal continua a passar AA', () => {
   }
 });
 
+/* Fase 9 (9.6). O botão de WhatsApp do hero passou de vidro a verde — o
+   verde da marca WhatsApp (`--wa`), com o texto em `--sobre-wa`. Os três
+   botões de cor sólida do site têm texto escuro sobre cor viva; nenhum
+   estava medido, porque o teste de cima só mede texto sobre os fundos
+   escuros. */
+test('9.6: o texto dos botoes de cor solida passa AA sobre a cor do botao', () => {
+  const pares = [
+    ['--sobre-wa', '--wa'],              // WhatsApp: hero, rodapé, ecrã de sucesso
+    ['--base', '--verde'],               // primário, ponta clara do degradê
+    ['--base', '--verde-escuro'],        // primário, ponta escura do degradê
+    ['--sobre-laranja', '--laranja'],    // "Descarregar PDF"
+  ];
+  for (const [texto, fundo] of pares) {
+    const r = ratio(hex(token(texto)), hex(token(fundo)));
+    assert.ok(r >= 4.5, `${texto} sobre ${fundo} dá ${r.toFixed(2)}:1`);
+  }
+
+  /* E são mesmo essas as cores do botão do WhatsApp. */
+  const orc = CSS.find(([, f]) => f === 'orcamento.css')[2];
+  const wa = /\.btn--wa\s*\{([^}]*)\}/.exec(orc)?.[1] ?? '';
+  assert.match(wa, /background:\s*var\(--wa\)/);
+  assert.match(wa, /color:\s*var\(--sobre-wa\)/);
+});
+
+/* "Usa o verde da marca WhatsApp (diferente do verde JVI) para não ficarem
+   dois verdes a competir." Diferente tem de se ver: mede-se o tom. */
+test('9.6: o verde do WhatsApp nao se confunde com o verde da JVI', () => {
+  const tom = ([r, g, b]) => {
+    const [x, y, z] = [r, g, b].map((c) => c / 255);
+    const max = Math.max(x, y, z);
+    const d = max - Math.min(x, y, z);
+    const h = max === x ? ((y - z) / d) % 6 : max === y ? (z - x) / d + 2 : (x - y) / d + 4;
+    return (h * 60 + 360) % 360;
+  };
+  assert.equal(token('--wa').toUpperCase(), '#25D366', 'o --wa deixou de ser o verde da marca WhatsApp');
+  const wa = tom(hex(token('--wa')));
+  for (const nome of ['--verde', '--verde-escuro']) {
+    const jvi = tom(hex(token(nome)));
+    assert.ok(Math.abs(wa - jvi) >= 40,
+      `o tom do WhatsApp (${wa.toFixed(0)}°) está a ${Math.abs(wa - jvi).toFixed(0)}° do ${nome} (${jvi.toFixed(0)}°)`);
+  }
+});
+
 /* O titulo do hero comeca apagado e acende com a animacao do voo. Com
    o piso antigo (0.12) o <h1> ficava a 1,26:1 durante ~7 segundos, e
    para sempre se o canvas nao arrancasse. O piso tem de manter o pior

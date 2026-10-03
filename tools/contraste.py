@@ -98,6 +98,15 @@ TEXTOS = {
     "wa": token("--wa"),
 }
 
+# Fase 9 (9.6): texto escuro sobre os botões de cor sólida. O WhatsApp do
+# hero passou a verde (`--wa`), e nenhum destes pares estava medido.
+BOTOES = [
+    ("sobre-wa", "wa"),
+    ("base", "verde"),
+    ("base", "verde-escuro"),
+    ("sobre-laranja", "laranja"),
+]
+
 if __name__ == "__main__":
     print(f"{'texto':<14} {'fundo':<14} {'raio':>6}  AA-normal  AA-grande  AAA")
     print("-" * 68)
@@ -115,6 +124,16 @@ if __name__ == "__main__":
             print(f"{nome_tx:<14} {nome_bg:<14} {r:>6.2f}  {normal:<10} {grande:<10} {aaa}{marca}")
             if r < 4.5:
                 falhas.append((nome_tx, nome_bg, cor_tx, hx_bg, r))
+
+    print()
+    print("texto sobre botões de cor sólida")
+    for nome_tx, nome_bg in BOTOES:
+        cor_tx, cor_bg = token(f"--{nome_tx}"), token(f"--{nome_bg}")
+        r = ratiocontraste(cor_tx, cor_bg)
+        marca = "  <-- FALHA texto normal" if r < 4.5 else ""
+        print(f"{nome_tx:<14} {nome_bg:<14} {r:>6.2f}{marca}")
+        if r < 4.5:
+            falhas.append((nome_tx, nome_bg, cor_tx, cor_bg, r))
 
     print()
     if falhas:

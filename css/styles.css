@@ -372,12 +372,23 @@ main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
    de baixo e a ocupar a largura toda. A primeira linha leva os outros
    dois — orçamento primário a par do WhatsApp — e cabe com folga
    (204.50 + 13 + 221.20 = 438.70px). */
+
+/* Fase 9 (9.4): "pedir orçamento" e "falar no WhatsApp" ocupam METADE cada
+   um da linha das direcções. Antes cada um tinha a largura do seu texto
+   (204.50 e 221.20px) e a linha de cima acabava a meio da de baixo.
+
+   A base é metade da linha menos metade do gap (13px / 2), e os dois
+   crescem por igual: ficam com a mesma largura tenham o texto que tiverem,
+   e as duas metades mais o gap dão exactamente a largura do botão de baixo.
+   A regra das direcções vem a seguir e ganha por especificidade. */
+.hero__acoes > * { flex: 1 1 calc(50% - 6.5px); }
 .hero__acoes > .btn--bloco { flex: 1 0 100%; }
 
-/* Abaixo de 520px de viewport dois botões à mesma linha ficam apertados
-   (o contentor ficaria com 473px para 438.70px de botões, e a partir de
-   487px nem isso era verdade). As três acções passam a coluna de
-   botões inteiros, que é também o que se toca melhor num telemóvel. */
+/* Abaixo de 520px de viewport cada metade deixa de levar o texto do botão
+   mais largo: a 521px o contentor tem 473px, cada metade 230px, e "Falar
+   no WhatsApp" mede 221.20px — é o último ecrã em que cabe com folga. As
+   três acções passam a coluna de botões inteiros, que é também o que se
+   toca melhor num telemóvel. */
 @media (max-width: 520px) {
   .hero__acoes > * { flex: 1 0 100%; }
 }
@@ -765,8 +776,13 @@ body.modal-aberto { overflow: hidden; }
   & svg { display: block; width: 100%; height: 44px; color: #EA4335; }
 }
 .rodape__accoes .btn-maps svg { display: block; width: 100%; height: 44px; color: #EA4335; }
-.rodape__accoes .btn--wa { justify-self: start; }
-@media (max-width: 520px) { .rodape__accoes .btn--wa { justify-self: stretch; } }
+/* Fase 9 (9.7): "o botão falar no WhatsApp está pequeno, coloque do mesmo
+   tamanho que o botão como chegar a JVI". Tinha a largura do texto,
+   encostado à esquerda. Passa a ter a MESMA caixa do botão do Maps — a
+   linha inteira, o ícone numa faixa de 44px por cima do texto — em todos
+   os ecrãs. `tests/hero-acoes.test.js` compara as duas regras. */
+.rodape__accoes .btn--wa { flex-direction: column; gap: 8px; width: 100%; padding-block: 14px 16px; border-radius: var(--raio); border: 1px solid transparent; }
+.rodape__accoes .btn--wa svg { display: block; width: 100%; height: 44px; }
 .rodape__links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 .rodape__links a { color: var(--texto-fraco); transition: color var(--transicao); }
 .rodape__links a:hover { color: var(--verde); }

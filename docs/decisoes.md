@@ -737,3 +737,49 @@ vê (D39) a ordem também se lê no próprio voo.
 **Dúvida que fica:** se o cartão a que o cliente se referia era o da Cobertura e
 não o do hero, falta tirar o `<div class="rotas">` do `index.html` (e o teste do
 C3 que fixa "Maputo — Sede" nessa lista). É uma remoção de dez linhas.
+
+### Botões: metade / metade no hero, WhatsApp verde, e o do rodapé à largura toda (D41)
+
+Três pedidos sobre os mesmos botões, num só bloco (9.4, 9.6 e 9.7).
+
+**9.4 — metade / metade.** "Pedir orçamento" e "Falar no WhatsApp" tinham a
+largura do texto (204,5 e 221,2 px) e a linha de cima acabava a meio do "Como
+chegar à JVI". Passam a `flex: 1 1 calc(50% - 6.5px)`: a mesma base e o mesmo
+crescimento, logo a mesma largura, e duas metades mais o gap de 13 px dão
+exactamente a largura do botão de baixo.
+
+Medido no Chrome (não assumido):
+
+| Viewport | Orçamento | WhatsApp | Como chegar |
+|---|---|---|---|
+| 1280 px | 323,5 | 323,5 | 660 |
+| 521 px | 230 | 230 | 473 |
+| 520 px (coluna) | 472 | 472 | 472 |
+| 360 px (coluna) | 312 | 312 | 312 |
+| 320 px (coluna) | 272 | 272 | 272 |
+
+O limite da coluna única **ficou nos 520 px**, e a conta foi refeita: com metade
+/ metade, cada metade tem de levar o botão mais largo (221,2 px). A 521 px cada
+metade tem 230 px — cabe; abaixo disso o `nowrap` empurrava o segundo botão para
+a linha de baixo com outra largura. O teste do limite passou a fazer esta conta.
+
+**9.6 — o WhatsApp do hero fica verde.** Passou de `btn--vidro` a `btn--wa`, a
+mesma classe do WhatsApp do rodapé.
+
+| Decisão | Razão |
+|---|---|
+| O verde é o da marca WhatsApp (`--wa`, `#25D366`), não o verde JVI | O briefing pede-o assim para não haver dois verdes a competir, e o cliente pediu "a mesma cor" do botão do rodapé, que já era este. |
+| Os dois verdes **distinguem-se**, e há teste | O verde JVI é um verde-lima (tom 76°, degradê até 85°); o do WhatsApp é um verde-esmeralda (tom 142°). São 57° a 66° de diferença de tom — vê-se, e a captura a 360 px confirma. O teste exige pelo menos 40°. |
+| O orçamento continua a ser o botão mais forte | É o único `btn--primario`, é o primeiro, tem degradê e brilho por baixo (`box-shadow`). O do WhatsApp é uma cor lisa, sem sombra, e há teste a impedir que ganhe uma. |
+| Contraste AA medido | Texto `--sobre-wa` sobre `--wa`: **8,45:1**. De caminho mediram-se os outros botões de cor sólida, que nenhum teste media: `--base` sobre o verde JVI 9,94:1 (8,78:1 na ponta escura do degradê) e o texto do botão laranja 7,04:1. `tools/contraste.py` passou a imprimir estes pares. |
+
+**9.7 — o WhatsApp do rodapé.** Tinha a largura do texto, encostado à esquerda
+(`justify-self: start`). Passa a ter a mesma caixa do "Como chegar à JVI": linha
+inteira, ícone numa faixa de 44 px por cima do texto. Levou 1 px de contorno
+transparente, porque o botão do Maps é `btn--vidro` e tem contorno — sem isso
+ficava 2 px mais baixo (106,75 contra 108,75 px, medido). Agora são os dois
+108,75 px de altura, a 312 px de largura no telemóvel e 1192 px no computador.
+
+**Dúvida que fica:** "a última página" foi lida como o rodapé, que é onde estão
+juntos o "Falar no WhatsApp" e o "Como chegar à JVI". Na secção Contactos o
+WhatsApp é um item de lista com o número (não um botão) e não foi mexido.
