@@ -551,3 +551,35 @@ divirjam.
 `python tools/verificar-html.py` confirma, sem browser, que todos os `id`, todos
 os `data-attribute` e todos os ficheiros que o JS procura existem no HTML, e que
 todas as ancoras internas têm destino.
+
+## O número da empresa mudou para 878066265 (D35)
+
+**3 de Outubro de 2026.** O número da JVI passou de `847935035` para
+**`878066265`** — por extenso **+258 87 806 6265**, e `258878066265` nos links
+`wa.me`. Continua a ser **um só** número em todo o site; o que a secção "Números
+de telefone: um só" diz sobre haver um único número mantém-se, só o número é
+outro. As menções ao 84 neste ficheiro e nos briefings ficam como estão: são o
+registo do que foi dito na altura.
+
+**Onde foi trocado:** `JVI_WHATSAPP` em `js/orcamento.js` (a fonte única, de onde
+saem os links das mensagens do formulário); no `index.html`, os quatro links
+`wa.me`, os dois `tel:`, o `aria-label` do botão "Ligar", a secção Contactos, a
+política de privacidade e o `telephone` do JSON-LD; os quatro sítios de
+`carta/index.html`; o `README.md` e o `.env.example`; e os testes que fixavam o
+número antigo. `functions/submit.js` não tinha o número — envia para `DESTINO`,
+que é configuração.
+
+**O prefixo passou de 84 (Vodacom) para 87 (Movitel).** Verificado, não foi
+preciso mexer no código: `normalizarTelefone` e `telefoneCallback` aceitam
+`^[2-9]d{8}$` depois de tirar o indicativo, e o `RE_TEL` do servidor só conta
+caracteres — nenhum dos três conhece operadoras. `tests/numero.test.js` passou a
+prová-lo com o 87 em todas as escritas, e com os prefixos 82 a 87.
+
+| Decisão | Razão |
+|---|---|
+| `tests/numero.test.js` varre os ficheiros vivos à procura do número antigo | O número está escrito à mão em sítios que não passam por JS. Um sítio esquecido punha o cliente a ligar para um número que já não é da JVI, e a olho não se vê. O teste compara só dígitos, por isso apanha `84 793 5035` e `847935035`. |
+| Os exemplos dos testes passaram a usar o número novo | Os testes que fixavam o 84 como "o número da JVI" foram corrigidos. Os que usam outros números 84 e 82 como telefone **de um cliente** ficaram: são casos de formatação, e os clientes continuam a ter números de qualquer operadora. |
+| O exemplo do campo Telefone continua `Ex.: 84 123 4567` | Não é o número da JVI — é um exemplo de escrita, e o teste do C2 proíbe precisamente que o exemplo seja o número real da empresa. Trocá-lo pelo 87 não acrescentava nada. |
+| O PDF da carta e a imagem da capa foram regenerados | `carta/jvi-carta-apresentacao.pdf` é o que o visitante descarrega e tinha o número antigo em quatro páginas; `assets/img/carta-capa.webp` é a página 1 desse PDF e mostrava-o legível. O PDF saiu do Chrome em modo headless, como o README manda, e a capa foi rasterizada a 96 dpi (794×1123). Comparado página a página com o PDF anterior: mesmas 10 páginas, e a única diferença de conteúdo é o número. |
+| `.p1::before` em `carta/style.css` | Ao regenerar, a capa saía com o título por cima do logótipo. Não era do número: a capa centra o título com `justify-content: space-between`, que precisa de três itens em fluxo, e o primeiro era a `<div class="grelha">` — em fluxo só porque a regra dela nunca casava. Quando a regra passou a `.grelha` (absoluta), o título subiu, mas o PDF não tinha sido regenerado desde então e ninguém viu. O pseudo-elemento repõe o item do topo. As páginas 2 a 9 ganharam a barra lateral de 7 px que esse mesmo commit prometia e que o PDF antigo ainda não tinha. |
+| `dist/` não foi editado à mão | É gerado por `tools/publicar.py`, e está no `.gitignore`. |

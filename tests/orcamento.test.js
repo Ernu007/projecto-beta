@@ -11,7 +11,7 @@ const CHEIO = {
   apelido: 'Sissu',
   provincia: 'Nampula',
   morada: 'Bairro da Sommachine',
-  telefone: '84 793 5035',
+  telefone: '87 806 6265',
   destinatario: 'Ana Maria',
   provinciaDestino: 'Cabo Delgado',
   peso: '11.7',
@@ -40,15 +40,15 @@ test('normalizarPeso aceita ponto e virgula', () => {
   assert.equal(normalizarPeso('-3'), null);
 });
 
-test('normalizarTelefone reduz qualquer escrita a 258847935035', () => {
-  for (const t of ['84 793 5035', '+258 84 793 5035', '258847935035',
-    '00258847935035', '258 84 793 5035', '0847935035']) {
-    assert.equal(normalizarTelefone(t), '258847935035', `escrita: ${t}`);
+test('normalizarTelefone reduz qualquer escrita a 258878066265', () => {
+  for (const t of ['87 806 6265', '+258 87 806 6265', '258878066265',
+    '00258878066265', '258 87 806 6265', '0878066265']) {
+    assert.equal(normalizarTelefone(t), '258878066265', `escrita: ${t}`);
   }
 });
 
 /* O teste anterior usava seis escritas do MESMO número. Um
-   `return '258847935035'` fixo passava-o inteiro, sem exercitar a
+   `return '258878066265'` fixo passava-o inteiro, sem exercitar a
    lógica. Estes usam outros números — o que entra aqui é o telefone
    que o CLIENTE preenche no formulário, que pode ser qualquer um, e
    não o número da JVI (esse é a constante `JVI_WHATSAPP`, e é único). */
@@ -71,17 +71,17 @@ test('normalizarTelefone nao confunde um prefixo que NAO e 258', () => {
   /* 351 (Portugal) tem 9 dígitos; se o código fosse cortado às cegas,
      o resto passaria a ser um número moçambicano válido. */
   assert.equal(normalizarTelefone('351912345678'), null);
-  assert.equal(normalizarTelefone('258847935035999'), null, 'tem dígitos a mais');
+  assert.equal(normalizarTelefone('258878066265999'), null, 'tem dígitos a mais');
 });
 
 test('normalizarTelefone rejeita o que nao e telefone moçambicano', () => {
-  for (const t of ['', 'abc', '123', null, undefined, '2588479350']) {
+  for (const t of ['', 'abc', '123', null, undefined, '2588780662']) {
     assert.equal(normalizarTelefone(t), null, `entrada: ${String(t)}`);
   }
 });
 
 test('telefoneLegivel volta ao formato que se escreve em Moçambique', () => {
-  assert.equal(telefoneLegivel('84 793 5035'), '+258 84 793 5035');
+  assert.equal(telefoneLegivel('87 806 6265'), '+258 87 806 6265');
   assert.equal(telefoneLegivel('xyz'), '—');
 });
 
@@ -92,7 +92,7 @@ test('a mensagem da empresa leva os dados completos e o orcamento', () => {
   assert.match(t, /João Pedro Sissu/);
   assert.match(t, /Nampula/);
   assert.match(t, /Bairro da Sommachine/);
-  assert.match(t, /\+258 84 793 5035/);
+  assert.match(t, /\+258 87 806 6265/);
   assert.match(t, /Ana Maria/);
   assert.match(t, /Cabo Delgado/);
   assert.match(t, /11\.7 kg/);
@@ -113,7 +113,7 @@ test('a mensagem do cliente confirma o orcamento sem linguagem interna', () => {
   assert.ok(t.includes(formatarMT(preco.total)), `total em falta: ${t}`);
   assert.ok(t.includes(formatarMT(preco.base)), `base em falta: ${t}`);
   assert.ok(t.includes(formatarMT(preco.iva)), `IVA em falta: ${t}`);
-  assert.doesNotMatch(t, /258847935035/);  // sem numero internacional cru
+  assert.doesNotMatch(t, /258878066265/);  // sem numero internacional cru
   assert.doesNotMatch(t, /PISO|floor|3000 MT base/i);
   assert.match(t, /pagar no levantamento/i);
 });
@@ -144,7 +144,7 @@ test('mensagens com campos vazios nao ficam com "—" a transbordar', () => {
 
 test('o aviso a JVI diz de quem e o numero, para ela ligar de volta', () => {
   const t = msgEmpresa(CHEIO);
-  assert.match(t, /• Telefone do cliente: \+258 84 793 5035/);
+  assert.match(t, /• Telefone do cliente: \+258 87 806 6265/);
   assert.doesNotMatch(t, /• WhatsApp:/,
     'o rótulo antigo não diz de quem é o número, e o aviso tem dois');
 });
@@ -155,7 +155,7 @@ test('no aviso a JVI o numero de retorno e o do CLIENTE, nunca o da JVI', () => 
      aparecer no corpo do aviso. */
   const t = msgEmpresa({ ...CHEIO, telefone: '82 555 8005' });
   assert.match(t, /• Telefone do cliente: \+258 82 555 8005/);
-  assert.doesNotMatch(t, /\+258 84 793 5035/);
-  assert.doesNotMatch(t, /258847935035/);
+  assert.doesNotMatch(t, /\+258 87 806 6265/);
+  assert.doesNotMatch(t, /258878066265/);
 });
 

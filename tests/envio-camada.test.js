@@ -5,7 +5,7 @@ import { planoEnvio } from '../js/orcamento.js';
 
 const CHEIO = {
   nome: 'João Pedro', apelido: 'Sissu', provincia: 'Nampula',
-  morada: 'Sommachine', telefone: '84 793 5035',
+  morada: 'Sommachine', telefone: '87 806 6265',
   destinatario: 'Ana Maria', provinciaDestino: 'Cabo Delgado',
   peso: '11.7', dimensao: '60 x 40 x 40', descricao: 'tintas PLASCON',
   pagamento: 'e-Mola', pagarNoLevantamento: 'sim',
@@ -36,13 +36,13 @@ const CHEIO = {
 test('planoEnvio dá SEMPRE um link para a JVI', () => {
   const p = planoEnvio(CHEIO);
   assert.ok(p.empresa, 'tem de haver sempre um link para a JVI');
-  assert.ok(p.empresa.url.startsWith('https://wa.me/258847935035?text='));
+  assert.ok(p.empresa.url.startsWith('https://wa.me/258878066265?text='));
 });
 
 test('planoEnvio dá um link para o cliente quando o telefone é válido', () => {
   const p = planoEnvio(CHEIO);
   assert.ok(p.cliente, 'devia haver link para o cliente');
-  assert.ok(p.cliente.url.startsWith('https://wa.me/258847935035?text='));
+  assert.ok(p.cliente.url.startsWith('https://wa.me/258878066265?text='));
 });
 
 test('sem telefone válido, o link do cliente é omitido mas o da JVI não', () => {

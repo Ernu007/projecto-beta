@@ -8,7 +8,7 @@ const CHEIO = {
   apelido: 'Sissu',
   provincia: 'Nampula',
   morada: 'Bairro da Sommachine',
-  telefone: '84 793 5035',
+  telefone: '87 806 6265',
   destinatario: 'Ana Maria',
   provinciaDestino: 'Cabo Delgado',
   peso: '11.7',
@@ -24,7 +24,7 @@ test('linhasResumo lista os dados e os tres valores sem omitir nada', () => {
   assert.match(texto, /Emissor: João Pedro Sissu Sissu/);
   assert.match(texto, /Origem: Nampula/);
   assert.match(texto, /Morada: Bairro da Sommachine/);
-  assert.match(texto, /Telefone: \+258 84 793 5035/);
+  assert.match(texto, /Telefone: \+258 87 806 6265/);
   assert.match(texto, /Recebe: Ana Maria/);
   assert.match(texto, /Destino: Cabo Delgado/);
   assert.match(texto, /Peso: 11\.7 kg/);

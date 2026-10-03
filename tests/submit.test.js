@@ -13,7 +13,7 @@ const BOM = {
   apelido: 'Sissu',
   provincia: 'Nampula',
   morada: 'Bairro da Sommachine',
-  telefone: '84 793 5035',
+  telefone: '87 806 6265',
   destinatario: 'Ana Maria',
   provinciaDestino: 'Cabo Delgado',
   peso: '11.7',
@@ -40,7 +40,7 @@ test('telefone invalido ou ausente e problema', () => {
   assert.ok(validar({ ...BOM, telefone: '' }).length > 0);
   assert.ok(validar({ ...BOM, telefone: 'abc' }).length > 0);
   assert.ok(validar({ ...BOM, telefone: '123' }).length > 0);
-  assert.deepEqual(validar({ ...BOM, telefone: '+258 84 793 5035' }), []);
+  assert.deepEqual(validar({ ...BOM, telefone: '+258 87 806 6265' }), []);
 });
 
 test('peso invalido e problema, e aceita virgula decimal', () => {
@@ -193,15 +193,15 @@ test('textoWA sem total nao inventa um valor', () => {
 
 test('o aviso do servidor nomeia o numero como sendo do cliente', () => {
   const t = textoWA({ ...BOM, preco_total: 3480 });
-  assert.match(t, /Telefone do cliente: \+258 84 793 5035/);
+  assert.match(t, /Telefone do cliente: \+258 87 806 6265/);
   assert.doesNotMatch(t, /• WhatsApp:/,
     'o rótulo antigo não diz de quem é o número');
 });
 
 test('telefoneCallback normaliza qualquer escrita para +258 …', () => {
-  for (const t of ['84 793 5035', '+258 84 793 5035', '258847935035',
-    '00258847935035', '258 84 793 5035', '0847935035']) {
-    assert.equal(telefoneCallback(t), '+258 84 793 5035', `escrita: ${t}`);
+  for (const t of ['87 806 6265', '+258 87 806 6265', '258878066265',
+    '00258878066265', '258 87 806 6265', '0878066265']) {
+    assert.equal(telefoneCallback(t), '+258 87 806 6265', `escrita: ${t}`);
   }
   assert.equal(telefoneCallback('82 555 8005'), '+258 82 555 8005');
 });
@@ -224,9 +224,9 @@ test('telefoneCallback nunca perde o numero do cliente', () => {
    folha é onde o registo é consultado meses depois. */
 test('o e-mail tambem leva o numero do cliente, no formato de telefone', () => {
   const { text, html, subject } = textoEmail({ ...BOM, preco_total: 3480 });
-  assert.match(text, /Telefone do cliente: \+258 84 793 5035/);
+  assert.match(text, /Telefone do cliente: \+258 87 806 6265/);
   assert.match(html, /Telefone do cliente/);
-  assert.match(html, /\+258 84 793 5035/);
+  assert.match(html, /\+258 87 806 6265/);
   assert.doesNotMatch(text, /Telefone \(WhatsApp\)/,
     'o rótulo antigo não diz de quem é o número');
   assert.ok(subject.length > 0);
@@ -249,6 +249,6 @@ test('os padroes de email e telefone sao ancorados', () => {
   assert.ok(RE_EMAIL.test('a.b@example.co.mz'));
   assert.ok(!RE_EMAIL.test('a@b@c.com'));
   assert.ok(!RE_EMAIL.test('<script>@x.com'));
-  assert.ok(RE_TEL.test('+258 84 793 5035'));
+  assert.ok(RE_TEL.test('+258 87 806 6265'));
   assert.ok(!RE_TEL.test('abc'));
 });

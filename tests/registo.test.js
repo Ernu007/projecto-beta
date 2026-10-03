@@ -39,7 +39,7 @@ const MAIN = fs.readFileSync('js/main.js', 'utf8');
 /** Payload mínimo que passa a validação do servidor. */
 const BOM = {
   nome: 'João Pedro', apelido: 'Sissu', provincia: 'Nampula',
-  morada: 'Sommachine', telefone: '84 793 5035',
+  morada: 'Sommachine', telefone: '87 806 6265',
   destinatario: 'Ana Maria', provinciaDestino: 'Cabo Delgado',
   peso: '11.7', dimensao: '60 x 40 x 40', descricao: 'tintas PLASCON',
   pagamento: 'e-Mola', pagarNoLevantamento: 'sim',

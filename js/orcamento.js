@@ -26,12 +26,12 @@ export const PROVINCIAS = [
 export const PAGAMENTOS = ['e-Mola', 'M-Pesa', 'Transferência bancária'];
 
 /* ---------- Telefone da empresa ----------
-   FONTE ÚNICA do número. É o ÚNICO número válido: o cliente confirmou
-   +258 84 793 5035 e mandou remover todos os outros que circulavam no
-   material antigo. Quando vier outro, muda-se AQUI e em mais lado nenhum —
+   FONTE ÚNICA do número. É o ÚNICO número válido: +258 87 806 6265
+   (Movitel). Substituiu o 84 que o cliente tinha confirmado antes — ver
+   D35 em `docs/decisoes.md`. Quando vier outro, muda-se AQUI e em mais lado nenhum —
    é para não ter de caçar o número pelas cópias soltas no `index.html`, no
    JSON-LD e na carta. Formato `wa.me`: só dígitos, sem `+`. */
-export const JVI_WHATSAPP = '258847935035';
+export const JVI_WHATSAPP = '258878066265';
 
 /* ---------- Peso: aceita vírgula ou ponto ----------
    Em Moçambique escreve-se 11,7. O `input type="number"` devolve
@@ -56,7 +56,7 @@ export function normalizarTelefone(txt) {
   return `258${d}`;
 }
 
-/** "258847935035" -> "+258 84 793 5035" */
+/** "258878066265" -> "+258 87 806 6265" */
 export function telefoneLegivel(movel) {
   const m = normalizarTelefone(movel);
   if (!m) return '—';

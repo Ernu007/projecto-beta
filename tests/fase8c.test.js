@@ -147,7 +147,7 @@ test('C5: o botão do telefone não mudou — só a cor', () => {
   /* "O telefone está bom." O HTML é o mesmo, byte a byte, da Fase 8B. */
   assert.ok(HTML.includes(`<span class="fixo fixo--tel">
     <span class="fixo__txt">Ligar</span>
-    <a class="fixo__btn" href="tel:+258847935035" aria-label="Ligar para +258 84 793 5035">
+    <a class="fixo__btn" href="tel:+258878066265" aria-label="Ligar para +258 87 806 6265">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.79a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.29-1.29a2 2 0 0 1 2.11-.45c.89.34 1.83.57 2.79.7A2 2 0 0 1 22 16.92z"/></svg>
     </a>
   </span>`), 'o botão do telefone mudou além da cor');

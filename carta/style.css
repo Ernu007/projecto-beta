@@ -99,6 +99,12 @@ p  { font-size: 10pt; line-height: 1.68; color: rgba(203,213,225,0.82); }
    PÁGINA 1 — CAPA
    ========================================================= */
 .p1 { justify-content: space-between; }
+/* O `space-between` da capa precisa de TRÊS itens em fluxo para o título
+   ficar a meio. O primeiro era a `<div class="grelha">`, que só estava em
+   fluxo porque a regra dela nunca casava; desde que passou a `.grelha`
+   (absoluta), o título subia para o topo e ficava por baixo do logótipo.
+   Este pseudo-elemento vazio repõe o item do topo. */
+.p1::before { content: ""; }
 .p1__logo { position: absolute; top: 24mm; left: 16mm; z-index: 3; width: 30mm; }
 .p1__meio { position: relative; z-index: 2; padding: 0 16mm; margin-top: 6mm; }
 .p1__citacao {

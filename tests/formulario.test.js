@@ -40,7 +40,7 @@ test('C2: o rótulo do telefone é só "Telefone" e o exemplo não é o número 
   assert.equal(rotulo, 'Telefone');
   const ph = /id="orcTelefone"[^>]*placeholder="([^"]*)"/.exec(TPL)?.[1];
   assert.ok(ph, 'o telefone não tem exemplo');
-  assert.ok(!ph.replace(/\D/g, '').includes('847935035'),
+  assert.ok(!ph.replace(/\D/g, '').includes('878066265'),
     `o exemplo do telefone é o número real da JVI: ${ph}`);
 });
 

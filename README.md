@@ -194,7 +194,7 @@ Depois de publicar, confirmar:
 curl -I https://<site>/                            # CSP sem unsafe-inline
 curl -I https://<site>/carta/                      # CSP com unsafe-inline
 curl -I https://<site>/.netlify/functions/submit   # sem 405, sem 404
-curl -s https://<site>/index.html | Select-String "wa.me/258847935035"  # o número certo
+curl -s https://<site>/index.html | Select-String "wa.me/258878066265"  # o número certo
 ```
 
 O `netlify.toml` já define o publish, o comando de build, as funções, o cache
@@ -229,12 +229,13 @@ descarregado pela página é o PDF, não o HTML.
 | NUEL | 100449137 |
 | NUIT | 400501424 |
 | Licença | 8732/11/04/PS/2014 |
-| **WhatsApp — Operações** | **+258 84 793 5035** |
+| **WhatsApp — Operações** | **+258 87 806 6265** |
 | Email | jvicargaservicos@gmail.com |
 | Sede | Av. 19 de Outubro, Terminal de Cargas Nº 113, Aeroporto de Maputo |
 
-✅ **O telefone está confirmado.** O cliente respondeu às três questões em aberto
-e confirmou **um único número**, o `+258 84 793 5035`. Os números que circulavam
+✅ **O telefone está confirmado, e é um só:** `+258 87 806 6265`. O cliente trocou
+de número em Outubro de 2026 (era um 84, passou a este 87 — D35 em
+`docs/decisoes.md`). Os números que circulavam
 no material antigo (Airwaybill, poster, briefing) estavam errados e foram
 removidos do site inteiro — contactos, JSON-LD, botões fixos, carta e PDF. A nota
 fica em [`docs/decisoes.md`](docs/decisoes.md).
