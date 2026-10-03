@@ -13,13 +13,14 @@
 
 import { calcularPreco, formatarMT } from './precos.js';
 
-/* C3: por ordem alfabética — o cliente reclamou duas vezes. Ordenada
-   aqui e não à mão, para que uma província acrescentada no sítio errado
-   não volte a desarrumar a lista. */
+/* Fase 8C/C2: ordem geográfica sul -> norte, "começando de Maputo (…)
+   para Cabo Delgado" — a mesma da rota do avião. NÃO é alfabética (a 8B
+   dizia que era, e estava errado). Palma é um distrito de Cabo Delgado,
+   o mais a norte; fica a seguir a ela. A ordem é a do array: não ordenar. */
 export const PROVINCIAS = [
-  'Cabo Delgado', 'Gaza', 'Inhambane', 'Manica', 'Maputo', 'Nampula',
-  'Niassa', 'Palma', 'Sofala', 'Tete', 'Zambézia',
-].sort((a, b) => a.localeCompare(b, 'pt'));
+  'Maputo', 'Gaza', 'Inhambane', 'Sofala', 'Manica', 'Tete',
+  'Zambézia', 'Niassa', 'Nampula', 'Cabo Delgado', 'Palma',
+];
 
 /* C5: as formas que o cliente corrigiu. Nunca cartão de crédito. */
 export const PAGAMENTOS = ['e-Mola', 'M-Pesa', 'Transferência bancária'];

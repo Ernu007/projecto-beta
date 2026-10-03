@@ -127,8 +127,8 @@ const LEVANTAMENTO = ['sim', 'nao'];
 /* As mesmas 11 do select do formulário. O servidor não pode aceitar
    texto arbitrário numa coluna que deveria ter 11 valores. */
 export const PROVINCIAS = [
-  'Cabo Delgado', 'Gaza', 'Inhambane', 'Manica', 'Maputo', 'Nampula',
-  'Niassa', 'Palma', 'Sofala', 'Tete', 'Zambézia',
+  'Maputo', 'Gaza', 'Inhambane', 'Sofala', 'Manica', 'Tete',
+  'Zambézia', 'Niassa', 'Nampula', 'Cabo Delgado', 'Palma',
 ];
 
 /* A tabela de preços, replicada do lado do servidor. O `preco_total`

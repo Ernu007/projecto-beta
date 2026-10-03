@@ -131,6 +131,16 @@ registada com regras de uso próprias.
 das províncias, Matola). Onde a 8C e uma fase anterior discordam, ganha a 8C:
 é a revisão completa (22 min) e não um excerto.
 
+### C2 — províncias por ordem geográfica (substitui o C3 da 8B)
+
+Os dois selects do formulário seguem a ordem da rota: Maputo, Gaza, Inhambane,
+Sofala, Manica, Tete, Zambézia, Niassa, Nampula, Cabo Delgado. O briefing diz
+que as 11 entradas são "a cidade de Maputo e a província" — **não são**: a
+11.ª é **Palma**, um distrito de Cabo Delgado que o cliente mandou manter na
+8B. Mantive as 11 e pus Palma no fim, a seguir a Cabo Delgado: é o ponto mais
+a norte da lista, e a ordem sul → norte fica coerente. O servidor
+(`functions/submit.js`) tem a mesma lista pela mesma ordem.
+
 ### C1 — a rota sai de Maputo (substitui D23)
 
 ```

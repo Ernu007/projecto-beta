@@ -22,10 +22,12 @@ const CHEIO = {
 };
 
 test('as 11 provincias do briefing estao no select', () => {
-  assert.deepEqual(PROVINCIAS, [
+  /* Aqui conta QUAIS são; a ORDEM (geográfica, Fase 8C) é testada em
+     tests/formulario.test.js. */
+  assert.deepEqual([...PROVINCIAS].sort(), [
     'Cabo Delgado', 'Gaza', 'Inhambane', 'Manica', 'Maputo', 'Nampula',
     'Niassa', 'Palma', 'Sofala', 'Tete', 'Zambézia',
-  ]);
+  ].sort());
 });
 
 test('normalizarPeso aceita ponto e virgula', () => {

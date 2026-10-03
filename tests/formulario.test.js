@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { PROVINCIAS, PAGAMENTOS } from '../js/orcamento.js';
+import { ROTA } from '../js/mapa-dados.js';
 import { PAGAMENTOS as PAGAMENTOS_SERVIDOR, PROVINCIAS as PROVINCIAS_SERVIDOR } from '../functions/submit.js';
 
 /* ---------------------------------------------------------------------------
@@ -63,11 +64,26 @@ test('C3: as dimensões são opcionais', () => {
   assert.doesNotMatch(dim, /\brequired\b/, 'as dimensões voltaram a ser obrigatórias');
 });
 
-test('C3: as províncias estão por ordem alfabética, e o servidor aceita as mesmas', () => {
-  const ordenada = [...PROVINCIAS].sort((a, b) => a.localeCompare(b, 'pt'));
-  assert.deepEqual(PROVINCIAS, ordenada);
+test('8C/C2: as províncias estão por ordem geográfica sul -> norte, e o servidor aceita as mesmas', () => {
+  /* A Fase 8B dizia alfabética; o áudio completo diz "começando de Maputo
+     (…) para Cabo Delgado". É a ordem da ROTA do avião. Palma, que é um
+     distrito de Cabo Delgado e não uma província, fica a seguir a ela. */
+  assert.deepEqual(PROVINCIAS, [
+    'Maputo', 'Gaza', 'Inhambane', 'Sofala', 'Manica', 'Tete',
+    'Zambézia', 'Niassa', 'Nampula', 'Cabo Delgado', 'Palma',
+  ]);
+  assert.deepEqual(PROVINCIAS.slice(0, ROTA.length), ROTA,
+    'a ordem do formulário divergiu da ordem da rota');
   assert.deepEqual([...PROVINCIAS_SERVIDOR].sort(), [...PROVINCIAS].sort(),
     'o servidor e o formulário aceitam províncias diferentes');
+});
+
+test('8C/C2: os DOIS selects (origem e destino) são enchidos pela mesma lista', () => {
+  assert.match(TPL, /<select id="orcProvincia" name="provincia"/);
+  assert.match(TPL, /<select id="orcProvinciaDestino" name="provinciaDestino"/);
+  assert.match(JS, /select\[name="provincia"\], select\[name="provinciaDestino"\]'\)\s*\.forEach\(encherProvincias\)/);
+  assert.doesNotMatch(JS, /PROVINCIAS = \[[^\]]*\]\.sort\(/,
+    'a lista voltou a ser reordenada alfabeticamente');
 });
 
 test('C3: o peso mostra que aceita vírgula e a descrição tem o exemplo entre parênteses', () => {
