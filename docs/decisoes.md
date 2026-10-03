@@ -645,3 +645,38 @@ de como o Maps interpreta "Terminal de Cargas Nº 113".
 | Isto substitui a parte do D18 que dizia "morada, não coordenadas" | A regra era não publicar um lat/long que ninguém confirmou. Agora há uma localização confirmada pelo cliente e verificada. O percurso com setas (D36) não muda: continua sem viragens, distâncias nem tempos, porque o site continua a não saber de onde o cliente parte. |
 | A política de privacidade diz "a localização do terminal" em vez de "o endereço do terminal" | O link já não leva um endereço em texto. O resto da política continua exacto: a JVI não recebe a posição de ninguém. |
 | Se a JVI se mudar | Muda-se `PLUS_CODE_JVI`, `COORDENADAS_JVI`, os dois `href` do `index.html` e o `location` do JSON-LD — e a `MORADA_JVI` nos sítios dela. Os testes falham enquanto as cópias não baterem. |
+
+## Fase 9 — dois números, o voo em loop e o mobile a sério
+
+Revisão do cliente depois de ver o site (`BRIEFING-FASE9-MOBILE.md`). A regra
+que atravessa a fase é dele: *"é na versão mobile que 99% dos clientes irão ver a
+página"*. Cada bloco foi um commit, com os testes escritos antes.
+
+### Dois números, dois papéis (D38)
+
+**3 de Outubro de 2026.** A JVI passou a ter **dois** números, e cada um só serve
+para uma coisa:
+
+| Papel | Número | Onde |
+|---|---|---|
+| **WhatsApp** (só mensagens) | `+258 87 806 6265` | os links `wa.me`, os botões de WhatsApp, as mensagens do formulário |
+| **Chamadas** | `+258 84 470 0012` | os `tel:`, o botão fixo "Ligar", o `telephone` do JSON-LD |
+
+Isto **substitui** o que o D35 e a secção "Números de telefone: um só" diziam
+sobre haver um único número. O 87 do D35 não mudou; só deixou de ser o das
+chamadas.
+
+| Decisão | Razão |
+|---|---|
+| `JVI_TELEFONE` ao lado de `JVI_WHATSAPP`, em `js/orcamento.js` | Os dois números ficam com fonte e nome. O JS só usa o do WhatsApp (as mensagens do formulário); o das chamadas existe para os testes conferirem as cópias escritas à mão no HTML. |
+| Os rótulos dos Contactos são "WhatsApp — só mensagens" e "Telefone — chamadas" | O briefing pede que ninguém ligue para o número do WhatsApp e fique à espera. "Operações", que era o rótulo antigo, não dizia a ninguém qual dos dois marcar. |
+| A política de privacidade manda **ligar** para o 84 | A frase é "escrever para o e-mail ou ligar": é o papel das chamadas. |
+| JSON-LD: `telephone` de topo = chamadas; dois `contactPoint` | O briefing pede o de voz como `telephone` e o WhatsApp como `contactPoint` separado. O do WhatsApp leva `name: "WhatsApp"` e o `url` `wa.me`, para um motor de busca não o apresentar como número para ligar. |
+| Na carta, tudo o que diz "Telefone" passou ao 84, e a página de contactos ganhou um cartão "WhatsApp · Mensagens" | A carta é impressa e descarregada: quem a lê vai **ligar**. O WhatsApp aparece uma vez, com o nome ao lado. |
+| O PDF da carta e a capa (`assets/img/carta-capa.webp`) foram regenerados | O mesmo processo do D35 (Chrome headless, capa a 96 dpi, 794×1123). Continuam a ser 10 páginas; o 84 aparece nas páginas 1, 8, 9 e 10 e o 87 só na 9. |
+| `tests/numero.test.js` confere o **papel**, não só o número | O erro novo possível é o número certo no sítio errado: um `tel:` com o 87, um `wa.me` com o 84, um "Telefone" da carta com o do WhatsApp. A olho, os dois parecem "o da JVI". |
+| A validação não mudou | Já aceitava qualquer móvel `^[2-9]\d{8}$`. Há um teste novo que passa o 84 470 0012, em seis escritas, pelos três normalizadores e pelo `validar` do servidor. |
+
+**Dúvida que fica:** o ícone do cartão do WhatsApp na carta é um envelope (✉),
+porque a carta usa caracteres e não SVG; se o cliente quiser o logótipo do
+WhatsApp no PDF, é preciso desenhá-lo lá.

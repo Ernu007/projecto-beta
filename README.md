@@ -229,23 +229,26 @@ descarregado pela página é o PDF, não o HTML.
 | NUEL | 100449137 |
 | NUIT | 400501424 |
 | Licença | 8732/11/04/PS/2014 |
-| **WhatsApp — Operações** | **+258 87 806 6265** |
+| **WhatsApp** (só mensagens, `wa.me`) | **+258 87 806 6265** |
+| **Telefone** (só chamadas, `tel:`) | **+258 84 470 0012** |
 | Email | jvicargaservicos@gmail.com |
 | Sede | Av. 19 de Outubro, Terminal de Cargas Nº 113, Aeroporto de Maputo |
 
-✅ **O telefone está confirmado, e é um só:** `+258 87 806 6265`. O cliente trocou
-de número em Outubro de 2026 (era um 84, passou a este 87 — D35 em
-`docs/decisoes.md`). Os números que circulavam
-no material antigo (Airwaybill, poster, briefing) estavam errados e foram
-removidos do site inteiro — contactos, JSON-LD, botões fixos, carta e PDF. A nota
-fica em [`docs/decisoes.md`](docs/decisoes.md).
+✅ **Os números estão confirmados, e são dois, com papéis diferentes** (Fase 9,
+D38 em `docs/decisoes.md`): o `+258 87 806 6265` é **só WhatsApp** e o
+`+258 84 470 0012` é **só chamadas**. Os números que circulavam no material
+antigo (Airwaybill, poster, briefing) estavam errados e foram removidos do site
+inteiro — contactos, JSON-LD, botões fixos, carta e PDF. A nota fica em
+[`docs/decisoes.md`](docs/decisoes.md).
 
-**Para alterar contactos:** a fonte única do número é a constante `JVI_WHATSAPP`
-em `js/orcamento.js` (é para onde vão as mensagens do formulário — tem teste
-próprio). O `index.html` repete-o em três sítios que não são JS: a secção
-Contactos, o botão fixo "Ligar" e o `contactPoint` do JSON-LD. Actualizar os
-quatro juntos, senão o site passa a anunciar números diferentes conforme onde se
-clica.
+**Para alterar contactos:** a fonte dos dois números são as constantes
+`JVI_WHATSAPP` e `JVI_TELEFONE` em `js/orcamento.js` (a primeira é para onde vão
+as mensagens do formulário). O `index.html` repete-os em sítios que não são JS:
+os links `wa.me`, os `tel:` (secção Contactos e botão fixo "Ligar"), a política
+de privacidade e o JSON-LD (`telephone` e os dois `contactPoint`); a carta
+(`carta/index.html`) repete-os em cinco sítios, e depois de mexer nela é preciso
+voltar a gerar o PDF e a capa. `tests/numero.test.js` falha se um número ficar
+no papel errado — um `tel:` com o número do WhatsApp, por exemplo.
 
 ---
 

@@ -25,13 +25,19 @@ export const PROVINCIAS = [
 /* C5: as formas que o cliente corrigiu. Nunca cartão de crédito. */
 export const PAGAMENTOS = ['e-Mola', 'M-Pesa', 'Transferência bancária'];
 
-/* ---------- Telefone da empresa ----------
-   FONTE ÚNICA do número. É o ÚNICO número válido: +258 87 806 6265
-   (Movitel). Substituiu o 84 que o cliente tinha confirmado antes — ver
-   D35 em `docs/decisoes.md`. Quando vier outro, muda-se AQUI e em mais lado nenhum —
-   é para não ter de caçar o número pelas cópias soltas no `index.html`, no
-   JSON-LD e na carta. Formato `wa.me`: só dígitos, sem `+`. */
+/* ---------- Telefones da empresa ----------
+   DOIS números, dois papéis (Fase 9, D38 em `docs/decisoes.md`):
+
+     JVI_WHATSAPP   +258 87 806 6265 (Movitel)  — só WhatsApp: `wa.me`
+     JVI_TELEFONE   +258 84 470 0012 (Vodacom)  — só chamadas: `tel:`
+
+   São a FONTE dos dois números. As mensagens do formulário saem daqui; as
+   cópias escritas à mão no `index.html`, no JSON-LD e na carta são
+   conferidas contra estas constantes por `tests/numero.test.js`, que
+   também recusa o número certo no papel errado. Formato `wa.me`: só
+   dígitos, sem `+`. */
 export const JVI_WHATSAPP = '258878066265';
+export const JVI_TELEFONE = '258844700012';
 
 /* ---------- Peso: aceita vírgula ou ponto ----------
    Em Moçambique escreve-se 11,7. O `input type="number"` devolve
