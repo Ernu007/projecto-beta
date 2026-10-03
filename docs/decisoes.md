@@ -497,7 +497,7 @@ O botão **"Como chegar à JVI"** está no hero, ao lado de "Pedir orçamento" e
 gratuito e não exige conta nem API key:
 
 ```
-https://www.google.com/maps/dir/?api=1&destination=<morada>&travelmode=driving
+https://www.google.com/maps/dir/?api=1&destination=<destino>&travelmode=driving
 ```
 
 Não há JavaScript envolvido, não há `navigator.geolocation` e não há tracking:
@@ -506,13 +506,14 @@ omitido de propósito — é a única forma de o Maps usar a localização de qu
 clica, e a JVI **não recebe, não guarda e não vê a posição de ninguém**. A
 pergunta ao utilizador, se houver, é o Google a fazê-la no consentimento dele.
 
-O destino é a **morada**, não coordenadas: sem API de geocodificação não há um
-lat/long de confiança, e uma coordenada errada mandava o cliente para o mato.
-A fonte única é `MORADA_JVI`, em `js/rota.js`, que só os testes importam —
-o `href` está escrito à mão no HTML para o link não depender de JavaScript.
-`tests/rota.test.js` compara as duas cópias byte a byte, e amarra a morada aos
-outros quatro sítios onde ela vive (JSON-LD, secção Contactos, política de
-privacidade).
+O destino **era** a morada em texto, porque não havia um lat/long de confiança.
+**Desde 3 de Outubro de 2026 é o Plus Code que o cliente confirmou** — ver o
+[D37](#a-localização-oficial-é-o-plus-code-3h9cvj8-maputo-d37), no fim deste
+documento. A fonte única é `PLUS_CODE_JVI`, em `js/rota.js`, que só os testes
+importam — o `href` está escrito à mão no HTML para o link não depender de
+JavaScript. `tests/rota.test.js` compara as duas cópias byte a byte, e amarra a
+`MORADA_JVI` (a etiqueta que o cliente lê) aos sítios onde ela vive (JSON-LD,
+secção Contactos, política de privacidade).
 
 **A 7B (aviso de aproximação) está DESACTIVADA** e é documentada em
 [`docs/decisoes.md`](docs/decisoes.md#fase-7-direcções-para-o-terminal-sem-api-key)
@@ -614,3 +615,33 @@ não sabe de onde o cliente parte.
 | No computador os passos ficam em linha; no telemóvel, em lista | Em linha ocupa uma faixa de ~60px, e o hero continua a mostrar os botões e o percurso sem rolar. No telemóvel lê-se como uma lista de instruções. |
 | Acima de 760px o hero passou a ter `padding-bottom: 136px` | Com o percurso o conteúdo cresceu e a última linha das provas ficava por baixo da etiqueta da rota (`.hero__rota`, presa a 96px do fundo). Já acontecia em ecrãs baixos; o percurso trazia-o para os ecrãs normais. O hero guarda agora o espaço da etiqueta, e há um teste que o mede. |
 | A política de privacidade não mudou | O percurso é texto estático: não usa a posição de ninguém, não chama serviço nenhum. O que a política diz sobre o botão continua exacto. |
+
+## A localização oficial é o Plus Code 3H9C+VJ8, Maputo (D37)
+
+**3 de Outubro de 2026.** O cliente mandou a localização oficial da empresa no
+Google Maps, em Plus Code: **`3H9C+VJ8, Maputo`**. O botão "Como chegar à JVI"
+(hero e rodapé) passou a levar o cliente a esse ponto exacto:
+
+```
+https://www.google.com/maps/dir/?api=1&destination=3H9C%2BVJ8%2C%20Maputo&travelmode=driving
+```
+
+**Verificado.** `https://www.google.com/maps/place/3H9C%2BVJ8,+Maputo/` resolve
+nas coordenadas **-25.9303375, 32.5715781**, junto ao Aeroporto de Maputo —
+coerente com a morada que o projecto já tinha (Terminal de Cargas Nº 113).
+
+**A razão é a precisão.** Até aqui o destino era o texto da morada, e era o
+Google que o resolvia por si: podia cair no aeroporto em geral, que é grande, e
+não no terminal de cargas. O Plus Code aponta para o sítio certo, e não depende
+de como o Maps interpreta "Terminal de Cargas Nº 113".
+
+| Decisão | Razão |
+|---|---|
+| A fonte da localização é `PLUS_CODE_JVI`, em `js/rota.js` | É o que o cliente confirmou. `linkDirecoes()` usa-o como destino por omissão; continua a aceitar outro destino por argumento. |
+| A `MORADA_JVI` fica, como etiqueta | O Plus Code é para a máquina, a morada é para a pessoa. Contactos, política de privacidade, `streetAddress` do JSON-LD, mensagem de WhatsApp e percurso com setas continuam a dizer "Av. 19 de Outubro, Terminal de Cargas Nº 113, Aeroporto de Maputo". Ninguém lê "3H9C+VJ8" no ecrã. |
+| O `+` vai como `%2B` | Num query string, um `+` cru é um espaço: o Maps leria "3H9C VJ8", que não é Plus Code nenhum, e a localização falhava com um link que a olho parece certo. É o `encodeURIComponent` que o faz, e há um teste só para isto, que também lê os dois `href` do HTML. |
+| O link leva o Plus Code, não as coordenadas | O que o cliente confirmou foi o código. As coordenadas são o resultado da verificação; ficam em `COORDENADAS_JVI` e servem só o JSON-LD. O teste que proíbe coordenadas no link continua a passar — e continua a garantir que a posição de quem clica não vai lá (o `origin` continua omitido, D17). |
+| O JSON-LD ganhou `location` (`Place` com `geo` e `hasMap`) | Os motores de busca passam a ter o mesmo ponto que o botão. O `tests/rota.test.js` confere o `geo` contra `COORDENADAS_JVI` e o `hasMap` contra o endereço verificado. |
+| Isto substitui a parte do D18 que dizia "morada, não coordenadas" | A regra era não publicar um lat/long que ninguém confirmou. Agora há uma localização confirmada pelo cliente e verificada. O percurso com setas (D36) não muda: continua sem viragens, distâncias nem tempos, porque o site continua a não saber de onde o cliente parte. |
+| A política de privacidade diz "a localização do terminal" em vez de "o endereço do terminal" | O link já não leva um endereço em texto. O resto da política continua exacto: a JVI não recebe a posição de ninguém. |
+| Se a JVI se mudar | Muda-se `PLUS_CODE_JVI`, `COORDENADAS_JVI`, os dois `href` do `index.html` e o `location` do JSON-LD — e a `MORADA_JVI` nos sítios dela. Os testes falham enquanto as cópias não baterem. |

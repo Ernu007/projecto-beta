@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { MORADA_JVI, linkDirecoes } from '../js/rota.js';
+import { MORADA_JVI, PLUS_CODE_JVI, COORDENADAS_JVI, linkDirecoes } from '../js/rota.js';
 
 /* ---------------------------------------------------------------------------
    O QUE ESTE FICHEIRO PROTEGE
@@ -58,14 +58,52 @@ test('a morada da JVI e a que o cliente confirmou, com a codificacao certa', () 
     MORADA_JVI,
     'Av. 19 de Outubro, Terminal de Cargas Nº 113, Aeroporto de Maputo',
   );
-  /* Ida e volta: o que metemos no link volta a ser exactamente a morada.
+  /* A morada já não é o destino por omissão (é o Plus Code), mas a
+     função continua a aceitá-la, e tem de a codificar bem.
+     Ida e volta: o que metemos no link volta a ser exactamente a morada.
      Sem isto, um `+` trocado por `%20` ou um `º` perdido passava. */
-  assert.equal(decodeURIComponent(param(linkDirecoes(), 'destination')), MORADA_JVI);
+  const u = linkDirecoes(MORADA_JVI);
+  assert.equal(param(u, 'destination'), MORADA_JVI);
   /* A vírgula tem de estar codificada: crua, o Maps lê-la-ia como
      separador de coordenadas em vez de parte do endereço. */
-  assert.ok(paramCru(linkDirecoes(), 'destination').includes('%2C'), 'a virgula ficou crua');
-  assert.ok(paramCru(linkDirecoes(), 'destination').includes('%C2%BA'),
+  assert.ok(paramCru(u, 'destination').includes('%2C'), 'a virgula ficou crua');
+  assert.ok(paramCru(u, 'destination').includes('%C2%BA'),
     'o "Nº" tem de ir como UTF-8, não como "N"');
+});
+
+/* ---------- O Plus Code (D37) ---------- */
+
+test('o destino por omissao e o Plus Code que o cliente confirmou', () => {
+  assert.equal(PLUS_CODE_JVI, '3H9C+VJ8, Maputo');
+  assert.equal(param(linkDirecoes(), 'destination'), PLUS_CODE_JVI);
+  assert.equal(
+    linkDirecoes(),
+    'https://www.google.com/maps/dir/?api=1&destination=3H9C%2BVJ8%2C%20Maputo&travelmode=driving',
+  );
+});
+
+test('o "+" do Plus Code vai como %2B, nunca cru', () => {
+  /* Num query string, um `+` cru é um ESPAÇO. O Maps leria "3H9C VJ8",
+     que não é Plus Code nenhum, e a localização falhava — com um link
+     que a olho parece certo. */
+  const cru = paramCru(linkDirecoes(), 'destination');
+  assert.equal(cru, '3H9C%2BVJ8%2C%20Maputo');
+  assert.ok(cru.includes('%2B'), 'o "+" do Plus Code não foi codificado');
+  assert.equal(cru.includes('+'), false, 'há um "+" cru no destino: o Maps lê-o como espaço');
+  assert.equal(linkDirecoes().includes('+'), false, 'há um "+" cru no link');
+
+  /* Ida e volta, lida como o servidor a lê (`URLSearchParams` troca o
+     `+` cru por espaço): o código tem de voltar com o `+` no sítio. */
+  assert.equal(param(linkDirecoes(), 'destination'), PLUS_CODE_JVI);
+  assert.notEqual(param(linkDirecoes(), 'destination'), '3H9C VJ8, Maputo');
+
+  /* E no HTML, que é escrito à mão: os DOIS botões. */
+  const hrefs = [...HTML.matchAll(/href="(https:\/\/www\.google\.com\/maps\/dir\/[^"]*)"/g)].map((m) => desescapar(m[1]));
+  assert.equal(hrefs.length, 2, 'esperava dois botões de direcções: o do hero e o do rodapé');
+  for (const h of hrefs) {
+    assert.equal(paramCru(h, 'destination'), '3H9C%2BVJ8%2C%20Maputo');
+    assert.equal(h, linkDirecoes());
+  }
 });
 
 test('o link NUNCA leva a posicao de quem clica', () => {
@@ -79,10 +117,11 @@ test('o link NUNCA leva a posicao de quem clica', () => {
   assert.doesNotMatch(u, /-25\.\d|\d{1,3}\.\d{4,}/, 'o link não pode conter coordenadas');
 });
 
-test('sem destino indicado, o link vai para a morada da JVI', () => {
+test('sem destino indicado, o link vai para a localizacao da JVI', () => {
   /* Um link morto é pior do que um link com a morada errada. */
   assert.equal(linkDirecoes(''), linkDirecoes());
   assert.equal(linkDirecoes('   '), linkDirecoes());
+  assert.equal(param(linkDirecoes(''), 'destination'), PLUS_CODE_JVI);
 });
 
 /* ---------- O que esta no HTML ---------- */
@@ -121,19 +160,34 @@ test('as direccoes sao secundarias: o hero continua com UMA accao primaria', () 
     'o link das direcções devia herdar o estilo secundário do hero');
 });
 
-test('a morada do link e a mesma que a do JSON-LD e a da politica de privacidade', () => {
-  /* A morada está escrita em três sítios do HTML (o `href`, o
-     `streetAddress` do JSON-LD e o cabeçalho da política) e agora também
-     na constante. São cinco cópias: um teste é o que impede que
-     passem a anunciar moradas diferentes. */
-  const destino = decodeURIComponent(param(hrefComoChegar().href, 'destination'));
+test('a morada que o cliente le e a mesma no JSON-LD, nos contactos e na politica', () => {
+  /* O destino do link passou a ser o Plus Code (D37), mas a morada
+     continua a ser o que a PESSOA lê, e está escrita à mão em três
+     sítios do HTML (o `streetAddress` do JSON-LD, a secção Contactos e
+     o cabeçalho da política). Um teste é o que impede que passem a
+     anunciar moradas diferentes da constante. */
   const streetAddress = /"streetAddress":\s*"([^"]+)"/.exec(HTML)?.[1];
   assert.ok(streetAddress, 'não encontrei streetAddress no JSON-LD');
-  assert.equal(destino, streetAddress);
+  assert.equal(streetAddress, MORADA_JVI);
   assert.ok(
     new RegExp(`<b>Sede operacional</b>\\s*${MORADA_JVI.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(HTML),
     'a morada da secção Contactos já não é a mesma',
   );
+  assert.ok(HTML.includes(`<p class="pp__meta">JVI Carga &amp; Serviços, Lda · ${MORADA_JVI}, Moçambique`),
+    'a morada do cabeçalho da política já não é a mesma');
+});
+
+test('o JSON-LD aponta para a mesma localizacao que o botao', () => {
+  const ld = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(HTML)[1]);
+  assert.equal(ld.location?.['@type'], 'Place');
+  assert.deepEqual(
+    { latitude: ld.location.geo.latitude, longitude: ld.location.geo.longitude },
+    COORDENADAS_JVI,
+  );
+  /* O `hasMap` é o endereço em que o Plus Code foi verificado — também
+     com o `+` como `%2B`. */
+  assert.equal(ld.location.hasMap, 'https://www.google.com/maps/place/3H9C%2BVJ8,+Maputo/');
+  assert.ok(decodeURIComponent(ld.location.hasMap).includes(PLUS_CODE_JVI.split(',')[0]));
 });
 
 /* ---------------------------------------------------------------------------
