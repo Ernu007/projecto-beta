@@ -40,6 +40,8 @@ que a aplicou.
 | D30 | O primeiro cartão leva as duas fotografias lado a lado; os quatro cartões ficam dois a dois | Ver "Fase 8B" abaixo. |
 | D31 | A galeria é um carrossel de uma fotografia, com anterior/seguinte e pausa | Ver "Fase 8B" abaixo. |
 | D32 | O "Pedir orçamento" passa a estar visível em todos os tamanhos de ecrã, e o menu de topo só aparece a partir de 1200 px | Ver "Fase 8B" abaixo. |
+| D33 | O "quando paga" não vem marcado: a pessoa tem de escolher | Ver "Formulário (C1–C6)" abaixo. |
+| D34 | Os termos são uma linha obrigatória, não um cartão | Ver "Formulário (C1–C6)" abaixo. |
 
 ## Fase 8B — menu, cartões, galeria e a secção nova
 
@@ -109,6 +111,19 @@ registada com regras de uso próprias.
 `assets/img/carta-capa.webp` é a página 1 de
 `carta/jvi-carta-apresentacao.pdf`, rasterizada a 96 dpi (794×1123,
 ~20 KB).
+
+## Formulário (C1–C6)
+
+| | O que mudou | Dúvida / decisão |
+|---|---|---|
+| C1 | A ajuda do telefone fica só com "É este número que recebe a confirmação." | A frase que "sugere que a pessoa escreva mais" foi lida como a segunda frase da ajuda do telefone ("Pode escrever com ou sem o +258"). |
+| C2 | Telefone sem "(WhatsApp)" no rótulo; exemplo `84 123 4567`, não o número da JVI. Morada: `Malhangalene, Maputo` | O exemplo antigo, "Sommachine", não é um bairro: o mais próximo é Sommerschield. Pesquisado: Malhangalene A e B são bairros do distrito municipal KaMpfumo (Município de Maputo). Escolhi-o por ser um bairro popular e não o "bairro nobre". A lista de províncias do passo 1 não mexeu, como o cliente pediu. |
+| C3 | "A sua carga"; dimensões opcionais e recolhidas num `<details>`; descrição com `(ex.: camisetas)` | A lista de províncias **já estava** em ordem alfabética no código; agora é ordenada com `localeCompare` para não voltar a desarrumar. Se o cliente viu outra ordem, viu uma versão antiga do site. **Conflito:** o `BRIEFING-FASE8C-CORRECCOES.md` (apareceu depois) pede ordem geográfica sul → norte; aqui seguiu-se o pedido desta fase, alfabética. "Palma" continua na lista, apesar de ser um distrito de Cabo Delgado e não uma província — o cliente mandou não mexer. |
+| C4 | Caixa verde obrigatória no passo 2: "Confirmo que a mercadoria está embalada e pronta para o embarque." | O texto exacto não veio na transcrição; escrevi-o curto. A validação passou a tratar caixas e rádios: uma checkbox tem sempre `value="sim"`, e validada como texto passaria sem ser marcada. A caixa só bloqueia no browser; o servidor não a recebe. |
+| C5 | Formas: e-Mola, M-Pesa, Transferência bancária — no formulário, em `js/orcamento.js` e em `functions/submit.js`. "Quando paga" à parte: "No acto de envio" ou "No acto de levantamento" | **D33**: nenhuma das duas vem marcada e escolher é obrigatório — "nenhuma pode ser a única permitida". Antes vinha marcado "Sim, no levantamento". O valor guardado continua `sim`/`nao` de "paga no levantamento", para não partir o servidor, a folha nem as mensagens. Os testes `submit.test.js` e `envio.test.js` que fixavam "Cartão de crédito" e "Numerário" foram actualizados: a especificação mudou, e eles testavam a antiga. |
+| C6 | "Aceito os termos do serviço e a Política de Privacidade." — obrigatório | **D34**: na página não havia nenhum cartão chamado "Termos"; o único bloco de termos era a caixa de consentimento do passo 3, desenhada como cartão. Ficou uma linha simples. O link para a política continua na própria frase — aceitar sem poder ler é uma aceitação fraca — e a política completa continua no rodapé. **Dúvida:** não há uma página de "termos do serviço"; se o cliente os quiser, falta escrevê-los. |
+
+`tests/formulario.test.js` fixa C1–C6.
 
 ## Fase 8A — o mapa
 

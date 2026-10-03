@@ -51,10 +51,12 @@ test('peso invalido e problema, e aceita virgula decimal', () => {
 });
 
 test('so aceita as tres formas de pagamento que o cliente pediu', () => {
-  for (const p of ['e-Mola', 'Cartão de crédito', 'Numerário']) {
+  /* C5 (Fase 8): o cliente corrigiu — e-Mola, M-Pesa e transferência
+     bancária. Cartão de crédito e numerário deixaram de ser aceites. */
+  for (const p of ['e-Mola', 'M-Pesa', 'Transferência bancária']) {
     assert.deepEqual(validar({ ...BOM, pagamento: p }), [], p);
   }
-  for (const p of ['Cheque', 'M-Pesa', 'Bitcoin', '', 'emola']) {
+  for (const p of ['Cheque', 'Cartão de crédito', 'Numerário', 'Bitcoin', '', 'emola']) {
     assert.ok(validar({ ...BOM, pagamento: p }).length > 0, `"${p}" devia falhar`);
   }
 });

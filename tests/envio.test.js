@@ -45,20 +45,20 @@ test('dados le o formulario para um objecto simples e aparado', () => {
       destinatario: 'Ana Maria', provinciaDestino: 'Cabo Delgado',
       peso: '11.7', dimensao: '60 x 40 x 40', descricao: 'tintas PLASCON',
     },
-    { pagamento: 'Cartão de crédito', pagarNoLevantamento: 'nao' }
+    { pagamento: 'M-Pesa', pagarNoLevantamento: 'nao' }
   );
   assert.deepEqual(dados(form), {
     nome: 'João Pedro', apelido: 'Sissu', provincia: 'Nampula',
     morada: 'Sommachine', telefone: '84 793 5035',
     destinatario: 'Ana Maria', provinciaDestino: 'Cabo Delgado',
     peso: '11.7', dimensao: '60 x 40 x 40', descricao: 'tintas PLASCON',
-    pagamento: 'Cartão de crédito', pagarNoLevantamento: 'nao',
+    pagamento: 'M-Pesa', pagarNoLevantamento: 'nao',
   });
 });
 
 test('dados cai nos valores por omissao quando os radios nao existem', () => {
   const d = dados(FORM_FALSO({ nome: 'Ana' }));
-  assert.equal(d.pagamento, 'Numerário');
+  assert.equal(d.pagamento, 'e-Mola');
   assert.equal(d.pagarNoLevantamento, 'sim');
   assert.equal(d.apelido, '');
 });

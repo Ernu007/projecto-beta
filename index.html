@@ -876,13 +876,15 @@
           </div>
           <div class="campo" data-campo="morada">
             <label for="orcMorada">Morada / bairro <span class="ob">*</span></label>
-            <input id="orcMorada" name="morada" type="text" maxlength="200" placeholder="Ex.: Sommachine, Maputo" required autocomplete="street-address">
+            <input id="orcMorada" name="morada" type="text" maxlength="200" placeholder="Ex.: Malhangalene, Maputo" required autocomplete="street-address">
             <span class="campo__erro">Indique a morada ou bairro.</span>
           </div>
           <div class="campo campo--largo" data-campo="telefone">
-            <label for="orcTelefone">Telefone (WhatsApp) <span class="ob">*</span></label>
-            <input id="orcTelefone" name="telefone" type="tel" inputmode="tel" maxlength="40" placeholder="84 793 5035" required autocomplete="tel">
-            <span class="campo__ajuda">É este número que recebe a confirmação. Pode escrever com ou sem o +258.</span>
+            <label for="orcTelefone">Telefone <span class="ob">*</span></label>
+            <!-- C2: o exemplo é um número inventado, não o da JVI. C1: só a
+                 primeira frase da ajuda; a segunda convidava a escrever mais. -->
+            <input id="orcTelefone" name="telefone" type="tel" inputmode="tel" maxlength="40" placeholder="Ex.: 84 123 4567" required autocomplete="tel">
+            <span class="campo__ajuda">É este número que recebe a confirmação.</span>
             <span class="campo__erro">Indique um número moçambicano válido: 9 dígitos, a começar por 8.</span>
           </div>
         </div>
@@ -891,7 +893,7 @@
       <!-- ===================== PASSO 2 ===================== -->
       <fieldset class="orc-seccao" data-seccao="1">
         <legend class="sr-only">Passo 2 — dados da carga</legend>
-        <h3 class="orc-seccao__t">O que transportamos</h3>
+        <h3 class="orc-seccao__t">A sua carga</h3>
         <div class="campos campos--2">
           <div class="campo" data-campo="destinatario">
             <label for="orcDestinatario">Quem recebe <span class="ob">*</span></label>
@@ -913,16 +915,28 @@
             <span class="campo__ajuda">Pode escrever 11,7 — a vírgula é aceite.</span>
             <span class="campo__erro">Indique o peso em quilogramas, entre 0,1 e 100 000.</span>
           </div>
-          <div class="campo" data-campo="dimensao">
-            <label for="orcDimensao">Dimensões (cm) <span class="opc">opcional</span></label>
+          <!-- C3: as dimensões não fazem falta a quem pede do telemóvel.
+               Ficam opcionais e recolhidas: quem as sabe abre e escreve. -->
+          <details class="campo campo--dobra" data-campo="dimensao">
+            <summary>Dimensões (cm) <span class="opc">opcional</span></summary>
+            <label class="sr-only" for="orcDimensao">Dimensões (cm)</label>
             <input id="orcDimensao" name="dimensao" type="text" maxlength="60" placeholder="Ex.: 60 x 40 x 40">
-            <span class="campo__ajuda">Comprimento × largura × altura. Se não souber, deixe vazio.</span>
-          </div>
+            <span class="campo__ajuda">Comprimento × largura × altura.</span>
+          </details>
           <div class="campo campo--largo" data-campo="descricao">
             <label for="orcDescricao">Descrição da mercadoria <span class="ob">*</span></label>
-            <textarea id="orcDescricao" name="descricao" rows="3" maxlength="1200" placeholder="Ex.: camisetas · tintas PLASCON · material eléctrico" required></textarea>
+            <textarea id="orcDescricao" name="descricao" rows="3" maxlength="1200" placeholder="(ex.: camisetas)" required></textarea>
             <span class="campo__erro">Descreva a mercadoria.</span>
           </div>
+        </div>
+
+        <!-- C4: caixa verde, obrigatória para avançar. -->
+        <div class="campo campo--verif" data-campo="embarque">
+          <label class="verif" for="orcEmbarque">
+            <input id="orcEmbarque" name="embarque" type="checkbox" value="sim" required>
+            <span>Confirmo que a mercadoria está embalada e pronta para o embarque. <span class="ob">*</span></span>
+          </label>
+          <span class="campo__erro">Confirme que a carga está pronta para o embarque.</span>
         </div>
 
         <!-- Custo estimado, calculado com o mesmo módulo que os testes
@@ -947,23 +961,28 @@
           <div class="campo campo--largo" data-campo="pagamento">
             <span class="campo__rotulo" id="rotPag">Forma de pagamento <span class="ob">*</span></span>
             <div class="opcoes" role="radiogroup" aria-labelledby="rotPag">
-              <label class="opcao"><input type="radio" name="pagamento" value="e-Mola" checked> <span>e-Mola<small>Telemóvel</small></span></label>
-              <label class="opcao"><input type="radio" name="pagamento" value="Cartão de crédito"> <span>Cartão de crédito<small>Visa · MasterCard</small></span></label>
-              <label class="opcao"><input type="radio" name="pagamento" value="Numerário"> <span>Numerário<small>Meticais</small></span></label>
+              <label class="opcao"><input type="radio" name="pagamento" value="e-Mola" checked> <span>e-Mola<small>Movitel</small></span></label>
+              <label class="opcao"><input type="radio" name="pagamento" value="M-Pesa"> <span>M-Pesa<small>Vodacom</small></span></label>
+              <label class="opcao"><input type="radio" name="pagamento" value="Transferência bancária"> <span>Transferência bancária<small>Para a conta da JVI</small></span></label>
             </div>
           </div>
 
           <div class="campo campo--largo" data-campo="pagarNoLevantamento">
-            <span class="campo__rotulo" id="rotLev">Paga no levantamento, na província de destino?</span>
+            <!-- C5: QUANDO paga, à parte da forma. As duas opções valem e
+                 nenhuma vem marcada: a pessoa escolhe. O valor continua
+                 `sim`/`nao` de "paga no levantamento", que é o que a função
+                 serverless e as mensagens já conhecem. -->
+            <span class="campo__rotulo" id="rotLev">Quando paga <span class="ob">*</span></span>
             <div class="opcoes opcoes--simnao" role="radiogroup" aria-labelledby="rotLev">
-              <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="sim" checked> <span>Sim<small>Pago quando for buscar</small></span></label>
-              <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="nao"> <span>Não<small>Pago antes do envio</small></span></label>
+              <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="nao" required> <span>No acto de envio<small>Ao entregar a carga à JVI</small></span></label>
+              <label class="opcao"><input type="radio" name="pagarNoLevantamento" value="sim"> <span>No acto de levantamento<small>Na província de destino</small></span></label>
             </div>
+            <span class="campo__erro">Escolha quando paga.</span>
           </div>
 
           <div class="consent" data-consent>
             <input type="checkbox" name="consentimento" value="sim" id="orcConsent">
-            <label for="orcConsent">Li e aceito a <a href="#" data-legal="privacidade">Política de Privacidade</a> e autorizo o tratamento dos meus dados para este orçamento. <span class="ob">*</span></label>
+            <label for="orcConsent">Aceito os termos do serviço e a <a href="#" data-legal="privacidade">Política de Privacidade</a>. <span class="ob">*</span></label>
           </div>
         </div>
       </fieldset>

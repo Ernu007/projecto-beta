@@ -105,15 +105,36 @@
 .orc__nav .btn--vidro[disabled] { opacity: 0.3; pointer-events: none; }
 
 /* ---------- Consentimento ---------- */
+/* C6: deixou de ser um cartão. A caixa continua obrigatória, mas é uma
+   linha, não um bloco de termos — o aviso legal completo fica no
+   rodapé. */
 .consent {
-  display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px;
-  border-radius: 12px; background: var(--vidro);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex; align-items: flex-start; gap: 12px; padding: 4px 0;
+  border-bottom: 1px solid transparent;
 }
 .consent input { width: 18px; height: 18px; flex: none; margin-top: 2px; accent-color: var(--verde); }
 .consent label { font-size: 14px; color: var(--texto-suave); }
 .consent a { color: var(--verde); text-decoration: underline; }
-.consent[data-erro="true"] { border-color: var(--erro); }
+.consent[data-erro="true"] { border-bottom-color: var(--erro); }
+
+/* C4: a caixa de embarque, verde e obrigatória. */
+.verif {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  border-radius: 12px; cursor: pointer;
+  background: rgb(var(--verde-rgb) / .08); border: 1px solid rgb(var(--verde-rgb) / .4);
+  font-size: 14px; font-weight: 600; color: var(--texto);
+}
+.verif input { width: 20px; height: 20px; flex: none; margin-top: 1px; accent-color: var(--verde); }
+.verif:has(input:checked) { background: rgb(var(--verde-rgb) / .16); border-color: var(--verde); }
+.campo--verif { margin-top: 16px; }
+.campo--verif[data-erro="true"] .verif { border-color: var(--erro); }
+
+/* C3: dimensões recolhidas por omissão. */
+.campo--dobra summary {
+  cursor: pointer; font-size: 14px; font-weight: 600; color: var(--texto-suave);
+  padding: 6px 0; list-style-position: inside;
+}
+.campo--dobra[open] summary { margin-bottom: 8px; }
 
 /* ---------- Anti-spam (honeypot) ---------- */
 .hp {

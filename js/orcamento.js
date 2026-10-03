@@ -13,12 +13,16 @@
 
 import { calcularPreco, formatarMT } from './precos.js';
 
+/* C3: por ordem alfabética — o cliente reclamou duas vezes. Ordenada
+   aqui e não à mão, para que uma província acrescentada no sítio errado
+   não volte a desarrumar a lista. */
 export const PROVINCIAS = [
   'Cabo Delgado', 'Gaza', 'Inhambane', 'Manica', 'Maputo', 'Nampula',
   'Niassa', 'Palma', 'Sofala', 'Tete', 'Zambézia',
-];
+].sort((a, b) => a.localeCompare(b, 'pt'));
 
-export const PAGAMENTOS = ['e-Mola', 'Cartão de crédito', 'Numerário'];
+/* C5: as formas que o cliente corrigiu. Nunca cartão de crédito. */
+export const PAGAMENTOS = ['e-Mola', 'M-Pesa', 'Transferência bancária'];
 
 /* ---------- Telefone da empresa ----------
    FONTE ÚNICA do número. É o ÚNICO número válido: o cliente confirmou
@@ -165,7 +169,7 @@ export function dados(form) {
     morada: g('morada'), telefone: g('telefone'),
     destinatario: g('destinatario'), provinciaDestino: g('provinciaDestino'),
     peso: g('peso'), dimensao: g('dimensao'), descricao: g('descricao'),
-    pagamento: form.querySelector('input[name="pagamento"]:checked')?.value || 'Numerário',
+    pagamento: form.querySelector('input[name="pagamento"]:checked')?.value || PAGAMENTOS[0],
     pagarNoLevantamento: form.querySelector('input[name="pagarNoLevantamento"]:checked')?.value || 'sim',
   };
 }
@@ -333,6 +337,10 @@ export function iniciarOrcamento(form) {
       return kg === null || kg < 0.1 || kg > 100000;
     }
     if (inp.name === 'telefone') return normalizarTelefone(inp.value) === null;
+    /* C4: a caixa de embarque só vale marcada. C5: num grupo de rádios
+       basta um marcado — o `required` vai no primeiro do grupo. */
+    if (inp.type === 'checkbox') return !inp.checked;
+    if (inp.type === 'radio') return !form.querySelector(`input[name="${inp.name}"]:checked`);
     return !inp.value.trim();
   }
 
@@ -378,7 +386,7 @@ export function iniciarOrcamento(form) {
       consent.dataset.erro = 'true';
       estado.dataset.mostrar = 'true';
       estado.className = 'estado-envio estado-envio--erro';
-      estado.textContent = 'Precisa de aceitar a Política de Privacidade para enviar o pedido.';
+      estado.textContent = 'Precisa de aceitar os termos e a Política de Privacidade para enviar o pedido.';
       consentCaixa.focus();
       return;
     }

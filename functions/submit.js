@@ -121,7 +121,7 @@ export const CAMPOS = [
   ['preco_total', 'Total calculado (MZN)'],
 ];
 
-export const PAGAMENTOS = ['e-Mola', 'Cartão de crédito', 'Numerário'];
+export const PAGAMENTOS = ['e-Mola', 'M-Pesa', 'Transferência bancária'];
 const LEVANTAMENTO = ['sim', 'nao'];
 
 /* As mesmas 11 do select do formulário. O servidor não pode aceitar
