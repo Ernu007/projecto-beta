@@ -177,3 +177,87 @@ test('C6: a secção chama-se "Nossa empresa" e mostra o panfleto, larga', () =>
   const larg = /max-width\s*:\s*(\d+)px/.exec(regra('.empresa__carta'))?.[1];
   assert.ok(Number(larg) >= 480, `o panfleto continua estreito (${larg}px)`);
 });
+
+/* ---------- C7: SEO, sem keyword stuffing e sem texto escondido ---------- */
+
+/* Os termos vêm da lógica do negócio e do vocabulário dos concorrentes
+   moçambicanos (ver docs/decisoes.md): não há dados de volume de pesquisa
+   verificáveis, e o briefing proíbe inventá-los. */
+/* Só as expressões de serviço: "Maputo" aparece onze vezes porque é a
+   morada e o nome de uma província, e isso não é stuffing. */
+const TERMOS = ['envio de encomendas', 'transporte de carga', 'carga aérea', 'agência de carga'];
+
+const titulo = /<title>([^<]*)<\/title>/.exec(HTML)?.[1] ?? '';
+const descricao = /<meta name="description" content="([^"]*)"/.exec(HTML)?.[1] ?? '';
+const LD = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(HTML)?.[1] ?? '{}');
+const minus = (s) => s.toLowerCase();
+
+test('C7: o <title> tem o serviço e o sítio, e cabe no resultado do Google', () => {
+  assert.match(minus(titulo), /envio de encomendas/);
+  assert.match(minus(titulo), /maputo/);
+  assert.match(titulo, /JVI/);
+  assert.ok(titulo.replace(/&amp;/g, '&').length <= 65, `o título tem ${titulo.length} caracteres`);
+});
+
+test('C7: a meta description tem os termos e o tamanho de um snippet', () => {
+  const d = minus(descricao);
+  for (const t of ['envio de encomendas', 'carga', 'maputo', 'províncias']) assert.ok(d.includes(t), `falta "${t}"`);
+  assert.ok(descricao.length >= 120 && descricao.length <= 160, `a descrição tem ${descricao.length} caracteres`);
+});
+
+test('C7: og e twitter dizem o mesmo que o <title> e a description', () => {
+  assert.ok(HTML.includes(`<meta property="og:title" content="${titulo}">`));
+  assert.ok(HTML.includes(`<meta name="twitter:title" content="${titulo}">`));
+  assert.ok(HTML.includes(`<meta property="og:description" content="${descricao}">`));
+  assert.ok(HTML.includes(`<meta name="twitter:description" content="${descricao}">`));
+});
+
+test('C7: o JSON-LD diz que serviços são e que províncias serve', () => {
+  const areas = (LD.areaServed ?? []).map((a) => a.name);
+  for (const p of ['Maputo', 'Gaza', 'Inhambane', 'Sofala', 'Manica', 'Tete', 'Zambézia', 'Niassa', 'Nampula', 'Cabo Delgado']) {
+    assert.ok(areas.includes(p), `o JSON-LD não serve ${p}`);
+  }
+  const servicos = (LD.hasOfferCatalog?.itemListElement ?? []).map((o) => minus(o.itemOffered?.name ?? ''));
+  for (const t of ['envio de encomendas', 'carga aérea', 'transporte rodoviário']) {
+    assert.ok(servicos.some((s) => s.includes(t)), `o catálogo do JSON-LD não tem "${t}"`);
+  }
+  assert.match(minus(LD.description), /envio de encomendas/);
+});
+
+test('C7: os h2 de serviços e cobertura falam como quem pesquisa', () => {
+  const h2 = (id) => /<h2[^>]*>([\s\S]*?)<\/h2>/.exec(seccao(id))[1].replace(/<[^>]+>/g, '');
+  assert.match(minus(h2('servicos')), /carga aérea e rodoviária/);
+  assert.match(minus(h2('cobertura')), /envio de encomendas/);
+});
+
+test('C7: sem keyword stuffing — nenhum termo repetido à exaustão', () => {
+  /* Conta no texto visível (sem scripts, estilos, comentários e atributos).
+     Um limite generoso, mas que apanha um bloco de palavras-chave colado. */
+  const visivel = minus(HTML
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' '));
+  for (const t of TERMOS) {
+    const n = visivel.split(t).length - 1;
+    assert.ok(n <= 8, `"${t}" aparece ${n} vezes no texto visível`);
+  }
+  assert.ok(minus(titulo).split('encomendas').length - 1 <= 1, 'o título repete "encomendas"');
+});
+
+test('C7: o bloco SEO do rodapé é texto real, com links internos, e não está escondido', () => {
+  const rodape = /<footer class="rodape">([\s\S]*?)<\/footer>/.exec(HTML)[1];
+  const bloco = /<nav class="rodape__seo"[^>]*>([\s\S]*?)<\/nav>/.exec(rodape)?.[0];
+  assert.ok(bloco, 'não há bloco de serviços/províncias no rodapé');
+  assert.doesNotMatch(bloco, /hidden|aria-hidden|sr-only|display:\s*none/);
+  const links = [...bloco.matchAll(/href="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(links.length >= 3, 'o bloco tem poucos links');
+  for (const l of links) {
+    assert.ok(l.startsWith('#'), `${l} não é um link interno`);
+    assert.match(HTML, new RegExp(`id="${l.slice(1)}"`), `${l} não tem destino`);
+  }
+  for (const c of ['Xai-Xai', 'Beira', 'Nampula', 'Pemba']) assert.match(bloco, new RegExp(c));
+  const css = regra('.rodape__seo');
+  assert.doesNotMatch(css, /display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0|opacity\s*:\s*0\b|text-indent\s*:\s*-/,
+    'o bloco SEO está escondido — o Google penaliza');
+});

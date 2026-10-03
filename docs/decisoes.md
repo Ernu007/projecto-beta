@@ -131,6 +131,40 @@ registada com regras de uso próprias.
 das províncias, Matola). Onde a 8C e uma fase anterior discordam, ganha a 8C:
 é a revisão completa (22 min) e não um excerto.
 
+### C7 — SEO
+
+**Volumes de pesquisa: não verificados.** Não há acesso a dados de volume
+(Google Keyword Planner / Search Console) e o briefing proíbe inventá-los. Os
+termos foram escolhidos pela lógica do negócio e pelo vocabulário que os
+concorrentes moçambicanos usam nas suas páginas (Skynet Express, TTI, Ramas,
+Expresso Carga e Serviços: "envio de encomendas", "transporte de carga",
+"grupagem", rotas "Maputo → Beira / Nampula / Pemba…"):
+
+- agência de carga em Maputo · envio de encomendas (para as províncias)
+- carga aérea (Aeroporto de Maputo) · transporte rodoviário de carga
+- os nomes das capitais de destino (Beira, Nampula, Pemba, Tete, …)
+
+Onde entraram:
+
+| Sítio | Antes | Depois |
+|---|---|---|
+| `<title>` (62 car.) | JVI Carga & Serviços — Transporte de Carga e Encomendas em Moçambique | Envio de Encomendas e Carga de Maputo para as Províncias \| JVI |
+| `meta description` (154 car.) | genérica | agência de carga, envio de encomendas, carga aérea, rodoviário, dez províncias, quatro capitais |
+| `og:`/`twitter:` | — | iguais ao title e à description (testado) |
+| JSON-LD | Organization sem serviços | + `areaServed` (as 10 províncias), `hasOfferCatalog` (4 serviços), `slogan`, `description` |
+| h2 Serviços | Soluções integradas aéreas e rodoviárias. | Carga aérea e rodoviária, de Maputo às províncias. |
+| h2 Cobertura | Infraestrutura estratégica em Moçambique. | Envio de encomendas para as dez províncias. |
+| Rodapé | — | bloco "Serviços / Destinos" em texto visível, com links internos |
+
+- **O h1 não mudou** ("A sua carga, em mãos seguras."): é animado palavra a
+  palavra com o voo e é a promessa da marca. Meter-lhe palavras-chave
+  estragava-o; o título da página e os h2 fazem esse trabalho.
+- **Sem stuffing e sem texto escondido:** `tests/fase8c.test.js` conta as
+  expressões de serviço no texto visível (máx. 8 cada; hoje 1–4) e falha se o
+  bloco do rodapé tiver `hidden`, `display:none`, `font-size:0`, etc.
+- `#orcamento` ganhou `tabindex="-1"`: o bloco do rodapé passou a ligar para
+  lá, e o teste de acessibilidade exige-o em todos os alvos de link.
+
 ### C8 — formulário (substitui partes do C2, C3 e C5 da 8B)
 
 | Campo | O que ficou | Decisão |

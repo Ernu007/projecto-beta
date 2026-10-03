@@ -708,6 +708,11 @@ body.modal-aberto { overflow: hidden; }
 .rodape__logo { height: 46px; width: auto; }
 .rodape__fiscais { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12.5px; color: var(--texto-fraco); }
 .rodape__fiscais b { color: var(--verde); font-weight: 700; }
+/* Fase 8C/C7: discreto, mas legível e visível — não é texto escondido. */
+.rodape__seo { display: grid; gap: 6px; margin-bottom: 24px; font-size: 13px; line-height: 1.6; color: var(--texto-fraco); }
+.rodape__seo b { color: var(--texto-suave); font-weight: 700; }
+.rodape__seo a { color: var(--texto-suave); text-decoration: underline; text-decoration-color: rgb(var(--verde-rgb) / .4); text-underline-offset: 3px; }
+.rodape__seo a:hover { color: var(--verde); }
 .rodape__base { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; padding-top: 24px; border-top: 1px solid var(--borda); font-size: 12.5px; color: var(--texto-fraco); }
 /* B10: as acções do rodapé. O "Como chegar à JVI" ocupa a largura
    toda e o pin do Google Maps também: é uma faixa de 44 px de altura com
