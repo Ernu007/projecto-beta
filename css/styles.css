@@ -1,0 +1,658 @@
+/* =========================================================
+   JVI Carga & Serviços, Lda — Landing Page
+   Tokens extraídos da identidade da marca
+   ========================================================= */
+
+:root {
+  /* Fase 10 (10.1): verde e preto, que são a marca. Preto no cabeçalho, no
+     hero e no rodapé; o resto da página é claro (ver `.seccao` mais
+     abaixo). O laranja e as cores do Google saíram da interface. */
+  --verde:        #A9CF44;   /* acento sobre fundo escuro */
+  --verde-marca:  #A9CF44;   /* fundo de botão e ponto: nunca texto sobre claro */
+  --verde-escuro: #82C91E;
+  --base:         #0B0B0C;
+  --claro:        #D4D4D8;
+
+  /* Canais RGB, para poderem ser usadas com alfa: rgb(var(--verde-rgb) / 0.08). */
+  --verde-rgb:   169 207 68;
+  --base-rgb:     11  11 12;
+  --claro-rgb:   212 212 216;
+
+  /* Derivados (tema escuro) */
+  --base-2:       #151516;
+  --base-3:       #1C1C1E;
+  --linha:        rgb(var(--verde-rgb) / .16);
+  --texto:        #F4F4F5;
+  --texto-suave:  rgb(var(--claro-rgb) / .82);
+  --texto-fraco:  rgb(var(--claro-rgb) / .66);
+
+  /* Superfícies que não tinham token */
+  --rodape:       #060607;   /* fundo do rodapé, um degrau abaixo do base */
+  --mapa:         #161618;   /* centro do cartão do mapa */
+
+  /* Branco translúcido. */
+  --vidro:        rgb(255 255 255 / 0.03);  /* preenchimento de superfície */
+  --borda:        rgb(255 255 255 / 0.07);  /* contorno de cartão */
+  --borda-forte:  rgb(255 255 255 / 0.11);  /* contorno de campo de texto */
+
+  /* Verde do WhatsApp: só nos botões WhatsApp. */
+  --wa:    #25D366;
+
+  /* Vermelho do pin do Google Maps: só no botão «Como chegar à JVI». */
+  --maps:  #EA4335;
+
+  /* Tema claro (10.1). Os valores vivem aqui, com nome próprio, para o
+     `tools/contraste.py` os medir; `.seccao` e `.tema-claro` é que os
+     vestem. O verde claro `#A9CF44` NÃO serve de texto sobre branco
+     (1,9:1), por isso o texto verde do tema claro é este mais escuro. */
+  --c-fundo:        #FFFFFF;
+  --c-fundo-2:      #F7F8FA;
+  --c-texto:        #0B0B0C;
+  --c-texto-suave:  #3F4348;
+  --c-texto-fraco:  #565C63;
+  --c-verde:        #476608;
+  --c-verde-rgb:    71 102 8;
+
+  /* Estados. */
+  --erro:        #F87171;    /* borda */
+  --erro-txt:    #FCA5A5;    /* texto do erro */
+  --aviso-txt:   #FDE68A;    /* texto do aviso */
+
+  /* Texto sobre fundos sólidos de cor viva */
+  --sobre-wa:      #05230F;
+
+  /* Tipografia */
+  --fonte: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Métrica */
+  --largura: 1240px;
+  /* Tamanho base do texto corrido. Rótulos, legendas e texto legal
+     ficam abaixo de propósito — é hierarquia, não um valor solto. */
+  --corpo: 16px;
+  --raio: 18px;
+  --raio-sm: 10px;
+  --sombra: 0 24px 60px -28px rgba(0, 0, 0, 0.85);
+  --transicao: 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Altura da faixa dos botões fixos: 48 + 12 de margem + 12 de folga. */
+  --faixa: 72px;
+}
+
+/* Tema claro: as secções do corpo da página. O cabeçalho, o hero, o
+   rodapé e os pop-ups ficam no tema escuro dos tokens de :root. Como os
+   derivados (`--linha`, `--texto-suave`…) são resolvidos onde são
+   declarados, têm de ser declarados outra vez aqui. */
+.seccao, .tema-claro {
+  --verde:        var(--c-verde);
+  --verde-escuro: var(--c-verde);
+  --verde-rgb:    var(--c-verde-rgb);
+  --base:         var(--c-fundo);
+  --base-rgb:     255 255 255;
+  --base-2:       var(--c-fundo-2);
+  --base-3:       var(--c-fundo);
+  --linha:        rgb(0 0 0 / .12);
+  --texto:        var(--c-texto);
+  --texto-suave:  var(--c-texto-suave);
+  --texto-fraco:  var(--c-texto-fraco);
+  --vidro:        rgb(0 0 0 / 0.03);
+  --borda:        rgb(0 0 0 / 0.1);
+  --borda-forte:  rgb(0 0 0 / 0.22);
+  --erro:         #B91C1C;
+  --erro-txt:     #B91C1C;
+  --aviso-txt:    #7C4A03;
+  --sombra:       0 18px 40px -26px rgba(0, 0, 0, 0.35);
+  background: var(--c-fundo);
+  color: var(--c-texto);
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  /* clip (nao hidden) impede que o menu off-canvas ou o canvas 3D
+     alarguem a viewport em browsers moveis, sem criar scroll container */
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+body {
+  font-family: var(--fonte);
+  background: var(--rodape);
+  color: var(--texto);
+  line-height: 1.65;
+  padding-bottom: calc(var(--faixa) + env(safe-area-inset-bottom, 0px)); /* a faixa dos botões fixos */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, svg, canvas { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+ul { list-style: none; }
+
+/* O atributo hidden tem de vencer os display: das classes utilitarias */
+[hidden] { display: none !important; }
+
+:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------- Utilitários ---------- */
+.container { width: 100%; max-width: var(--largura); margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 480px) { .container { padding-inline: 20px; } }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.verde  { color: var(--verde); }
+
+.seccao { position: relative; padding: clamp(40px, 6vw, 72px) 0; }
+.seccao--alt { background: var(--base-2); }
+
+/* Etiqueta de secção */
+.etiqueta {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--verde);
+  padding: 8px 16px; border: 1px solid var(--linha);
+  border-radius: 100px; background: rgb(var(--verde-rgb) / .07);
+  margin-bottom: 20px;
+}
+/* Fase 8C/C4: "estende ali para a direita". A etiqueta cresce para a
+   direita (o ponto fica à esquerda), sem mudar de tamanho de letra. */
+.etiqueta--larga { padding: 10px 34px 10px 18px; min-width: 15em; }
+.etiqueta::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--verde); box-shadow: 0 0 0 4px rgb(var(--verde-rgb) / .2);
+}
+
+.titulo-seccao {
+  font-size: clamp(28px, 4.4vw, 46px);
+  line-height: 1.12; font-weight: 800; letter-spacing: -0.025em;
+  max-width: 20ch; margin-bottom: 16px;
+}
+.titulo-seccao--centro { margin-inline: auto; text-align: center; }
+
+.subtitulo-seccao {
+  font-size: clamp(16px, 1.7vw, 18px);
+  color: var(--texto-suave); max-width: 60ch;
+}
+.subtitulo-seccao--centro { margin-inline: auto; text-align: center; }
+
+/* ---------- Botões ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px 28px; border-radius: 100px;
+  font-weight: 700; font-size: 15px; letter-spacing: -0.01em;
+  transition: transform var(--transicao), box-shadow var(--transicao), background var(--transicao);
+  white-space: nowrap;
+}
+.btn svg { width: 19px; height: 19px; flex: none; }
+.btn--primario {
+  background: var(--verde-marca); color: #0B0B0C;
+}
+.btn--primario:hover { transform: translateY(-2px); background: #B8DA5C; }
+.btn--vidro {
+  background: var(--vidro); color: var(--texto);
+  border: 1px solid var(--borda-forte);
+}
+.btn--vidro:hover { background: var(--borda); transform: translateY(-2px); }
+.btn--bloco { width: 100%; }
+/* Fase 10B (10B.3): «Como chegar à JVI» com o estilo antigo (a12bf1f) — o
+   pin do Google Maps, vermelho e grande, numa faixa de 44 px POR CIMA do
+   texto. Agora com fundo próprio (cartão branco com borda): no hero é o
+   terceiro botão e secundário; em Contactos parecia só texto. Os dois são
+   iguais. Não é verde nem preenchido de cor: não compete com o WhatsApp. */
+.btn-maps {
+  flex-direction: column; gap: 8px; width: 100%; padding: 14px 16px 16px;
+  border-radius: var(--raio);
+  background: var(--c-fundo); color: var(--c-texto);
+  border: 1px solid var(--borda-forte); box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.45);
+}
+.btn-maps:hover { background: var(--c-fundo-2); }
+.btn-maps svg { display: block; width: 100%; height: 44px; color: var(--maps); }
+.btn:active { transform: translateY(-1px) scale(0.99); }
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+/* Fase 10: preto em todas as páginas (é a cor da marca) e sem botão de
+   orçamento — o cliente riscou-o: duplicava o do hero e apertava o
+   cabeçalho no telemóvel. */
+.header {
+  position: fixed; inset: 0 0 auto 0; z-index: 90;
+  padding: 16px 0; background: var(--base);
+  box-shadow: 0 1px 0 var(--linha);
+  transition: padding var(--transicao);
+}
+.header--preso { padding: 8px 0; }
+.header__int { display: flex; align-items: center; gap: 20px; }
+
+/* Skip link. Escondido fora do foco, e aparece no primeiro Tab —
+   WCAG 2.4.1. Fica acima de tudo e é o único elemento que o
+   `outline: 2px solid var(--verde)` global não substitui. */
+.pular {
+  position: absolute; z-index: 200;
+  top: 8px; left: 8px;
+  padding: 12px 18px;
+  border-radius: var(--raio-sm);
+  background: var(--verde-marca); color: #0B0B0C;
+  font-size: 15px; font-weight: 800;
+  transform: translateY(-160%);
+  transition: transform 0.15s ease;
+}
+.pular:focus { transform: translateY(0); }
+
+/* O `main` tem `tabindex="-1"` para receber o foco do skip link. Sem isto
+   não se vê um anel de foco à volta de todo o conteúdo. */
+main:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
+.hero:focus, .secao-pagina:focus { outline: none; }
+
+.brand { display: flex; align-items: center; gap: 12px; flex: none; min-width: 44px; min-height: 44px; }
+.brand__logo { height: 46px; width: auto; transition: height var(--transicao); }
+.header--preso .brand__logo { height: 38px; }
+.brand__txt { display: none; line-height: 1.2; }
+.brand__txt b { display: block; font-size: 15px; font-weight: 800; letter-spacing: 0.02em; }
+.brand__txt span { font-size: 11px; color: var(--verde); letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; }
+
+.nav { display: none; margin-left: auto; }
+.nav ul { display: flex; gap: 4px; }
+.nav a {
+  display: block; padding: 8px 14px; border-radius: 8px;
+  font-size: 15px; font-weight: 600; color: var(--texto-suave);
+  transition: color var(--transicao), background var(--transicao);
+}
+.nav a:hover { color: var(--verde); background: rgb(var(--verde-rgb) / .08); }
+.nav a[aria-current] { color: var(--texto); box-shadow: inset 0 -2px 0 var(--verde-marca); border-radius: 0; }
+
+/* Menu mobile */
+.menu-btn {
+  margin-left: auto; width: 44px; height: 44px; border-radius: 12px;
+  display: grid; place-items: center; border: 1px solid var(--borda-forte);
+  background: var(--vidro);
+}
+.menu-btn svg { width: 22px; height: 22px; transition: transform var(--transicao); }
+.menu-btn[aria-expanded="true"] svg { transform: rotate(90deg); }
+
+/* Menu off-canvas. Fica display:none quando fechado: um painel fixo
+   deslocado fora do ecrã ainda conta para a largura da viewport em
+   browsers moveis, o que encolhe/escala a pagina inteira. */
+.menu {
+  position: fixed; inset: 0 0 0 auto; width: min(360px, 86vw); z-index: 95;
+  background: var(--base-2); border-left: 1px solid var(--linha);
+  padding: 92px 28px 32px;
+  display: none;
+  overflow-y: auto; flex-direction: column; gap: 6px;
+}
+.menu[data-aberto="true"] { display: flex; animation: menuEntra 0.4s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: -30px 0 80px -30px #000; }
+.menu[data-estado="a-fechar"] { display: flex; animation: menuSai 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes menuEntra { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes menuSai { from { transform: translateX(0); } to { transform: translateX(100%); } }
+.menu a {
+  padding: 14px 16px; border-radius: 12px; font-weight: 700; font-size: 16px;
+  color: var(--texto-suave); border: 1px solid transparent;
+  transition: all var(--transicao);
+}
+.menu a:hover { color: var(--verde); background: rgb(var(--verde-rgb) / .08); border-color: var(--linha); }
+.menu a[aria-current] { color: var(--texto); border-color: var(--verde-marca); }
+.menu-fundo {
+  position: fixed; inset: 0; z-index: 94; background: rgba(0, 0, 0, 0.72);
+  opacity: 0; pointer-events: none; transition: opacity var(--transicao);
+}
+.menu-fundo[data-visivel="true"] { opacity: 1; pointer-events: auto; }
+
+/* Cinco itens cabem ao lado da marca a partir de 900 px. */
+@media (min-width: 900px) {
+  .nav { display: block; margin-left: auto; }
+  .menu-btn, .menu, .menu-fundo { display: none; }
+}
+@media (min-width: 700px) {
+  .brand__txt { display: block; }
+}
+
+/* Fase 10B: as cinco "páginas" são secções de uma só página. O cabeçalho é
+   fixo; sem esta margem o título de cada secção ficava por baixo dele. */
+.hero, .secao-pagina { scroll-margin-top: 64px; }
+
+/* =========================================================
+   TOPO DAS SECÇÕES
+   ========================================================= */
+.pagina-topo { padding: 40px 0 32px; background: var(--base); border-bottom: 1px solid var(--linha); }
+.pagina-topo h2 {
+  font-size: clamp(30px, 5vw, 48px); line-height: 1.1;
+  font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px;
+}
+.pagina-topo__lead { font-size: clamp(16px, 1.7vw, 18px); color: var(--texto-suave); max-width: 56ch; }
+
+/* =========================================================
+   HERO
+   ========================================================= */
+/* Fase 10: hero curto. O mapa de Moçambique e o avião vivem sobre o preto
+   e são o ÚNICO mapa do site. Sem provas, sem grelha, sem brilho. */
+.hero {
+  position: relative; min-height: min(100svh, 720px);
+  display: flex; align-items: center;
+  padding: 120px 0 64px; overflow: hidden; background: var(--base);
+}
+.hero__fundo { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero__fundo canvas { width: 100%; height: 100%; }
+/* Vinheta suave: puxa o olhar para o texto e esconde as bordas do canvas */
+.hero__glow { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.hero__glow::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(to right, var(--base) 0%, rgb(var(--base-rgb) / .72) 26%, transparent 52%),
+    linear-gradient(to top, var(--base) 0%, transparent 26%);
+}
+.hero__int { position: relative; z-index: 2; }
+
+.hero__conteudo { max-width: 560px; }
+.hero__conteudo h1 {
+  font-size: clamp(38px, 7vw, 68px); line-height: 1.03;
+  font-weight: 800; letter-spacing: -0.04em; margin-bottom: 20px;
+}
+.hero__lead {
+  font-size: clamp(16px, 2vw, 19px); color: var(--texto-suave);
+  max-width: 44ch; margin-bottom: 28px;
+}
+/* O WhatsApp é o botão em destaque (largo, verde WhatsApp); o orçamento é
+   o secundário, por baixo, em contorno. */
+.hero__acoes { display: grid; gap: 12px; max-width: 380px; }
+
+/* Fase 10C (10C.3): os três botões do hero têm a mesma altura (as linhas da
+   grelha são iguais: `1fr`), a mesma forma (pílula) e o mesmo padding. O
+   «Como chegar à JVI» deixou de ser um cartão com o pin em cima do texto:
+   pin vermelho à esquerda, como os ícones dos outros. Fica branco (o estilo
+   secundário de sempre), sem sombra, e nunca maior do que o WhatsApp. Só no
+   hero: o de Contactos fica como está (`.btn-maps`, mais acima). */
+.hero__acoes { grid-auto-rows: 1fr; }
+.hero__acoes .btn { padding-block: 16px; }
+.hero__acoes .btn-maps {
+  flex-direction: row; gap: 10px; width: auto; padding: 16px 28px;
+  border-radius: 100px; box-shadow: none;
+}
+.hero__acoes .btn-maps svg { width: 19px; height: 19px; }
+
+/* Fase 10C (10C.2): no telemóvel o hero mantém o arranjo do computador. O
+   título e a linha ocupam a largura toda; por baixo, os botões ficam na
+   coluna da ESQUERDA e o mapa (Moçambique é alto e estreito) na da DIREITA,
+   lado a lado e no primeiro ecrã. `.hero__int` e `.hero__conteudo` passam a
+   `display: contents` para os filhos entrarem na grelha do hero. O limite é
+   o do `w < 900` do js/hero-voo.js — o teste confere que são o mesmo. */
+@media (max-width: 899px) {
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr); column-gap: 10px;
+    align-items: center; align-content: start;
+    padding: 92px 20px 16px; min-height: 0;
+  }
+  .hero__int, .hero__conteudo { display: contents; }
+  .hero__conteudo h1, .hero__lead { grid-column: 1 / -1; }
+  .hero__lead { margin-bottom: 18px; }
+  .hero__acoes { grid-column: 1; grid-row: 3; max-width: none; gap: 10px; }
+  .hero__acoes .btn, .hero__acoes .btn--grande, .hero__acoes .btn-maps {
+    min-height: 52px; padding: 8px 12px; gap: 8px; font-size: 15px; line-height: 1.2;
+    white-space: normal; text-align: left; justify-content: flex-start;
+  }
+  .hero__acoes .btn svg, .hero__acoes .btn--grande svg { width: 20px; height: 20px; }
+  /* O mapa (e o avião) têm de caber no primeiro ecrã: o voo só arranca com o
+     mapa à vista (IntersectionObserver). */
+  .hero__fundo { position: relative; inset: auto; grid-column: 2; grid-row: 3; height: min(86vw, 440px); }
+  .hero__glow::after { background: none; }
+}
+
+/* O percurso com setas, junto ao botão "Como chegar à JVI" (D36). É
+   texto: três passos, do aeroporto ao terminal. Não há setas de viragem
+   porque o projecto não sabe para que lado se vira — ver
+   `PASSOS_PERCURSO` em js/rota.js. */
+.percurso { font-size: 14px; color: var(--texto-suave); }
+.percurso__passos {
+  list-style: none; margin: 0; padding: 11px 14px;
+  display: flex; flex-wrap: wrap; gap: 10px 30px;
+  border: 1px solid var(--linha); border-radius: var(--raio);
+  background: var(--base-2);
+}
+.percurso__passo { display: flex; align-items: center; gap: 9px; line-height: 1.3; }
+.percurso__txt b { display: block; color: var(--texto); font-weight: 800; }
+.percurso__seta {
+  flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--verde-marca); color: #0B0B0C;
+  font-size: 17px; font-weight: 800; line-height: 1;
+}
+.percurso__passo--chegada svg {
+  flex: none; width: 26px; height: 26px; padding: 4px; border-radius: 50%;
+  background: var(--verde-marca); color: #0B0B0C;
+}
+.percurso__nota { margin-top: 7px; font-size: 12.5px; line-height: 1.5; color: var(--texto-fraco); }
+@media (max-width: 760px) {
+  .percurso__passos { flex-direction: column; gap: 9px; }
+  .percurso__txt b { display: inline; }
+}
+
+/* =========================================================
+   INÍCIO — os três serviços em resumo
+   ========================================================= */
+.resumo { list-style: none; display: grid; gap: 0; border-top: 1px solid var(--borda); }
+.resumo__i { display: grid; gap: 4px; padding: 20px 0; border-bottom: 1px solid var(--borda); }
+.resumo h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.resumo p { color: var(--texto-suave); }
+.resumo__mais {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 12px;
+  font-weight: 700; color: var(--verde); text-decoration: underline; text-underline-offset: 4px;
+}
+@media (min-width: 760px) {
+  .resumo { grid-template-columns: repeat(3, 1fr); gap: 32px; border-top: 0; }
+  .resumo__i { border-bottom: 0; border-top: 3px solid var(--verde-marca); padding-top: 16px; }
+}
+
+/* =========================================================
+   SERVIÇOS
+   ========================================================= */
+.servicos { display: grid; gap: 24px; grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 640px) { .servicos { grid-template-columns: 1fr; } }
+.servico {
+  border-radius: var(--raio); overflow: hidden;
+  background: var(--c-fundo); border: 1px solid var(--borda);
+  display: flex; flex-direction: column;
+}
+.servico__figura { margin: 0; aspect-ratio: 16 / 10; overflow: hidden; background: var(--base-2); }
+.servico__figura img { width: 100%; height: 100%; object-fit: cover; }
+.servico h2 { margin: 22px 24px 8px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.servico p { margin: 0 24px 24px; font-size: var(--corpo); color: var(--texto-suave); }
+
+/* =========================================================
+   DA RECOLHA À ENTREGA — quatro passos curtos
+   ========================================================= */
+.titulo-seccao { margin-bottom: 20px; }
+.passos { list-style: none; display: grid; gap: 12px; margin-bottom: 28px; }
+.passo {
+  display: grid; grid-template-columns: 36px 1fr; column-gap: 14px; align-items: start;
+  padding: 16px 18px; border-radius: var(--raio-sm);
+  background: var(--c-fundo); border: 1px solid var(--borda);
+}
+.passo__n {
+  grid-row: span 2; width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--verde-marca); color: #0B0B0C; font-weight: 800;
+}
+.passo h3 { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+.passo p { font-size: 15px; color: var(--texto-suave); }
+@media (min-width: 900px) {
+  .passos { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .passo { grid-template-columns: 1fr; row-gap: 6px; padding: 20px; }
+  .passo__n { grid-row: auto; margin-bottom: 6px; }
+}
+
+/* =========================================================
+   SOBRE NÓS — visão, missão, objectivo
+   ========================================================= */
+.pilares { display: grid; gap: 12px; }
+.pilar { padding: 20px 22px; border-radius: var(--raio-sm); background: var(--base-2); border: 1px solid var(--borda); }
+.pilar h2 { font-size: 15px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.pilar p { font-size: var(--corpo); color: var(--texto-suave); }
+
+/* =========================================================
+   FORMULÁRIO DE ORÇAMENTO
+   ------------------------------------------------------------
+   Vive em css/orcamento.css, carregado depois deste ficheiro. Desde a
+   Fase 10B está na secção #orcamento de index.html, e já não num pop-up.
+   ========================================================= */
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sobe { from { opacity: 0; transform: translateY(28px) scale(0.97); } to { opacity: 1; transform: none; } }
+/* Trava o scroll do fundo enquanto um diálogo (confirmação, privacidade,
+   fotografia ampliada) está aberto. */
+body.modal-aberto { overflow: hidden; }
+
+/* =========================================================
+   FAQ
+   ========================================================= */
+.faq { margin-top: 40px; display: grid; gap: 12px; max-width: 860px; }
+.faq__i {
+  border: 1px solid var(--borda); border-radius: var(--raio-sm);
+  background: var(--base-2); overflow: hidden; transition: border-color var(--transicao);
+}
+.faq__i[open] { border-color: var(--linha); }
+.faq__p {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 24px; font-size: 16px; font-weight: 700; cursor: pointer; list-style: none;
+}
+.faq__p::-webkit-details-marker { display: none; }
+.faq__p::after {
+  content: "+"; flex: none; font-size: 24px; font-weight: 400; line-height: 1;
+  color: var(--verde); transition: transform var(--transicao);
+}
+.faq__i[open] .faq__p::after { transform: rotate(45deg); }
+.faq__p:hover { background: rgb(var(--verde-rgb) / .05); }
+.faq__p:focus-visible { outline: 2px solid var(--verde); outline-offset: -2px; }
+.faq__r { padding: 0 24px 24px; font-size: var(--corpo); color: var(--texto-suave); }
+.faq__r p + p { margin-top: 12px; }
+.faq__r b { color: var(--verde); }
+
+/* =========================================================
+   CONTACTOS
+   ========================================================= */
+.grelha-cont {
+  display: grid; gap: 24px;
+  grid-template-areas: "principal" "lista" "chegar";
+}
+@media (min-width: 900px) {
+  .grelha-cont {
+    grid-template-columns: 1fr 1fr; column-gap: 48px; align-items: start;
+    grid-template-areas: "principal chegar" "lista chegar";
+  }
+}
+.cont-principal { grid-area: principal; display: grid; gap: 10px; }
+.cont-lista { grid-area: lista; display: grid; gap: 12px; }
+.cont-chegar { grid-area: chegar; display: grid; gap: 14px; }
+.cont-numero { font-size: 14px; color: var(--texto-fraco); }
+.cont-numero span { margin-left: 6px; }
+.cont-item {
+  display: flex; gap: 16px; padding: 16px 20px; border-radius: 13px;
+  background: var(--vidro); border: 1px solid var(--borda);
+  transition: border-color var(--transicao), background var(--transicao);
+}
+a.cont-item:hover { border-color: var(--verde); background: rgb(var(--verde-rgb) / .05); }
+.cont-item svg { width: 21px; height: 21px; color: var(--verde); flex: none; margin-top: 3px; }
+.cont-item b { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-fraco); margin-bottom: 3px; }
+.cont-item span { font-size: var(--corpo); font-weight: 600; }
+
+/* =========================================================
+   SOBRE NÓS — a empresa
+   ========================================================= */
+.empresa { display: grid; gap: 28px; align-items: start; }
+@media (min-width: 860px) { .empresa { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 56px; } }
+.empresa__dados { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 24px; margin: 24px 0; }
+.empresa__dados dt { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--texto-fraco); }
+.empresa__dados dd { margin: 4px 0 0; font-weight: 700; color: var(--texto); word-break: break-word; }
+@media (max-width: 520px) { .empresa__dados { grid-template-columns: 1fr 1fr; } }
+
+/* =========================================================
+   RODAPÉ — legal mínimo
+   ========================================================= */
+.rodape { border-top: 1px solid var(--linha); padding: 32px 0 28px; background: var(--rodape); }
+.rodape__topo { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.rodape__logo { height: 46px; width: auto; }
+.rodape__fiscais { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12.5px; color: var(--texto-fraco); }
+.rodape__fiscais b { color: var(--verde); font-weight: 700; }
+.rodape__base { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; padding-top: 20px; border-top: 1px solid var(--borda); font-size: 12.5px; color: var(--texto-fraco); }
+.rodape__links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+/* A área de toque sobe aos 44px. */
+.rodape__links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--texto-fraco); transition: color var(--transicao); }
+.rodape__links a:hover { color: var(--verde); }
+
+/* =========================================================
+   BOTÕES FIXOS (canto inferior direito): WhatsApp e telefone
+   ========================================================= */
+/* Dois botões pequenos, numa fila, em TODOS os tamanhos de ecrã. Não tapam
+   conteúdo no fim da página: o `body` reserva a altura da faixa
+   (`--faixa`: 48 px de botão, 12 px de margem em baixo e 12 px de folga).
+   `pointer-events: none` na caixa, `auto` nos botões: o resto da faixa não
+   engole toques. */
+.fixos {
+  position: fixed; right: 12px; bottom: 12px; z-index: 80;
+  display: flex; flex-direction: row; gap: 10px; align-items: center;
+  pointer-events: none;
+}
+.fixo { display: flex; }
+.fixo__btn {
+  width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  pointer-events: auto;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+  transition: transform var(--transicao);
+}
+.fixo__btn svg { width: 24px; height: 24px; }
+.fixo--wa   .fixo__btn { background: var(--wa);           color: var(--sobre-wa); }
+.fixo--tel  .fixo__btn { background: var(--verde-marca);  color: #0B0B0C; }
+.fixo__btn:hover { transform: scale(1.08); }
+/* Fase 10C: no telemóvel os fixos escondem-se com o hero à vista (js/main.js). */
+@media (max-width: 899px) {
+  .fixos { transition: opacity 0.2s ease, visibility 0.2s; }
+  .fixos--sobre-hero { opacity: 0; visibility: hidden; }
+}
+
+/* =========================================================
+   BARRA DE PROGRESSO E ENTRADA DO HERO
+   ========================================================= */
+.barra-topo {
+  position: fixed; top: 0; left: 0; z-index: 100; height: 3px; width: 0%;
+  background: var(--verde-marca);
+  transition: width 0.12s linear;
+}
+
+/* Entrada do hero. Fase 10B (10B.2): o <h1> NÃO entra aqui nem em lado
+   nenhum com opacidade, blur ou deslocamento: tem de estar nítido e opaco
+   desde o primeiro paint, sem esperar por JS, pelo canvas ou pelo avião
+   (com internet fraca ninguém o lia). Só o resto (lead e botões) entra,
+   e só por CSS: sem JS também aparecem. */
+.hero__conteudo > *:not(h1) { opacity: 0; transform: translateY(26px); animation: heroEntra 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero__conteudo > *:nth-child(2) { animation-delay: 0.10s; }
+.hero__conteudo > *:nth-child(3) { animation-delay: 0.22s; }
+@keyframes heroEntra { to { opacity: 1; transform: none; } }
+
+/* Título do hero: legível por inteiro desde o início. O único efeito é um
+   sublinhado verde que cresce por baixo (não esconde nem desfoca nada). */
+.hero h1 { display: grid; gap: 0 0.28em; }
+.hero h1::after {
+  content: ""; display: block; width: 72px; height: 4px; margin-top: 14px;
+  border-radius: 2px; background: var(--verde-marca);
+  transform-origin: left center; animation: sublinhaCresce 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+@keyframes sublinhaCresce { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.h1linha { display: block; }
+.pal {
+  display: inline-block;
+  color: var(--verde);
+}
+.pal--feio { color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .hero__conteudo > * { opacity: 1; transform: none; }
+  .hero h1::after { animation: none; }
+}

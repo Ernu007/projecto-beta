@@ -1,0 +1,75 @@
+/* =========================================================
+   Política de Privacidade — JVI Carga & Serviços, Lda
+   ========================================================= */
+.pp { max-width: 78ch; }
+
+.pp__meta {
+  font-size: 13px; color: var(--texto-fraco); margin-bottom: 32px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--borda);
+}
+
+/* A linha "última revisão" fica em vez de antes, não em depois. */
+.pp__meta--fim {
+  margin: 24px 0 0; padding: 16px 0 0; border-bottom: 0;
+  border-top: 1px solid var(--borda);
+}
+
+.pp h3 {
+  font-size: 17px; font-weight: 800; margin: 30px 0 10px;
+  letter-spacing: -0.01em; color: var(--verde);
+}
+.pp h3:first-of-type { margin-top: 0; }
+.pp p { font-size: 14.5px; color: var(--texto-suave); margin-bottom: 12px; }
+.pp ul { margin: 0 0 14px; padding-left: 4px; list-style: none; display: grid; gap: 8px; }
+.pp li {
+  font-size: 14.5px; color: var(--texto-suave);
+  padding-left: 20px; position: relative;
+}
+.pp li::before {
+  content: ""; position: absolute; left: 0; top: 9px;
+  width: 7px; height: 7px; border-radius: 2px; background: var(--verde-escuro);
+}
+.pp strong { color: var(--texto); font-weight: 700; }
+
+.pp__destaque {
+  padding: 20px; border-radius: 12px; margin: 22px 0;
+  background: rgb(var(--verde-rgb) / .07); border: 1px solid var(--linha);
+  border-left: 3px solid var(--verde);
+  font-size: 14.5px; color: var(--texto-suave);
+}
+.pp__destaque p:last-child { margin-bottom: 0; }
+
+/* Recolha de consentimento junto ao botão de envio. Fase 8C/C8: deixou
+   de ser um cartão (sem fundo, contorno nem cantos) — é uma linha. */
+.consent {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-top: 16px;
+  font-size: 12.5px; color: var(--texto-fraco); line-height: 1.55;
+}
+.consent input { accent-color: var(--verde); width: 17px; height: 17px; flex: none; margin-top: 1px; }
+.consent a { color: var(--verde); text-decoration: underline; text-underline-offset: 2px; }
+.consent a:hover { color: var(--verde-escuro); }
+
+/* Diálogo legal */
+.legal {
+  position: fixed; inset: 0; z-index: 130; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.legal[data-aberto="true"] { display: flex; }
+.legal__fundo { position: absolute; inset: 0; background: rgba(5, 9, 18, 0.88); backdrop-filter: blur(8px); }
+.legal__caixa {
+  position: relative; width: min(760px, 100%); max-height: 88svh; overflow-y: auto;
+  background: var(--base-2); border: 1px solid var(--linha); border-radius: var(--raio);
+  box-shadow: var(--sombra); padding: 34px 30px;
+  animation: sobe 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.legal__caixa h2 { margin-bottom: 6px; }
+.legal__caixa > p { margin-bottom: 24px; }
+.legal__fechar {
+  position: absolute; top: 16px; right: 16px;
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--vidro); color: var(--texto-suave);
+  transition: all var(--transicao);
+}
+.legal__fechar:hover { background: rgba(248, 113, 113, 0.2); color: var(--erro-txt); }
+.legal__fechar svg { width: 19px; height: 19px; }

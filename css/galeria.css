@@ -1,0 +1,123 @@
+/* =========================================================
+   JVI Carga & Serviços — Galeria de trabalho real
+   ------------------------------------------------------------
+   Espaçamento na escala de 4/8 px.
+   ========================================================= */
+/* =========================================================
+   GALERIA — carrossel automático (Fase 10B, 10B.6)
+   ------------------------------------------------------------
+   Uma fotografia de cada vez, a passar sozinha (fade, 2 s por imagem), em ciclo.
+   Sem setas e sem botão de pausa: o cliente não os quer. A pausa é por
+   gestos (rato, toque, foco, fora do ecrã, separador oculto) — ver
+   `iniciarCarrossel` em js/galeria.js e a decisão D58.
+
+   As fotografias empilham-se no mesmo sítio e só se anima `opacity` e
+   `transform` (nada que force layout). A fotografia vai inteira
+   (`contain`) sobre ela própria desfocada, porque as do cliente têm
+   proporções muito diferentes (largas, 4:3 e de pé) e o recorte
+   cortava a carga.
+   ========================================================= */
+.gal { margin-top: 48px; }
+.gal__grelha {
+  position: relative; overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--raio-sm); border: 1px solid var(--borda);
+  background: var(--base-3);
+  /* O deslize horizontal é nosso (swipe); o vertical continua a ser o scroll da página. */
+  touch-action: pan-y;
+}
+
+.gal__item {
+  position: absolute; inset: 0; display: block; width: 100%; padding: 0; overflow: hidden;
+  border: 0; background: transparent; cursor: zoom-in;
+  opacity: 0; transform: scale(1.04); pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease-out; /* Fase 10C: curta, para a imagem ficar parada quase os 2 s */
+}
+.gal__item[data-estado="ativo"] { opacity: 1; transform: none; pointer-events: auto; z-index: 1; }
+
+/* O palco: o carrossel.
+
+   Fase 9 (9.5): "aumente o tamanho das imagens do carrossel, está muito
+   pequeno!" — 860px no computador, com esse máximo para não ficar gigante
+   num ecrã largo. A altura sai dos 4:3 do cartão, e a segunda declaração
+   limita o palco pela altura do ecrã, para a fotografia caber inteira num
+   telemóvel deitado ou num portátil baixo (quem não conhece `svh` fica com
+   a primeira). */
+.gal__palco {
+  max-width: 860px;
+  max-width: min(860px, calc(78svh * 4 / 3));
+  margin-inline: auto;
+}
+/* No telemóvel a fotografia ocupa praticamente a largura toda do ecrã: o
+   palco sai 16px para fora de cada margem do contentor (24px), e ficam
+   8px de cada lado — 344 dos 360px. */
+@media (max-width: 640px) {
+  .gal__palco { margin-inline: -16px; }
+}
+
+/* Pontos indicadores: discretos, não clicáveis (não são botões). */
+.gal__pontos { display: flex; justify-content: center; gap: 8px; margin-top: 14px; }
+.gal__pontos i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--texto-fraco);
+  opacity: 0.35; transform: scale(0.85);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.gal__pontos i[data-estado="ativo"] { opacity: 1; transform: scale(1.25); background: var(--verde); }
+
+.gal__fundo, .gal__foto { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gal__fundo { object-fit: cover; filter: blur(22px) saturate(1.1); transform: scale(1.2); opacity: 0.85; }
+.gal__foto { object-fit: contain; }
+/* A legenda fica sempre visível, no pé da fotografia. */
+.gal__legenda {
+  position: absolute; inset: auto 0 0 0; padding: 40px 16px 14px;
+  background: linear-gradient(to top, rgba(5, 9, 18, 0.9) 35%, transparent);
+  font-size: 14px; font-weight: 600; color: var(--claro); text-align: left;
+}
+.gal__item:focus-visible { outline: 3px solid var(--verde); outline-offset: -3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gal__item, .gal__pontos i { transition: none; transform: none; }
+}
+
+.gal__mais {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px;
+  margin-top: 24px; padding: 20px 24px; border-radius: var(--raio);
+  background: var(--vidro); border: 1px solid var(--borda);
+}
+.gal__mais p { flex: 1 1 240px; font-size: var(--corpo); color: var(--texto-suave); }
+
+/* =========================================================
+   LUZBOX
+   ========================================================= */
+.luz {
+  position: fixed; inset: 0; z-index: 140; display: none;
+  align-items: center; justify-content: center; padding: 24px;
+}
+.luz[data-aberto="true"] { display: flex; }
+.luz__fundo { position: absolute; inset: 0; background: rgba(3, 6, 12, 0.94); }
+.luz__figura { position: relative; max-width: min(1100px, 100%); max-height: 86svh; margin: 0; }
+.luz__figura img { max-width: 100%; max-height: 82svh; object-fit: contain; border-radius: var(--raio-sm); }
+.luz__legenda { margin-top: 12px; font-size: 13.5px; color: var(--claro); text-align: center; }
+.luz__fechar, .luz__nav {
+  position: absolute; width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(255, 255, 255, 0.1);
+  color: var(--texto); transition: background var(--transicao);
+}
+.luz__fechar:hover, .luz__nav:hover { background: rgba(255, 255, 255, 0.2); }
+.luz__fechar { top: -56px; right: 0; }
+.luz__nav { top: 50%; transform: translateY(-50%); }
+.luz__nav--ant { left: -60px; }
+.luz__nav--prox { right: -60px; }
+.luz__nav svg, .luz__fechar svg { width: 20px; height: 20px; }
+@media (max-width: 1220px) {
+  /* Os botões de navegação ficavam FORA do ecrã entre 821 e ~1219 px:
+     a figura chega a 1100 px de largura e já não sobrava margem para
+     os botões de 44 px em -60 px. O limiar antigo era 820 px, o que
+     deixava ~400 px de ecrã morto. Passam para baixo da figura. */
+  .luz { padding: 16px; }
+  .luz__fechar { top: auto; bottom: -52px; right: 0; }
+  .luz__nav { top: auto; bottom: -52px; transform: none; }
+  .luz__nav--ant { left: 28%; }
+  .luz__nav--prox { right: 28%; }
+  .luz__figura img { max-height: calc(82svh - 60px); }
+}

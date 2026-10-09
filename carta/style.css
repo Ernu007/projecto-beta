@@ -1,0 +1,261 @@
+/* =========================================================
+   JVI Carga & Serviços — Carta de Apresentação
+   10 páginas A4 verticais, para exportação a PDF
+   Imprimir com Ctrl+P > Guardar como PDF (A4, sem margens)
+   ========================================================= */
+
+@page { size: A4; margin: 0; }
+
+:root {
+  --verde: #A9CF44;
+  --verde-escuro: #82C91E;
+  --laranja: #EA8240;
+  --base: #0F172A;
+  --claro: #CBD5E1;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  background: #4a5568;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ---------- Folha A4 ---------- */
+.pagina {
+  width: 210mm;
+  height: 297mm;
+  position: relative;
+  overflow: hidden;
+  background: var(--base);
+  color: #E8EDF5;
+  margin: 24px auto;
+  page-break-after: always;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+}
+.pagina:last-child { page-break-after: auto; break-after: auto; margin-bottom: 24px; }
+
+@media print {
+  body { background: none; }
+  .pagina { margin: 0; box-shadow: none; }
+}
+
+/* ---------- Decoração comum ---------- */
+.glow-a {
+  position: absolute; width: 420px; height: 420px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(169,207,68,0.22), transparent 68%);
+  top: -140px; right: -140px; pointer-events: none;
+}
+.glow-b {
+  position: absolute; width: 360px; height: 360px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(234,130,64,0.16), transparent 68%);
+  bottom: -130px; left: -130px; pointer-events: none;
+}
+.grelha {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(169,207,68,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(169,207,68,0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+.faixa-lateral {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 7px;
+  background: linear-gradient(180deg, var(--verde), var(--laranja));
+}
+
+.pnum {
+  position: absolute; bottom: 13mm; right: 16mm;
+  font-size: 9pt; color: rgba(203,213,225,0.45); font-weight: 700; letter-spacing: 0.08em;
+}
+.pmarca {
+  position: absolute; bottom: 13mm; left: 16mm;
+  font-size: 8pt; color: rgba(203,213,225,0.4); letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+/* ---------- Tipografia ---------- */
+.et {
+  display: inline-block;
+  font-size: 8pt; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--verde); padding: 5px 13px; border: 1px solid rgba(169,207,68,0.28);
+  border-radius: 100px; background: rgba(169,207,68,0.08);
+}
+h1 { font-size: 34pt; line-height: 1.05; font-weight: 800; letter-spacing: -0.035em; }
+h2 { font-size: 22pt; line-height: 1.12; font-weight: 800; letter-spacing: -0.025em; }
+h3 { font-size: 12.5pt; font-weight: 800; letter-spacing: -0.015em; }
+p  { font-size: 10pt; line-height: 1.68; color: rgba(203,213,225,0.82); }
+.v { color: var(--verde); }
+.lj { color: var(--laranja); }
+.lead { font-size: 11.5pt; line-height: 1.62; color: rgba(203,213,225,0.86); }
+.tit { font-size: 15pt; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.02em; }
+
+.corpo { position: relative; z-index: 2; padding: 26mm 16mm 0; flex: 1; }
+.corpo--centro { display: flex; flex-direction: column; justify-content: center; }
+
+/* =========================================================
+   PÁGINA 1 — CAPA
+   ========================================================= */
+.p1 { justify-content: space-between; }
+/* O `space-between` da capa precisa de TRÊS itens em fluxo para o título
+   ficar a meio. O primeiro era a `<div class="grelha">`, que só estava em
+   fluxo porque a regra dela nunca casava; desde que passou a `.grelha`
+   (absoluta), o título subia para o topo e ficava por baixo do logótipo.
+   Este pseudo-elemento vazio repõe o item do topo. */
+.p1::before { content: ""; }
+.p1__logo { position: absolute; top: 24mm; left: 16mm; z-index: 3; width: 30mm; }
+.p1__meio { position: relative; z-index: 2; padding: 0 16mm; margin-top: 6mm; }
+.p1__citacao {
+  margin-top: 9mm; padding-left: 5mm; border-left: 3px solid var(--laranja);
+  font-size: 11pt; font-weight: 700; line-height: 1.5; color: var(--verde);
+}
+.p1__rodape {
+  position: relative; z-index: 2; padding: 0 16mm 26mm;
+  display: flex; flex-wrap: wrap; gap: 6mm 20mm; font-size: 8.5pt; color: rgba(203,213,225,0.6);
+}
+.p1__rodape b { color: var(--claro); font-weight: 700; }
+
+/* =========================================================
+   PÁGINA 2 — QUEM SOMOS
+   ========================================================= */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; margin-top: 9mm; }
+.cred {
+  padding: 7mm; border-radius: 4mm;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+}
+.cred__rot { font-size: 7.5pt; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--verde); margin-bottom: 3mm; }
+.cred__val { font-size: 12.5pt; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1.5mm; word-break: break-word; }
+.cred__desc { font-size: 8.5pt; line-height: 1.5; color: rgba(203,213,225,0.72); }
+
+/* =========================================================
+   PÁGINA 3 — SERVIÇOS
+   ========================================================= */
+.pilha { display: grid; gap: 6mm; margin-top: 8mm; }
+.serv {
+  display: grid; grid-template-columns: 46mm 1fr; gap: 7mm; align-items: center;
+  padding: 6mm; border-radius: 4mm; overflow: hidden;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+}
+.serv__fig { border-radius: 3mm; overflow: hidden; height: 32mm; background: #16243D; }
+.serv__fig img { width: 100%; height: 100%; object-fit: cover; }
+.serv__n { font-size: 7.5pt; font-weight: 800; letter-spacing: 0.14em; color: var(--verde); margin-bottom: 2mm; }
+.serv p { font-size: 9pt; }
+.marcas { list-style: none; margin-top: 3mm; display: grid; gap: 1.5mm; }
+.marcas li { font-size: 8.5pt; color: rgba(203,213,225,0.66); padding-left: 4.5mm; position: relative; }
+.marcas li::before { content: "›"; position: absolute; left: 0; color: var(--verde); font-weight: 800; }
+
+/* =========================================================
+   PÁGINA 4 — FLUXO (5 etapas)
+   ========================================================= */
+.etapas { display: grid; gap: 5mm; margin-top: 9mm; }
+.etapa {
+  display: grid; grid-template-columns: 14mm 1fr; gap: 6mm; align-items: start;
+  padding: 5.5mm 6mm; border-radius: 4mm;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  position: relative;
+}
+.etapa::before {
+  content: ""; position: absolute; left: 0; top: 4mm; bottom: 4mm; width: 2.5px;
+  border-radius: 0 2px 2px 0; background: linear-gradient(180deg, var(--verde), var(--laranja));
+}
+.etapa__n {
+  width: 11mm; height: 11mm; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(169,207,68,0.14); color: var(--verde); font-size: 9pt; font-weight: 800;
+  border: 1.5px solid var(--verde);
+}
+.etapa__et { font-size: 7.5pt; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--laranja); }
+.etapa h3 { margin: 1.5mm 0 1.5mm; }
+.etapa p { font-size: 9pt; }
+
+/* =========================================================
+   PÁGINA 5 — COBERTURA (mapa SVG)
+   ========================================================= */
+.mapa { margin-top: 5mm; display: grid; grid-template-columns: 1fr 60mm; gap: 7mm; align-items: center; }
+.mapa svg { width: 100%; max-height: 120mm; }
+.rotas { list-style: none; display: grid; gap: 2.5mm; }
+.rotas li {
+  font-size: 9pt; padding: 3mm 4mm; border-radius: 3mm;
+  background: rgba(169,207,68,0.07); border: 1px solid rgba(169,207,68,0.18);
+  display: flex; align-items: center; gap: 3mm;
+}
+.rotas li::before { content: ""; width: 2mm; height: 2mm; border-radius: 50%; background: var(--verde); flex: none; }
+.rotas li.hub { background: rgba(234,130,64,0.1); border-color: rgba(234,130,64,0.3); color: var(--laranja); font-weight: 700; }
+.rotas li.hub::before { background: var(--laranja); }
+
+/* =========================================================
+   PÁGINA 6 — DIFERENCIAIS
+   ========================================================= */
+.g2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-top: 9mm; }
+.dif { padding: 7mm; border-radius: 4mm; background: linear-gradient(155deg, #1B2740, #131E33); border: 1px solid rgba(255,255,255,0.07); }
+.dif__i {
+  width: 11mm; height: 11mm; border-radius: 3mm; display: grid; place-items: center;
+  background: rgba(169,207,68,0.13); color: var(--verde); margin-bottom: 4mm;
+  font-size: 13pt; font-weight: 800;
+}
+.dif h3 { margin-bottom: 2mm; }
+.dif p { font-size: 9pt; }
+
+/* =========================================================
+   PÁGINA 7 — VISÃO / MISSÃO / OBJECTIVO
+   ========================================================= */
+.pilares { display: grid; gap: 6mm; margin-top: 10mm; }
+.pilar { padding: 8mm; border-radius: 4mm; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+.pilar__t { display: flex; align-items: center; gap: 4mm; margin-bottom: 4mm; }
+.pilar__t span {
+  width: 8mm; height: 8mm; border-radius: 50%; display: grid; place-items: center;
+  background: var(--verde); color: var(--base); font-size: 10pt; font-weight: 800;
+}
+.pilar h3 { font-size: 11pt; letter-spacing: 0.12em; text-transform: uppercase; }
+.pilar p { font-size: 9.5pt; }
+.cita { margin-top: 8mm; font-size: 12pt; font-weight: 700; line-height: 1.45; color: var(--verde); }
+
+/* =========================================================
+   PÁGINA 8 — AIRWAYBILL
+   ========================================================= */
+.awb { margin-top: 7mm; border: 1px solid rgba(255,255,255,0.14); border-radius: 3mm; overflow: hidden; }
+.awb__topo {
+  display: flex; justify-content: space-between; align-items: center; gap: 5mm;
+  padding: 5mm; background: rgba(169,207,68,0.09); border-bottom: 1px solid rgba(169,207,68,0.22);
+}
+.awb__topo b { font-size: 10pt; font-weight: 800; letter-spacing: 0.06em; }
+.awb__n { font-size: 9pt; font-weight: 800; color: var(--verde); }
+.awb__sec { display: grid; grid-template-columns: 1fr 1fr; }
+.awb__cel { padding: 4mm 5mm; border: 0.5px solid rgba(255,255,255,0.12); }
+.awb__cel--l { grid-column: 1 / -1; }
+.awb__r { font-size: 7pt; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--verde); margin-bottom: 2mm; }
+.awb__v { font-size: 9.5pt; font-weight: 600; min-height: 4mm; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 1.5mm; }
+.awb__v--l { min-height: 11mm; }
+.awb__t { padding: 4mm 5mm; border: 0.5px solid rgba(255,255,255,0.12); }
+.awb__t table { width: 100%; border-collapse: collapse; }
+.awb__t th, .awb__t td { text-align: left; padding: 1.8mm 2mm; font-size: 8pt; }
+.awb__t th { color: var(--verde); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-size: 7pt; }
+.awb__t td { border-bottom: 0.5px solid rgba(255,255,255,0.1); min-height: 8mm; }
+.awb__nota { margin-top: 5mm; font-size: 8.5pt; color: rgba(203,213,225,0.6); line-height: 1.6; }
+
+/* =========================================================
+   PÁGINA 9 — CONTACTOS
+   ========================================================= */
+.cont { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 9mm; }
+.citem {
+  display: flex; gap: 4mm; padding: 5mm; border-radius: 4mm;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+}
+.citem__i {
+  width: 9mm; height: 9mm; border-radius: 3mm; flex: none; display: grid; place-items: center;
+  background: rgba(169,207,68,0.13); color: var(--verde); font-size: 10pt;
+}
+.citem b { display: block; font-size: 7pt; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(203,213,225,0.55); margin-bottom: 1.5mm; }
+.citem span { font-size: 9.5pt; font-weight: 600; }
+.mapa-local { margin-top: 8mm; border-radius: 4mm; overflow: hidden; height: 62mm; border: 1px solid rgba(255,255,255,0.08); }
+.mapa-local svg { width: 100%; height: 100%; }
+
+/* =========================================================
+   PÁGINA 10 — FECHO
+   ========================================================= */
+.p10 { justify-content: center; }
+.p10__meio { position: relative; z-index: 2; padding: 0 16mm; }
+.p10__logo { width: 26mm; margin-bottom: 10mm; }
+.p10__fiscais { display: flex; flex-wrap: wrap; gap: 4mm 14mm; margin-top: 9mm; font-size: 8.5pt; color: rgba(203,213,225,0.6); }
+.p10__fiscais b { color: var(--verde); font-weight: 800; }

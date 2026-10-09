@@ -1,0 +1,5 @@
+﻿User-agent: *
+Allow: /
+Disallow: /carta/
+
+Sitemap: https://jvicargaservicos.co.mz/sitemap.xml
